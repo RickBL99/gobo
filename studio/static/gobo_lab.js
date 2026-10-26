@@ -315,25 +315,43 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     if (!strokes.length) { direction = null; out.innerHTML = `<span class="hint">Nothing drawn yet.</span>`; q("#drawApply", lab).disabled = q("#drawShoot", lab).disabled = true; q("#drawWhy", lab).textContent = ""; return; }
     direction = g.direct({ w: cv.width, h: cv.height, strokes });
     const c = direction.camera;
-    out.innerHTML = (c ? `Camera: <b>${h(optLabel("move", c.move))}</b> — ${h(c.phrase)}` : `<span class="hint">No camera stroke: the camera stays as set.</span>`)
+    const d = drawnMove(c);
+    const named = c && (hasOpt("move", c.move) ? optLabel("move", c.move)
+      : `${String(c.phrase || c.move).split(":")[0]} (${d.move ? `shot as ${optLabel("move", d.move).toLowerCase()}, with the move in words` : "in words"})`);
+    out.innerHTML = (c ? `Camera: <b>${h(named)}</b> — ${h(c.phrase)}` : `<span class="hint">No camera stroke: the camera stays as set.</span>`)
       + (direction.action ? `<span class="act">${h(direction.action)}</span>` : "");
-    q("#drawWhy", lab).textContent = c ? c.why : "";
+    q("#drawWhy", lab).textContent = c ? String(c.why || "").replace(/\ba ([aeiou])/gi, "an $1") : "";
     q("#drawApply", lab).disabled = q("#drawShoot", lab).disabled = false;
   }
+  // The drawing reader knows more moves than a studio may offer (the in-house
+  // one has 15): a move that isn't in this studio's list takes the nearest
+  // one, and the drawing's own words go into the scene, so the model still
+  // gets the move that was drawn (2026-10-26: bullet time was dropped silently)
+  const NEAREST = { bullet: "orbit", orbit360: "orbit", arc: "orbit", tiltdown: "tilt", cranedown: "crane", fpv: "drone",
+                    eyesin: "push", earth: "pull", snorri: "handheld", headtrack: "track", dutchroll: "handheld",
+                    rack: "static", robo: "dolly", hyperlapse: "track" };
+  function drawnMove(c) {
+    if (!c) return { move: "", words: "" };
+    if (hasOpt("move", c.move)) return { move: c.move, words: "" };
+    const near = NEAREST[c.move] && hasOpt("move", NEAREST[c.move]) ? NEAREST[c.move] : "";
+    const p = String(c.phrase || "").trim().replace(/[.]+$/, "");
+    return { move: near, words: p ? p[0].toUpperCase() + p.slice(1) + "." : "" };
+  }
+  const drawnText = d => [d.words, direction.action].filter(Boolean).join(" ");
   q("#drawApply", lab).onclick = () => {
     if (!direction) return;
-    const c = direction.camera;
-    if (c && hasOpt("move", c.move)) ST().setDirection({ move: c.move });
-    if (direction.action) ST().addToScene(direction.action);
-    say(c ? `Camera: ${optLabel("move", c.move)}${direction.action ? "; the action went into the scene" : ""}. Generate when you're ready.` : "The action went into the scene. Generate when you're ready.");
+    const d = drawnMove(direction.camera), text = drawnText(d);
+    if (d.move) ST().setDirection({ move: d.move });
+    if (text) ST().addToScene(text);
+    say(!d.move && !text ? "Nothing in this drawing changes the shot." : `${d.move ? `Camera: ${optLabel("move", d.move)}` : "Camera as set"}${text ? "; the drawing's words went into the scene" : ""}. Generate when you're ready.`);
   };
   q("#drawShoot", lab).onclick = async () => {
     if (!direction) return;
-    const c = direction.camera, t = ST().current();
-    const move = c && hasOpt("move", c.move) ? c.move : "";
+    const d = drawnMove(direction.camera), text = drawnText(d), t = ST().current();
+    if (!d.move && !text) return say("Nothing in this drawing changes the shot, so nothing was shot. Draw a camera or a subject stroke.", true);
     close();
-    await ST().redo(t, move, direction.action || "");
-    ST().toast(`Shooting it again${move ? ` with a ${optLabel("move", move).toLowerCase()}` : ""}. The new take lands beside the old one.`);
+    await ST().redo(t, d.move, text);
+    ST().toast(`Shooting it again${d.move ? ` with a ${optLabel("move", d.move).toLowerCase()}` : ""}${d.words ? ", and the drawn move in the scene" : ""}. The new take lands beside the old one.`);
   };
 
   // ── Grade ───────────────────────────────────────────────────────────────
