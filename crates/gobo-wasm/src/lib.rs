@@ -140,6 +140,29 @@ pub extern "C" fn scrim_lut_load(body: *mut u8, len: usize) -> u64 {
     }
 }
 
+/// A loaded LUT read back into the sliders ({id}): the look with the fitted
+/// numbers, the rest as .cube text (it goes first, under its own id once
+/// loaded), how much the sliders show, and whether to keep the LUT whole.
+#[no_mangle]
+pub extern "C" fn scrim_lut_unpack(body: *mut u8, len: usize) -> u64 {
+    let v = match take_json(body, len) {
+        Ok(v) => v,
+        Err(e) => return reply(json!({"error": e})),
+    };
+    let Some(id) = v.get("id").and_then(Value::as_str) else {
+        return reply(json!({"error": "unpacking needs a loaded LUT's id"}));
+    };
+    let Some(cube) = CUBES.with(|m| m.borrow().get(id).cloned()) else {
+        return reply(json!({"error": format!("the LUT {id} isn't loaded")}));
+    };
+    let u = scrim::unpack(&cube);
+    let r = |v: f32| (v as f64 * 100.0).round() / 100.0;
+    reply(json!({
+        "look": u.look.to_json(), "rest": u.rest.table.cube(&u.rest.title), "title": cube.title,
+        "sliders_off": r(u.sliders_off), "rest_off": r(u.rest_off), "shown": r(u.shown), "whole": u.whole,
+    }))
+}
+
 /// A scope of a picture as RGBA pixels, `ow` × `oh`: kind 0 waveform,
 /// 1 RGB parade, 2 vectorscope, 3 histogram. (Bytes, not JSON.)
 #[no_mangle]

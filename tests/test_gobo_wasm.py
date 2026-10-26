@@ -70,6 +70,13 @@ out.colour_look = g.look({ wheels: { lift: [0, 0, 0.05, 0], gain: [0, 0, 0, -0.1
   cdl: { slope: [1.1, 1, 0.9], offset: 0, power: 1, sat: 0.9 }, lut3d: { id: "lut-swap", mix: 0.5 } });
 const lifted = warmPx(); g.grade(lifted, { wheels: { lift: [0, 0, 0.2, 0] } }, 1); out.lifted = Array.from(lifted.data.slice(0, 3));
 out.cube_has_lut = g.cube({ lut3d: { id: "lut-swap" } }, 2).split("\n").filter(l => /^[0-9]/.test(l))[1];
+// a LUT read back into the sliders: a warm, contrasty table comes back as Warmth and Contrast
+g.loadLut("lut-warm", g.cube({ temp: 0.5, contrast: 1.3 }, 17));
+const wu = g.unpackLut("lut-warm");
+out.unpack = { whole: wu.whole, temp: wu.look.temp, contrast: wu.look.contrast, head: wu.rest.slice(0, 6), rest_off: wu.rest_off, shown: wu.shown };
+out.unpack_rest = g.loadLut("lut-warm-rest", wu.rest);
+out.unpack_swap = g.unpackLut("lut-swap").whole;
+out.unpack_missing = g.unpackLut("lut-nope").error;
 const wf = g.scope(scene(0), "waveform", 256, 128), vs = g.scope(scene(0), "vector", 160, 160);
 out.scope = [wf.width, wf.height, wf.data.length, Array.from(wf.data).filter((v, i) => i % 4 === 3 && v > 0).length,
              vs.data.length, Array.from(vs.data).filter((v, i) => i % 4 === 3 && v > 0).length];
@@ -149,6 +156,17 @@ class GoboWasm(unittest.TestCase):
         self.assertEqual((w, h, n, vn), (256, 128, 256 * 128 * 4, 160 * 160 * 4))
         self.assertGreater(lit, 256, "the waveform has a trace")
         self.assertGreater(vlit, 10)
+
+    def test_a_lut_is_read_into_the_sliders(self):
+        u = self.out["unpack"]
+        self.assertIsNone(u["whole"])
+        self.assertGreater(u["temp"], 0.25, u)
+        self.assertGreater(u["contrast"], 1.15, u)
+        self.assertLess(u["rest_off"], 1.0, "the sliders and the rest are the LUT")
+        self.assertEqual(u["head"], "TITLE ")
+        self.assertEqual((self.out["unpack_rest"]["kind"], self.out["unpack_rest"]["size"]), ("3D", 33))
+        self.assertEqual(self.out["unpack_swap"], "beyond", "no slider swaps red and blue: it stays whole")
+        self.assertIn("isn't loaded", self.out["unpack_missing"])
 
     def test_continuity(self):
         self.assertEqual(self.out["same"]["verdict"], "match")

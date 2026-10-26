@@ -16,6 +16,8 @@
 //!   editor, all folded into the look's LUT.
 //! * [`scope`]: the scopes a colourist grades by: waveform, RGB parade,
 //!   vectorscope and histogram.
+//! * [`unpack`]: a .cube read back into the sliders, with what they can't
+//!   say kept as a small table of its own.
 //!
 //! Everything runs in the page as WebAssembly (crates/gobo-wasm), on the
 //! pixels of a canvas: nothing is uploaded to read or grade a frame.
@@ -27,9 +29,11 @@ pub mod look;
 pub mod read;
 pub mod scope;
 pub mod steal;
+pub mod unpack;
 
 pub use colour::{parse_cube, Cdl, Cube, Curves, Ext, Wheels};
 pub use grade::{grade_rgba, grade_with, lut, Lut};
 pub use look::{compose, film, grade as grade_preset, Look};
 pub use read::{read, Frame, Reading};
 pub use steal::{stolen, suggest};
+pub use unpack::{unpack, Unpacked};

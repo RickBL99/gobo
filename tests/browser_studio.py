@@ -920,6 +920,44 @@ def main():
         lut = tab.js("goboGrade.look.lut3d")
         check("colour: a .cube imports, uploads to the reel and goes on the look", bool(lut) and lut["id"].startswith("lut-")
               and tab.js("$('#cLut').selectedOptions[0].textContent") == "Swap" and not tab.js("$('#cLutOpts').classList.contains('hidden')"), lut)
+        swap_id = (lut or {}).get("id")
+        # a warm, contrasty LUT is read into the sliders: they move, and the picture is still the LUT's
+        warm = "TITLE \\\"Warm\\\"\\nLUT_3D_SIZE 9\\n" + "".join(
+            "%.5f %.5f %.5f\\n" % tuple(min(1, max(0, v)) for v in ((r / 8) ** 0.85 * 1.04, (g / 8) ** 0.95, (b / 8) * 0.86))
+            for b in range(9) for g in range(9) for r in range(9))
+        before = tab.js("JSON.stringify({temp: goboGrade.look.temp, lift: (goboGrade.look.wheels || {}).lift})")
+        tab.js(f"""const dt = new DataTransfer(); dt.items.add(new File(["{warm}"], 'warm.cube'));
+          $('#cLutFile').files = dt.files; $('#cLutFile').dispatchEvent(new Event('change')); 1""")
+        time.sleep(3)
+        got = tab.js("JSON.stringify({lut: goboGrade.look.lut3d, temp: goboGrade.look.temp, gain: (goboGrade.look.wheels || {}).gain, slider: $('#cBasics [data-k=temp]').value})")
+        gl = json.loads(got)
+        check("colour: a LUT is read into the sliders, its rest kept first", (gl["lut"] or {}).get("of", "").startswith("lut-") and gl["lut"]["first"]
+              and (gl["temp"] > 0.1 or any(abs(v) > 0.005 for v in (gl["gain"] or [])))
+              and abs(float(gl["slider"]) - gl["temp"]) < 0.011
+              and tab.js("$('#cLut').selectedOptions[0].textContent") == "Warm" and tab.js("$('#cLutOpts').classList.contains('hidden')")
+              and "Keep it as one LUT instead" in tab.js("$('#cLutNote').textContent"), got)
+        tab.js("$('#cLutNote [data-lut=whole]').click(); 1"); time.sleep(1)
+        back = tab.js("JSON.stringify({temp: goboGrade.look.temp, lift: (goboGrade.look.wheels || {}).lift})")
+        check("colour: Keep it as one LUT puts the sliders back", back == before and not tab.js("goboGrade.look.lut3d.of")
+              and tab.js("goboGrade.look.lut3d.first") is False and "Read it into the sliders" in tab.js("$('#cLutNote').textContent"), [before, back])
+        tab.js("$('#cLutNote [data-lut=read]').click(); 1"); time.sleep(2.5)
+        check("colour: Read it into the sliders again", bool(tab.js("goboGrade.look.lut3d.of")))
+        tab.js(f"$('#cLut').value = '{swap_id}'; $('#cLut').dispatchEvent(new Event('change')); 1"); time.sleep(2)
+        check("colour: a LUT no slider can follow stays whole", tab.js("goboGrade.look.lut3d.id") == swap_id and not tab.js("goboGrade.look.lut3d.of"))
+        # a CDL's slope, offset and power land on the wheels, exactly
+        cdl = ('<ColorDecisionList><ColorDecision><ColorCorrection id=\\"a\\"><SOPNode><Slope>1.1 1.0 0.9</Slope><Offset>0.02 0 -0.01</Offset>'
+               '<Power>1.0 0.95 1.05</Power></SOPNode><SatNode><Saturation>1.0</Saturation></SatNode></ColorCorrection></ColorDecision></ColorDecisionList>')
+        tab.js(f"""const dt = new DataTransfer(); dt.items.add(new File(["{cdl}"], 'shot.cdl'));
+          $('#cLutFile').files = dt.files; $('#cLutFile').dispatchEvent(new Event('change')); 1""")
+        time.sleep(1.5)
+        same = tab.js("""(async () => { const g = await goboReady, w = goboGrade.look.wheels;
+          const px = () => { const d = new Uint8ClampedArray(64 * 4); for (let i = 0; i < 64; i++) d.set([i * 4, 255 - i * 3, (i * 37) % 256, 255], i * 4); return {width: 64, height: 1, data: d}; };
+          const a = px(), b = px();
+          g.grade(a, {cdl: {slope: [1.1, 1, 0.9], offset: [0.02, 0, -0.01], power: [1, 0.95, 1.05], sat: 1}}, 1);
+          g.grade(b, {wheels: w}, 1);
+          let worst = 0; for (let i = 0; i < a.data.length; i++) worst = Math.max(worst, Math.abs(a.data[i] - b.data[i]));
+          return [worst, !goboGrade.look.cdl, w.gain[0] > w.gain[2]]; })()""")
+        check("colour: a CDL goes on the wheels, exactly", same and same[0] <= 2 and same[1] and same[2], same)
         tab.shot("33-colour")
         tab.js("$('#cSimple').click(); 1"); time.sleep(1.5)
         check("colour: Simple goes back to the Lab's Grade, the grade kept", tab.js("$('#colour').classList.contains('hidden')")

@@ -156,6 +156,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
         <input type="file" id="gLutFile" accept=".cube,.cdl,.cc,.ccc,.xml" hidden>
         <button class="btn small" id="gLutPick" title="A .cube LUT, or a colourist's CDL (.cdl, .cc)">Import LUT or CDL</button></div>
       <label class="sl hidden" id="gLutMixRow"><span>LUT amount</span><input type="range" id="gLutMix" min="0" max="1" step="0.01" value="1"><output></output></label>
+      <div class="hint hidden" id="gLutNote"></div>
       <div class="hint hidden" id="gCdlNote"></div>
       <div class="row"><button class="btn small" id="gAdv" title="Lift, gamma, gain and offset wheels, curves and scopes, full screen">Advanced: wheels, curves, scopes →</button></div>
       <div class="row"><button class="btn small primary" id="gBake" title="Every frame through this look, in Rust, as a new take beside the original">Grade the take</button>
@@ -384,13 +385,19 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   // ── LUTs and CDLs: from any editor, kept with the reel ─────────────────
   // A .cube is uploaded to the reel (so Grade the take can use it on the
   // server) and loaded into this page's gobo.wasm; the look names it by id.
+  //
+  // A LUT is read into the sliders: they move to the nearest they come to it,
+  // and what they can't show is kept as its rest, a small LUT that goes first,
+  // so the picture is still the LUT's (scrim::unpack). One no slider comes
+  // near (a negative, a swap of colours) stays whole, after the look. A CDL's
+  // slope, offset and power are lift, gain and gamma, so it goes on the wheels.
   const loadedLuts = new Set();
-  let reelLuts = [], lutsFor = null;
+  let reelLuts = [], lutsFor = null, lastRead = null;
   async function listLuts(force) {
     const reel = ST() && ST().reel();
     if (!reel) return [];
     if (force || lutsFor !== reel) { const r = await ST().api(`/reels/${reel}/luts`); reelLuts = r.luts || []; lutsFor = reel; }
-    return reelLuts;
+    return reelLuts.filter(m => !m.of);               // a LUT's rest isn't one to pick
   }
   async function ensureLut(look) {
     const id = look && look.lut3d && look.lut3d.id;
@@ -403,6 +410,67 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     loadedLuts.add(id);
     return true;
   }
+  const signed = v => (v > 0 ? "+" : "") + v.toFixed(2);
+  const MOVED = [["exposure", "Exposure", 0, 0.02, signed], ["contrast", "Contrast", 1, 0.02], ["fade", "Fade", 0, 0.005], ["white", "White point", 1, 0.005],
+    ["sat", "Saturation", 1, 0.02], ["temp", "Warmth", 0, 0.02, signed], ["tint", "Tint", 0, 0.02, signed]];
+  const andList = a => a.length < 2 ? a.join("") : `${a.slice(0, -1).join(", ")} and ${a[a.length - 1]}`;
+  function moved(look) {
+    const out = MOVED.filter(([k, , at, min]) => Math.abs(look[k] - at) >= min).map(([k, label, , , f]) => `${label} ${(f || (v => v.toFixed(2)))(look[k])}`);
+    const w = look.wheels || {}, wheels = ["lift", "gamma", "gain"].filter(k => (w[k] || []).some(v => Math.abs(v) >= 0.005));
+    if (wheels.length) out.push(`the ${andList(wheels.map(k => k[0].toUpperCase() + k.slice(1)))} wheel${wheels.length > 1 ? "s" : ""}`);
+    return out;
+  }
+  async function readLut(meta) {
+    const g = await window.goboReady, reel = ST().reel(), name = meta.title || meta.name || "The LUT";
+    if (!(await ensureLut({ lut3d: { id: meta.id } }))) throw new Error("That LUT isn't in this reel any more.");
+    const u = g.unpackLut(meta.id);
+    if (u.error) throw new Error(u.error);
+    if (u.whole) {
+      gradeLook.lut3d = { id: meta.id, mix: 1, first: false };
+      lastRead = null;
+      return u.whole === "nothing" ? `${name} barely changes the picture, so it's on as a LUT and the sliders stay where they were.`
+        : `${name} does what no slider does (it turns one colour into another, inverts or posterises), so it stays a LUT, after the look, and the sliders stay where they were.`;
+    }
+    const fd = new FormData();
+    fd.append("file", new Blob([u.rest], { type: "text/plain" }), `${name} (the rest).cube`);
+    fd.append("of", meta.id);
+    const r = await ST().api(`/reels/${reel}/luts`, { method: "POST", body: fd });
+    if (r.error) throw new Error(r.error);
+    const loaded = g.loadLut(r.lut.id, u.rest);
+    if (loaded.error) throw new Error(loaded.error);
+    loadedLuts.add(r.lut.id);
+    lastRead = { of: meta.id, name, before: JSON.parse(JSON.stringify(gradeLook)) };
+    gradeLook = Object.assign(u.look, { lut3d: { id: r.lut.id, mix: 1, first: true, of: meta.id } });
+    q("#gFilm", lab).value = "clean"; q("#gGrade", lab).value = "natural";
+    const m = moved(gradeLook);
+    return `${name} is in the sliders: ${m.length ? andList(m) : "they barely move"}. What they can't show is kept as a small LUT before them, so the picture is exactly the LUT's. Amount sets how much of it.`;
+  }
+  function keepWhole() {
+    const cur = gradeLook && gradeLook.lut3d;
+    if (!cur || !cur.of) return;
+    if (lastRead && lastRead.of === cur.of) gradeLook = lastRead.before;
+    gradeLook.lut3d = { id: cur.of, mix: 1, first: false };
+    lastRead = null;
+  }
+  function lutNote() {
+    const cur = gradeLook && gradeLook.lut3d;
+    if (!cur) return "";
+    const m = reelLuts.find(x => x.id === (cur.of || cur.id)), name = h((m && (m.title || m.name)) || "This LUT");
+    return cur.of ? `${name} is read into the sliders, with what they can't show kept as a small LUT before them: the picture is exactly the LUT's. <button class="linkbtn" data-lut="whole">Keep it as one LUT instead</button>`
+      : `${name} is one LUT on the look; the sliders don't show it. <button class="linkbtn" data-lut="read">Read it into the sliders</button>`;
+  }
+  async function lutAction(what) {
+    const cur = gradeLook && gradeLook.lut3d;
+    if (!cur) return "";
+    if (what === "whole") { keepWhole(); return "It's one LUT again, after the look, and the sliders are back where they were."; }
+    const m = reelLuts.find(x => x.id === cur.id) || { id: cur.id };
+    return readLut(m);
+  }
+  async function useLut(id) {
+    if (!id) { delete gradeLook.lut3d; lastRead = null; return ""; }
+    const m = (await listLuts()).find(x => x.id === id) || { id };
+    return readLut(m);
+  }
   function parseCdl(text) {
     // ASC CDL XML (.cdl, .cc, .ccc): the first correction's SOP and saturation
     const doc = new DOMParser().parseFromString(text, "application/xml");
@@ -412,12 +480,35 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     const three = (v, d) => v && v.length === 3 && v.every(Number.isFinite) ? v : [d, d, d];
     return { slope: three(slope, 1), offset: three(offset, 0), power: three(power, 1), sat: sat && Number.isFinite(sat[0]) ? sat[0] : 1 };
   }
+  function cdlWheels(c) {
+    // (x·slope + offset)^power is the wheels' (gain·(x + lift·(1 − x)))^(2^−gamma)
+    // exactly, with gain = slope + offset, lift = offset / gain, gamma = −log2 power.
+    // The colour goes on each wheel and the brightness on its slider.
+    const w = { lift: [0, 0, 0, 0], gamma: [0, 0, 0, 0], gain: [0, 0, 0, 0], offset: [0, 0, 0, 0] };
+    for (let k = 0; k < 3; k++) {
+      const gain = c.slope[k] + c.offset[k];
+      if (!(gain > 0.01) || !(c.power[k] > 0)) return null;
+      w.lift[k] = c.offset[k] / gain; w.gain[k] = gain - 1; w.gamma[k] = -Math.log2(c.power[k]);
+    }
+    for (const k of ["lift", "gamma", "gain"]) {
+      const v = w[k], y = 0.2126 * v[0] + 0.7152 * v[1] + 0.0722 * v[2];
+      w[k] = [v[0] - y, v[1] - y, v[2] - y, y];
+    }
+    const fits = [...w.lift, ...w.gamma].every(v => Math.abs(v) <= 1) && w.gain.every(v => Math.abs(v) <= 2);
+    return fits ? w : null;
+  }
   async function importGrade(file) {
     const text = await file.text(), g = await window.goboReady;
     if (/\.(cdl|cc|ccc|xml)$/i.test(file.name) || /<(ColorCorrection|ColorDecision|SOPNode)/.test(text.slice(0, 4000))) {
-      gradeLook.cdl = parseCdl(text);
-      say(`The CDL from ${file.name} is on the look: slope, offset, power and saturation, before everything else.`);
-      return "cdl";
+      const c = parseCdl(text), w = cdlWheels(c);
+      if (!w) {
+        gradeLook.cdl = c;
+        return `The CDL from ${file.name} is beyond what the wheels reach, so it's on the look as it is: slope, offset, power and saturation, before everything else.`;
+      }
+      delete gradeLook.cdl;
+      gradeLook.wheels = w;
+      gradeLook.sat = Math.max(0, Math.min(2, (gradeLook.sat == null ? 1 : gradeLook.sat) * c.sat));
+      return `The CDL from ${file.name} is on the wheels: its slope, offset and power are the Lift, Gamma and Gain wheels exactly (Advanced shows them)${c.sat !== 1 ? `, and its saturation (×${c.sat.toFixed(2)}) is on Saturation` : ""}.`;
     }
     const reel = ST().reel();
     if (!reel) throw new Error("Open a reel first: a LUT is kept with the reel.");
@@ -427,35 +518,40 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     const loaded = g.loadLut(r.lut.id, text);
     if (loaded.error) throw new Error(loaded.error);
     loadedLuts.add(r.lut.id);
-    gradeLook.lut3d = { id: r.lut.id, mix: 1, first: false };
     await listLuts(true);
-    say(`${r.lut.title} (a ${r.lut.size}${r.lut.kind === "3D" ? "³" : "-point 1D"} LUT) is on the look, after the stock and grade. Its amount is under the list.`);
-    return "lut";
+    return readLut(r.lut);
   }
   async function syncLut() {
     if (!gradeLook) return;
     const sel = q("#gLut", lab), cur = gradeLook.lut3d;
     const list = await listLuts().catch(() => []);
     sel.innerHTML = `<option value="">No LUT</option>` + list.map(m => `<option value="${h(m.id)}">${h(m.title || m.name)}</option>`).join("");
-    sel.value = cur ? cur.id : "";
-    q("#gLutMixRow", lab).classList.toggle("hidden", !cur);
+    sel.value = cur ? cur.of || cur.id : "";
+    // a LUT read into the sliders has no amount of its own: Amount is all of it
+    q("#gLutMixRow", lab).classList.toggle("hidden", !cur || !!cur.of);
     if (cur) { q("#gLutMix", lab).value = cur.mix == null ? 1 : cur.mix; q("#gLutMix", lab).nextElementSibling.textContent = Number(q("#gLutMix", lab).value).toFixed(2); }
+    const ln = q("#gLutNote", lab), html = lutNote();
+    ln.classList.toggle("hidden", !html); ln.innerHTML = html;
     const c = gradeLook.cdl, note = q("#gCdlNote", lab);
     note.classList.toggle("hidden", !c);
     if (c) note.innerHTML = `CDL: slope ${c.slope.map(v => v.toFixed(3)).join(" ")} · offset ${c.offset.map(v => v.toFixed(3)).join(" ")} · power ${c.power.map(v => v.toFixed(3)).join(" ")} · sat ${Number(c.sat).toFixed(2)} <button class="linkbtn" id="gCdlOff">Remove</button>`;
     const off = q("#gCdlOff", lab); if (off) off.onclick = () => { delete gradeLook.cdl; syncLut(); render(); };
   }
+  // after a LUT or CDL changes the look: every slider, the note, the picture
+  async function lutDone(msg) { gradeFrom = "lab"; syncSliders(); render(); if (msg) say(msg); }
+  q("#gLutNote", lab).onclick = async e => {
+    const b = e.target.closest("[data-lut]");
+    if (!b) return;
+    try { await lutDone(await lutAction(b.dataset.lut)); } catch (err) { say(err.message, true); }
+  };
   q("#gLutPick", lab).onclick = () => q("#gLutFile", lab).click();
   q("#gLutFile", lab).onchange = async e => {
     const f = e.target.files[0]; e.target.value = "";
     if (!f || !gradeLook) return;
-    try { await importGrade(f); gradeFrom = "lab"; syncLut(); render(); } catch (err) { say(err.message, true); }
+    try { await lutDone(await importGrade(f)); } catch (err) { say(err.message, true); }
   };
   q("#gLut", lab).onchange = async e => {
-    const id = e.target.value;
-    if (!id) delete gradeLook.lut3d;
-    else { gradeLook.lut3d = { id, mix: 1, first: gradeLook.lut3d ? !!gradeLook.lut3d.first : false }; await ensureLut(gradeLook); }
-    gradeFrom = "lab"; syncLut(); render();
+    try { await lutDone(await useLut(e.target.value)); } catch (err) { say(err.message, true); syncLut(); }
   };
   q("#gLutMix", lab).oninput = e => { if (gradeLook.lut3d) { gradeLook.lut3d.mix = Number(e.target.value); e.target.nextElementSibling.textContent = Number(e.target.value).toFixed(2); render(); } };
   async function fromShot() {
@@ -576,7 +672,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       gradeLook = keepTools(await baseLook(film, grade), gradeLook); gradeFrom = "lab"; return gradeLook;
     },
     preset: () => ({ film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value }),
-    reset: fromShot, ensureLut, listLuts, importGrade, bake, saveCube, saveStill, name: gradeName,
+    reset: fromShot, ensureLut, listLuts, importGrade, useLut, lutNote, lutAction, bake, saveCube, saveStill, name: gradeName,
     reopen() { open("grade"); },
   };
 

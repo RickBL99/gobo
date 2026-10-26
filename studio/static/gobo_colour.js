@@ -114,6 +114,7 @@ body.colouropen { overflow: hidden; }
         <label class="sl"><span>LUT amount</span><input type="range" id="cLutMix" min="0" max="1" step="0.01"><output></output></label>
         <div class="row"><span class="hint">Apply it</span><div class="seg" id="cLutWhere"><button data-first="0">After the look</button><button data-first="1" title="For a camera's log-to-video LUT">First</button></div></div>
       </div>
+      <div class="hint" id="cLutNote"></div>
       <div class="hint" id="cCdl"></div>
       <h3>Basics</h3><div id="cBasics"></div>
       <h3>Film</h3><div id="cFilmFx"></div>
@@ -374,8 +375,10 @@ body.colouropen { overflow: hidden; }
     const look = L(), sel = q("#cLut", el), cur = look.lut3d;
     const list = await GG().listLuts().catch(() => []);
     sel.innerHTML = `<option value="">No LUT</option>` + list.map(m => `<option value="${h(m.id)}">${h(m.title || m.name)}${m.kind === "1D" ? " (1D)" : ""}</option>`).join("");
-    sel.value = cur ? cur.id : "";
-    q("#cLutOpts", el).classList.toggle("hidden", !cur);
+    sel.value = cur ? cur.of || cur.id : "";
+    // a LUT read into the sliders is them plus its rest: Amount is all of it
+    q("#cLutOpts", el).classList.toggle("hidden", !cur || !!cur.of);
+    q("#cLutNote", el).innerHTML = GG().lutNote();
     if (cur) {
       q("#cLutMix", el).value = cur.mix == null ? 1 : cur.mix;
       q("#cLutMix", el).nextElementSibling.textContent = Number(q("#cLutMix", el).value).toFixed(2);
@@ -389,13 +392,17 @@ body.colouropen { overflow: hidden; }
   q("#cLutFile", el).onchange = async e => {
     const f = e.target.files[0]; e.target.value = "";
     if (!f) return;
-    try { await GG().importGrade(f); await syncLut(); touched(); } catch (err) { say(err.message, true); }
+    try { lutDone(await GG().importGrade(f)); } catch (err) { say(err.message, true); }
   };
+  // a LUT or CDL moves the sliders, the wheels and the stock: show them all
+  function lutDone(msg) { syncAll(); touched(); if (msg) say(msg); }
   q("#cLut", el).onchange = async e => {
-    const id = e.target.value, look = L();
-    if (!id) delete look.lut3d;
-    else { look.lut3d = { id, mix: 1, first: look.lut3d ? !!look.lut3d.first : false }; await GG().ensureLut(look); }
-    await syncLut(); touched();
+    try { lutDone(await GG().useLut(e.target.value)); } catch (err) { say(err.message, true); syncLut(); }
+  };
+  q("#cLutNote", el).onclick = async e => {
+    const b = e.target.closest("[data-lut]");
+    if (!b) return;
+    try { lutDone(await GG().lutAction(b.dataset.lut)); } catch (err) { say(err.message, true); }
   };
   q("#cLutMix", el).oninput = e => { if (L().lut3d) { L().lut3d.mix = Number(e.target.value); e.target.nextElementSibling.textContent = Number(e.target.value).toFixed(2); touched(); } };
   qa("#cLutWhere button", el).forEach(b => b.onclick = () => { if (!L().lut3d) return; L().lut3d.first = b.dataset.first === "1"; syncLut(); touched(); });

@@ -1401,7 +1401,10 @@ MAX_LUT_BYTES = 16 * 1024 * 1024                # a 65³ table is about 7 MB
 
 
 @router.post("/reels/{reel}/luts", response_class=JSONResponse)
-async def add_lut(reel: str, file: UploadFile = File(...)):
+async def add_lut(reel: str, file: UploadFile = File(...), of: str = Form("")):
+    """A .cube for the reel. `of` names the LUT this one is the rest of (the
+    part of a LUT the sliders can't show, which the page works out when a LUT
+    is read into them); the page's list leaves those out."""
     if not _reel_or_404(reel):
         return _err("No such reel.", 404)
     data = await file.read(MAX_LUT_BYTES + 1)
@@ -1413,9 +1416,12 @@ async def add_lut(reel: str, file: UploadFile = File(...)):
     except ValueError as e:
         return _err(f"That isn't a LUT Gobo can read: {e}")
     name = os.path.basename(file.filename or "look.cube")[:80]
-    meta = J.put_lut(reel, text, {"name": name, "title": info.get("title") or os.path.splitext(name)[0],
-                                  "kind": info["kind"], "size": info["size"]})
-    return {"lut": meta}
+    meta = {"name": name, "title": info.get("title") or os.path.splitext(name)[0], "kind": info["kind"], "size": info["size"]}
+    if of:
+        if J.lut_text(reel, of) is None:
+            return _err("The LUT this is the rest of isn't in this reel.")
+        meta["of"] = of
+    return {"lut": J.put_lut(reel, text, meta)}
 
 
 @router.get("/reels/{reel}/luts", response_class=JSONResponse)

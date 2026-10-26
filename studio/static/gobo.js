@@ -44,6 +44,8 @@
       cube: (l, size) => { const [p, n] = json(l); return text(x.scrim_cube(p, n, size || 33)); },
       /** Load a .cube for looks to name ({lut3d: {id}}): {id, title, kind, size} or {error}. */
       loadLut: (id, cubeText) => { const [p, n] = json({ id, text: cubeText }); return obj(x.scrim_lut_load(p, n)); },
+      // a loaded LUT read into the sliders: {look, rest (.cube text, goes first), shown, whole}
+      unpackLut: id => { const [p, n] = json({ id }); return obj(x.scrim_lut_unpack(p, n)); },
       /** A scope of ImageData as ImageData, w × h: "waveform", "parade", "vector" or "histogram". */
       scope(img, kind, w, h) {
         const code = { waveform: 0, parade: 1, vector: 2, histogram: 3 }[kind] || 0;

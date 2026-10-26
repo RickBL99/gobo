@@ -434,6 +434,13 @@ class Flow(unittest.TestCase):
         self.assertTrue(b > 180 and r < 60, f"red and blue swapped: {(r, g, b)}")
         gone = self.c.post(f"/studio/reels/{reel}/takes/{still['id']}/grade", json={"look": {"lut3d": {"id": "lut-0123456789ab"}}})
         self.assertIn("isn't in this reel", gone.json()["error"])
+        # a LUT's rest (what the sliders can't show, worked out in the page) says whose rest it is
+        rest = swap.replace("Swap", "Swap (the rest)")
+        r = self.c.post(f"/studio/reels/{reel}/luts", data={"of": up["id"]}, files={"file": ("rest.cube", rest.encode(), "text/plain")}).json()["lut"]
+        self.assertEqual(r["of"], up["id"])
+        self.assertEqual({m["id"]: m.get("of") for m in self.c.get(f"/studio/reels/{reel}/luts").json()["luts"]}, {up["id"]: None, r["id"]: up["id"]})
+        orphan = self.c.post(f"/studio/reels/{reel}/luts", data={"of": "lut-0123456789ab"}, files={"file": ("rest.cube", rest.encode(), "text/plain")})
+        self.assertEqual(orphan.status_code, 400)
 
     def settle(self, reel, tid, wait=60):
         """A take made in the background (a grade), once it stops running."""

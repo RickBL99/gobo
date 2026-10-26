@@ -29,14 +29,7 @@ pub fn lut(look: &Look, n: usize) -> Lut {
                 if let Some(e) = look.ext.as_ref().filter(|e| e.first) {
                     c = e.apply(c);
                 }
-                if look.corrects() {
-                    if let Some(cdl) = &look.cdl {
-                        c = cdl.apply(c);
-                    }
-                    c = look.curves.apply(look.wheels.apply(c).map(|v| v.clamp(0.0, 1.0)));
-                }
-                let o = look.apply([to_linear(c[0]), to_linear(c[1]), to_linear(c[2])]);
-                let mut o = o.map(to_srgb);
+                let mut o = controls(look, c);
                 if let Some(e) = look.ext.as_ref().filter(|e| !e.first) {
                     o = e.apply(o);
                 }
@@ -47,6 +40,20 @@ pub fn lut(look: &Look, n: usize) -> Lut {
         }
     }
     Lut { n, data }
+}
+
+/// One display colour through the look's own controls: the CDL, the wheels,
+/// the curves, then the stock and grade. Everything but a .cube from elsewhere
+/// and the amount, which [`lut`] puts round it.
+pub fn controls(look: &Look, d: [f32; 3]) -> [f32; 3] {
+    let mut c = d;
+    if look.corrects() {
+        if let Some(cdl) = &look.cdl {
+            c = cdl.apply(c);
+        }
+        c = look.curves.apply(look.wheels.apply(c).map(|v| v.clamp(0.0, 1.0)));
+    }
+    look.apply([to_linear(c[0]), to_linear(c[1]), to_linear(c[2])]).map(to_srgb)
 }
 
 impl Lut {
