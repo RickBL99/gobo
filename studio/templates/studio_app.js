@@ -2193,6 +2193,18 @@ window.STUDIO = {
   current: () => cur(), takes: () => S.takes.slice(), toast, api,
   reel: () => S.reel && S.reel.id,
   addTakes(ts) { mergeTakes(ts); },
+  show(id) { setView("shot"); select(id); },
+  // Draw the move's "Shoot it": the take on screen again with the drawn move
+  // and action (a still is animated from), and nothing else changed
+  async redo(t, move, action) {
+    if (t && t.status === "done") { if (t.kind === "image") animateFrom(t, "first"); else reuseSettings(t); }
+    setOverride(null);                                   // a hand-edited prompt would ignore the new move
+    if (S.pmode === "director") S.pmode = "cinematic";
+    if (move) S.direction.move = move;
+    if (action) { S.scene = (S.scene.trim() ? S.scene.trim().replace(/[.!?]?$/, ". ") : "") + action; $("#scene").value = S.scene; }
+    onShotChange(); setView("shot");
+    return generate(t && t.status === "done" ? { parent: t.id, action: "move" } : undefined);
+  },
   setDirection(patch) { Object.assign(S.direction, patch); onShotChange(); },
   setAspect(a) { S.aspect = a; onShotChange(); },
   addToScene(text) {

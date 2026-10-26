@@ -66,6 +66,9 @@
   // ── the drawer ──────────────────────────────────────────────────────────
   const style = document.createElement("style");
   style.textContent = `
+/* the studio's failed-take cards sit in the same corner: beside the Lab while it's open, not on top of it */
+body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
+@media (max-width: 700px) { body.labopen #fails { display: none; } }
 #lab { position: fixed; top: 58px; right: 0; bottom: 0; width: min(440px, 100vw); z-index: 40; background: var(--panel);
   border-left: 1px solid var(--line); display: flex; flex-direction: column; box-shadow: -12px 0 40px #0008; }
 #lab .labhead { display: flex; align-items: center; gap: 8px; padding: 12px 14px 8px; }
@@ -136,7 +139,8 @@
         <button class="btn small" id="drawUndo">Undo</button><button class="btn small" id="drawClear">Clear</button></div>
       <div class="drawwrap"><canvas id="drawCv"></canvas></div>
       <div class="read" id="drawRead"><span class="hint">Nothing drawn yet.</span></div>
-      <div class="row"><button class="btn primary small" id="drawApply" disabled>Use this direction</button><span class="hint" id="drawWhy"></span></div>
+      <div class="row"><button class="btn primary small" id="drawShoot" disabled title="Shoot the take on screen again with this move (a still is animated from)">Shoot it</button>
+        <button class="btn small" id="drawApply" disabled title="Put the move and the action on the shot, and shoot it yourself later">Just set it</button><span class="hint" id="drawWhy"></span></div>
     </section>
     <section data-pane="grade" class="hidden">
       <div class="row"><select class="field" id="gFilm" title="Film stock"></select><select class="field" id="gGrade" title="Grade"></select>
@@ -168,9 +172,10 @@
   let tab = "look";
   function open(which) {
     lab.classList.remove("hidden");
+    document.body.classList.add("labopen");
     if (which) setTab(which); else setTab(tab);
   }
-  function close() { lab.classList.add("hidden"); stopVideo(); }
+  function close() { lab.classList.add("hidden"); document.body.classList.remove("labopen"); stopVideo(); }
   function setTab(t) {
     tab = t;
     qa(".labtabs button", lab).forEach(b => b.classList.toggle("on", b.dataset.tab === t));
@@ -307,20 +312,28 @@
   async function readStrokes() {
     const g = await window.goboReady;
     const out = q("#drawRead", lab);
-    if (!strokes.length) { direction = null; out.innerHTML = `<span class="hint">Nothing drawn yet.</span>`; q("#drawApply", lab).disabled = true; q("#drawWhy", lab).textContent = ""; return; }
+    if (!strokes.length) { direction = null; out.innerHTML = `<span class="hint">Nothing drawn yet.</span>`; q("#drawApply", lab).disabled = q("#drawShoot", lab).disabled = true; q("#drawWhy", lab).textContent = ""; return; }
     direction = g.direct({ w: cv.width, h: cv.height, strokes });
     const c = direction.camera;
     out.innerHTML = (c ? `Camera: <b>${h(optLabel("move", c.move))}</b> — ${h(c.phrase)}` : `<span class="hint">No camera stroke: the camera stays as set.</span>`)
       + (direction.action ? `<span class="act">${h(direction.action)}</span>` : "");
     q("#drawWhy", lab).textContent = c ? c.why : "";
-    q("#drawApply", lab).disabled = false;
+    q("#drawApply", lab).disabled = q("#drawShoot", lab).disabled = false;
   }
   q("#drawApply", lab).onclick = () => {
     if (!direction) return;
     const c = direction.camera;
     if (c && hasOpt("move", c.move)) ST().setDirection({ move: c.move });
     if (direction.action) ST().addToScene(direction.action);
-    say(c ? `Camera: ${optLabel("move", c.move)}${direction.action ? "; the action went into the scene" : ""}.` : "The action went into the scene.");
+    say(c ? `Camera: ${optLabel("move", c.move)}${direction.action ? "; the action went into the scene" : ""}. Generate when you're ready.` : "The action went into the scene. Generate when you're ready.");
+  };
+  q("#drawShoot", lab).onclick = async () => {
+    if (!direction) return;
+    const c = direction.camera, t = ST().current();
+    const move = c && hasOpt("move", c.move) ? c.move : "";
+    close();
+    await ST().redo(t, move, direction.action || "");
+    ST().toast(`Shooting it again${move ? ` with a ${optLabel("move", move).toLowerCase()}` : ""}. The new take lands beside the old one.`);
   };
 
   // ── Grade ───────────────────────────────────────────────────────────────
@@ -413,7 +426,10 @@
       const r = await ST().api(`/reels/${ST().reel()}/takes/${t.id}/grade`, { method: "POST", json: { look: gradeLook, label: `Graded · ${look}` } });
       if (r.error) return ST().toast(r.error, true);
       ST().addTakes([r.take]);
-      ST().toast(r.frames ? `Graded ${r.frames} frames in ${r.seconds} s, in Rust. The graded take is beside the original.` : "Graded. The graded take is beside the original.");
+      // show the result: the Lab covers the stage, so it closes on the graded take
+      close();
+      if (ST().show) ST().show(r.take.id);
+      ST().toast(r.frames ? `Graded ${r.frames} frames in ${r.seconds} s, in Rust. You're watching the graded take; the original is beside it.` : "Graded. You're looking at the graded take; the original is beside it.");
     } finally { b.disabled = false; b.textContent = "Grade the take"; }
   };
   q("#gCube", lab).onclick = async () => {
