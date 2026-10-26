@@ -1,15 +1,15 @@
-"""The Comfy Router engine: every take can run on Comfy's model router.
+"""The Comfy Router engine: every take runs on Comfy's model router.
 
 Comfy Router (https://api.comfy.org, docs.comfy.org/development/comfy-router)
 puts ~260 hosted models behind one key: FLUX, Seedance, LTX, MiniMax, Veo,
 Kling, Luma, Runway, Wan, GPT Image, Nano Banana and more. Each model takes
 its provider's own native request body and returns its own native result, so
-this module does three jobs, and the rest of the studio does not change:
+this module does three jobs:
 
-  1. CATALOGUE. Each model's published OpenAPI schema becomes the same compact
-     input description the studio already reads for Segmind's models
-     (models.analyse), so framing, aspect, duration, references and frames are
-     mapped by the code that already maps them. Most models are flat. A few
+  1. CATALOGUE. Each model's published OpenAPI schema becomes one compact
+     input description (models.analyse reads it), so framing, aspect,
+     duration, references and frames are mapped by one piece of code for
+     every model. Most models are flat. A few
      families nest their inputs and get a small adapter each: BytePlus/MiniMax
      put prompt and media in a `content` list, Wan/Qwen split `input` and
      `parameters` (Wan 2.7+ with a typed `media` list), Veo uses
@@ -662,18 +662,12 @@ def host(path: str) -> str:
 
 
 def _link(path: str) -> str:
-    """A link the model can fetch: Comfy's storage first (one key runs it
-    all), then the studio's own hosting, then — for a still only — a data URL."""
+    """A link the model can fetch: Comfy's storage (one key runs it all), or,
+    for a still only, a data URL."""
     try:
         return host(path)
     except Exception as e:                          # noqa: BLE001 - try the next way
         print(f"[comfy] Comfy storage didn't take {os.path.basename(path)}: {e}")
-    if settings.AZURE_STORAGE_CONNECTION_STRING or settings.SEGMIND_API_KEY:
-        from . import models as M
-        try:
-            return M.media_url(path)
-        except Exception as e:                      # noqa: BLE001
-            print(f"[comfy] could not host {os.path.basename(path)}: {e}")
     if (mimetypes.guess_type(path)[0] or "").startswith("image/"):
         return _data_url(path)
     from .models import RunError

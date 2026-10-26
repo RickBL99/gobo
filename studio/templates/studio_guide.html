@@ -201,7 +201,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   <section class="topic" id="layout" data-keys="screen layout panel stage inspector header buttons">
     <h3>Finding your way around</h3>
     <ul>
-      <li><b>Header</b>: the reel's name (click it to rename), <span class="ui">Library</span>, <span class="ui">Reels</span>, <span class="ui">New reel</span>, this <span class="ui">Guide</span>, your balance (Comfy, or Segmind), and <span class="ui">Prompt</span> to show or hide the right column.</li>
+      <li><b>Header</b>: the reel's name (click it to rename), <span class="ui">Library</span>, <span class="ui">Reels</span>, <span class="ui">New reel</span>, this <span class="ui">Guide</span>, your Comfy balance, and <span class="ui">Prompt</span> to show or hide the right column.</li>
       <li><b>Left panel</b>: what to make (<span class="ui">Still image</span> or <span class="ui">Video clip</span>), the model, the scene, the camera and look, the format, and the <span class="ui">Generate</span> button at the bottom.</li>
       <li><b>Middle</b>: the <span class="ui">Shot</span> and <span class="ui">Board</span> switch, the stage where the current take plays, its actions, and the <b>Sequence</b> bar with every take in the reel.</li>
       <li><b>Right</b>: the prompt that will actually be sent, coloured by which control wrote each part, and details of the selected take.</li>
@@ -241,13 +241,12 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <div class="chapter" id="directing">
   <h2>Directing a shot</h2>
   <p class="lede">Everything in the left panel, top to bottom.</p>
-  <section class="topic" id="models" data-keys="model picker choose filter search price comfy router segmind refresh lora shootout catalogue directory verdict">
+  <section class="topic" id="models" data-keys="model picker choose filter search price comfy router shootout catalogue directory">
     <h3>Choosing a model</h3>
-    <p>Click the model button to open the picker: every model of the current kind with its price and what it can do. Comfy Router's come first (the picks under <span class="ui">Comfy · Cinema</span>, <span class="ui">Fast drafts</span> and so on, then the rest by maker); Segmind's follow when that catalogue is switched on.</p>
+    <p>Click the model button to open the picker: every model of the current kind with its price and what it can do. Gobo's picks come first (under <span class="ui">Comfy · Cinema</span>, <span class="ui">Fast drafts</span> and so on), then the rest by maker.</p>
     <ul>
       <li><b>Search</b> by name or maker, or filter: for stills <span class="ui">References</span>, <span class="ui">Text &amp; type</span>, <span class="ui">Fast</span>, <span class="ui">Under $0.05</span>; for video <span class="ui">Start frame</span>, <span class="ui">End frame</span>, <span class="ui">Audio</span>, <span class="ui">10s+</span>, <span class="ui">Change video</span>, <span class="ui">Extend video</span>.</li>
-      <li>With the Segmind catalogue on, <span class="ui">Refresh from Segmind</span> pulls its current models without waiting for an update. Comfy Router's catalogue comes with each release.</li>
-      <li><b>Your LoRAs</b> (style models trained on your Segmind account) appear in their own group.</li>
+      <li>Comfy Router's catalogue comes with each release.</li>
       <li>Under each name is a one-line verdict. Click the <span class="ui">?</span> at the end of a row, or <span class="ui">Model directory</span> at the top, for what that model is good at and where it falls down: see the <a href="#directory">Model directory</a>.</li>
     </ul>
   </section>
@@ -310,7 +309,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <div class="chapter" id="takes">
   <h2>Working with takes</h2>
   <p class="lede">What happens after you click Generate.</p>
-  <section class="topic" id="stage" data-keys="rendering waiting stop check again failed failure error panel dismiss blocked policy try another model timer queue line in line credits balance top up segmind">
+  <section class="topic" id="stage" data-keys="rendering waiting stop check again failed failure error panel dismiss blocked policy try another model timer queue line in line credits balance top up">
     <h3>While it renders, and when it fails</h3>
     <ul>
       <li>A rendering take shows a timer. You can keep directing, switch reels, even close the tab: it keeps going and lands in the Sequence bar.</li>
@@ -319,7 +318,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li>A failure stays on screen until you dismiss it: in a red panel (bottom right; top on a phone) and on its Board card, saying in plain English what went wrong and what to try. <span class="ui">What the model said</span> shows the model's own words; <span class="ui">Show me</span> goes to the card or take; <span class="ui">Got it</span> clears it. Click a red letter on a card to read it again.</li>
       <li>A run the Studio refuses before sending (a stretch too long for the tool, say) goes in the same panel, so nothing is spent and the reason stays put.</li>
       <li><b>In line:</b> each maker runs only so many clips at once (Luma, four), so when you animate a whole Board the rest wait their turn and start by themselves. A waiting card says <i>In line · 2 ahead</i>; <span class="ui">Don't run it</span> takes it out of the line and nothing is spent. A maker that says it's busy gets the take back in line, not a failure.</li>
-      <li><b>The balance</b> in the header (your Comfy credits, or Segmind's) is live: it updates as takes land, every minute, and when you click it. <i>≈$10.00 in progress</i> is what's rendering or waiting in line. It turns amber with a <span class="ui">top up</span> link when what's left after that is under $50, and a run the account can't pay for is refused before it's sent.</li>
+      <li><b>The balance</b> in the header (your Comfy credits) is live: it updates as takes land, every minute, and when you click it. <i>≈$10.00 in progress</i> is what's rendering or waiting in line. It turns amber with a <span class="ui">top up</span> link when what's left after that is under $5, and a run the account can't pay for is refused before it's sent.</li>
     </ul>
   </section>
   <section class="topic" id="compare" data-keys="compare slider zoom star favourite favorite letters">
@@ -583,7 +582,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   <p class="lede">At <a href="{{ api }}/stills">{{ api }}/stills</a>: the same engine, stills only, with batch tools. Your prompt is sent exactly as written unless you direct it.</p>
   <section class="topic" id="cg-batch" data-keys="content generator batch 20 images stills plain variations sessions">
     <h3>Batches of stills</h3>
-    <p>Every still model (178, your LoRAs included) is in the picker with its price. Set up to 20 <b>Images</b> under Format and click Generate. The camera and look controls are there whenever you want to direct a shot.</p>
+    <p>Every still model is in the picker with its price. Set up to 20 <b>Images</b> under Format and click Generate. The camera and look controls are there whenever you want to direct a shot.</p>
   </section>
   <section class="topic" id="cg-reference" data-keys="from a reference image prompts gpt variation photo illustration notes art direction write">
     <h3>Prompts from a reference picture</h3>
@@ -599,12 +598,11 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <h3>A whole folder</h3>
     <p>Click <span class="ui">Folder</span> and pick a folder of pictures. <span class="ui">Run N images × M</span> writes prompts for each picture and generates them, at most 8 at a time. <span class="ui">Stop</span> finishes the current picture and stops.</p>
   </section>
-  <section class="topic" id="cg-more" data-keys="sessions classic old page loras train style download size">
-    <h3>Sessions, sizes, Classic and LoRAs</h3>
+  <section class="topic" id="cg-more" data-keys="sessions download size">
+    <h3>Sessions and sizes</h3>
     <ul>
       <li><b>Sessions</b> are the Content Generator's reels; they're kept apart from the studio's.</li>
       <li>Download at <b>Original</b>, <b>2K</b>, <b>4K</b> or <b>8K</b> (300 dpi) with the size menu.</li>
-      <li><span class="ui">Classic</span> opens the previous generator and its old sessions. <span class="ui">LoRAs</span> trains and manages style models.</li>
     </ul>
   </section>
 </div>
@@ -648,7 +646,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <tr><td>The model is temporarily unavailable… you have not been charged</td><td>Try again in a few minutes, or another model.</td></tr>
       <tr><td>Not enough Comfy credits for this shot</td><td>Add credits in ComfyUI: Settings → Workspace → Plan &amp; Credits. Nothing was sent.</td></tr>
       <tr><td>Comfy rejected your API key</td><td>The key was deleted or mistyped. Make a new one at platform.comfy.org (API Keys) and sign in with it.</td></tr>
-      <tr><td>Not enough Segmind credits / Segmind has $… and this needs about $…</td><td>Top up at segmind.com (the balance in the header is live; click it to check again). Nothing was sent.</td></tr>
+      <tr><td>Comfy has $… and this needs about $…</td><td>Add credits in ComfyUI (Settings, Plan &amp; Credits); the balance in the header is live, so click it to check again. Nothing was sent.</td></tr>
       <tr><td>In line · N ahead</td><td>Nothing's wrong: the maker is already running as many as it allows. It starts by itself.</td></tr>
       <tr><td>… can't start from an image</td><td>Pick a video model with <b>Start frame</b> (filter in the picker).</td></tr>
       <tr><td>… doesn't take reference images / takes up to N</td><td>Remove some references, or filter the picker by <b>References</b>.</td></tr>
@@ -673,7 +671,6 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <tr><td><b>Footage</b></td><td>A clip someone shot with a camera, brought in.</td></tr>
       <tr><td><b>Keyframe</b></td><td>The still a clip starts from.</td></tr>
       <tr><td><b>Kit</b></td><td>The named cast, products and places a spot keeps the same.</td></tr>
-      <tr><td><b>LoRA</b></td><td>A style model trained on your own pictures.</td></tr>
       <tr><td><b>Reel / session</b></td><td>A project: all its shots and takes.</td></tr>
       <tr><td><b>Seed</b></td><td>The number behind a result's randomness; the same seed repeats it.</td></tr>
       <tr><td><b>Shot</b></td><td>A group of takes of one idea.</td></tr>
@@ -694,57 +691,44 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   </div>
   <section class="topic" id="choose" data-keys="which model choose best recommend pick quick picks start">
     <h3>Which model should I use?</h3>
-    <p>Where we would start for each job. The first name is the safest bet; the others are the next to try. Then read the entry's <b>Watch out for</b> before you spend on it.</p>
+    <p>Where we would start for each job, from Gobo's picks on Comfy Router. The first name is the safest bet; the others are the next to try. Each entry below has the model's price, lengths and sizes.</p>
     <h4 class="picks">Pictures</h4>
     <table class="picks">
       <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
-      <tr><td>A believable photo, or a keyframe for the Board</td><td><a href="#m-nano-banana-2-1">Nano Banana 2.1</a></td><td><a href="#m-kling-3-image">Kling 3.0</a> (cheap), <a href="#m-seedream-4-5">Seedream 4.5</a></td></tr>
-      <tr><td>Words in the picture that must be spelled right: posters, labels, signs</td><td><a href="#m-ideogram-4-5">Ideogram 4.5</a></td><td><a href="#m-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a>, <a href="#m-flux-3">FLUX 3</a></td></tr>
-      <tr><td>A hard brief: many parts, a dense layout, lots of reference pictures</td><td><a href="#m-nano-banana-pro">Nano Banana Pro</a></td><td><a href="#m-flux-3">FLUX 3</a></td></tr>
-      <tr><td>Your product or person, kept from reference pictures</td><td><a href="#m-nano-banana-2-1">Nano Banana 2.1</a></td><td><a href="#m-flux-3">FLUX 3</a>, <a href="#m-seedream-4-5">Seedream 4.5</a></td></tr>
-      <tr><td>One thing changed in a photo, said in a sentence: remove, recolour, swap</td><td><a href="#m-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a></td><td><a href="#m-flux-3">FLUX 3</a> (attach the photo), <a href="#m-p-image-edit">P Image Edit</a> (cheap)</td></tr>
-      <tr><td>A logo, sticker or cut-out on a transparent background</td><td><a href="#m-qwen-image-2-1-pro">Qwen Image 2.1 Pro</a></td><td><a href="#m-bria-remove-background">Bria Remove Background</a> on any finished picture</td></tr>
-      <tr><td>A vector file (SVG) a designer can edit</td><td><a href="#m-recraft-v4-svg">Recraft V4 SVG</a></td><td><a href="#m-recraft-v4-pro-svg">Recraft V4 Pro SVG</a></td></tr>
-      <tr><td>Lots of cheap drafts to find the idea</td><td><a href="#m-flux-3-klein">FLUX 3 Klein</a></td><td><a href="#m-p-image">P Image</a>, <a href="#m-qwen-image-2-1-turbo">Qwen Image 2.1 Turbo</a></td></tr>
-      <tr><td>A different shape without cropping: wider or taller</td><td><a href="#m-bria-expand-image">Bria Expand (outpaint)</a></td><td></td></tr>
-      <tr><td>A bigger file for print</td><td><a href="#m-clarityai-crystal-upscaler">Crystal Upscaler</a> (AI pictures)</td><td><a href="#m-topaz-image-upscale">Topaz Image Upscale</a> (real photographs)</td></tr>
+      <tr><td>A believable photo, or a keyframe for the Board</td><td><a href="#m-bfl-flux-3-image">FLUX 3</a></td><td><a href="#m-vertexai-gemini-nano-banana-2-1">Nano Banana 2.1</a>, <a href="#m-byteplus-seedream-5-0-260128">Seedream 5</a></td></tr>
+      <tr><td>Words in the picture that must be spelled right: posters, labels, signs</td><td><a href="#m-ideogram-p-image-ideogram">Ideogram (P Image)</a></td><td><a href="#m-openai-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a></td></tr>
+      <tr><td>Your product or person, kept from reference pictures</td><td><a href="#m-vertexai-gemini-3-pro-image">Nano Banana Pro</a></td><td><a href="#m-bfl-flux-kontext-max">FLUX Kontext Max</a></td></tr>
+      <tr><td>One thing changed in a photo, said in a sentence</td><td><a href="#m-bfl-flux-kontext-max">FLUX Kontext Max</a></td><td><a href="#m-openai-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a></td></tr>
+      <tr><td>A cut-out on a transparent background</td><td><a href="#m-bria-image-edit-remove-background">Bria Remove Background</a> on any finished picture</td><td></td></tr>
+      <tr><td>A bigger file for print</td><td><a href="#m-fal-crystal-upscaler">Crystal Upscaler</a></td><td><a href="#m-wavespeed-seedvr2">SeedVR2 Upscale</a></td></tr>
     </table>
     <h4 class="picks">Clips</h4>
     <table class="picks">
       <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
-      <tr><td>A finished hero shot with sound</td><td><a href="#m-veo-3-1">Veo 3.1</a></td><td><a href="#m-kling-3-pro">Kling 3.0 Pro</a>, <a href="#m-seedance-2-5">Seedance 2.5</a></td></tr>
-      <tr><td>Board shots that start on one keyframe and land on the next</td><td><a href="#m-veo-3-1">Veo 3.1</a></td><td><a href="#m-wan3-0-video">Wan 3.0</a>, <a href="#m-luma-ray-3-2">Luma Ray 3.2</a> (silent)</td></tr>
-      <tr><td>Someone talking, with mouths that match the words</td><td><a href="#m-happyhorse-1-1">HappyHorse 1.1</a></td><td><a href="#m-veo-3-1">Veo 3.1</a>, <a href="#m-kling-3-pro">Kling 3.0 Pro</a></td></tr>
-      <tr><td>A long single take, up to half a minute</td><td><a href="#m-seedance-2-5">Seedance 2.5</a></td><td><a href="#m-wan3-0-video">Wan 3.0</a></td></tr>
-      <tr><td>The kit's person or product kept the same across shots</td><td><a href="#m-minimax-h3-reference-to-video">MiniMax Hailuo H3 Reference to Video</a></td><td><a href="#m-seedance-2-5">Seedance 2.5</a>, <a href="#m-grok-imagine-video-1-5-reference-to-video">Grok Imagine Video 1.5 Reference to Video</a>, <a href="#m-pixverse-v6-reference-to-video">Pixverse V6 Reference to Video</a></td></tr>
-      <tr><td>Lots of cheap drafts before the real render</td><td><a href="#m-grok-imagine-video-1-5">Grok Imagine Video 1.5</a></td><td><a href="#m-minimax-h3-max-turbo">MiniMax H3 Max Turbo</a>, <a href="#m-pixverse-v6">PixVerse V6</a>, <a href="#m-seedance-2-0-mini">Seedance 2.0 Mini</a></td></tr>
-      <tr><td>A 4K master</td><td><a href="#m-seedance-2-5-upscaled">Seedance 2.5 Upscaled</a></td><td><a href="#m-topaz-video-upscale">Topaz Video Upscale</a> on any finished clip</td></tr>
+      <tr><td>A finished hero shot with sound</td><td><a href="#m-veo-veo-3-1-generate-001">Veo 3.1</a></td><td><a href="#m-byteplus-dreamina-seedance-2-5-260628">Seedance 2.5</a>, <a href="#m-kling-kling-v3-omni">Kling 3 Omni</a></td></tr>
+      <tr><td>Board shots, each animated from its keyframe</td><td><a href="#m-wan-wan3-0-video">Wan 3.0</a> (The Last Watch)</td><td><a href="#m-ltx-ltx-2-5-pro">LTX 2.5 Pro</a>, <a href="#m-minimax-minimax-h3">MiniMax H3</a></td></tr>
+      <tr><td>Lots of cheap drafts before the real render</td><td><a href="#m-ltx-ltx-2-5-fast">LTX 2.5 Fast</a></td><td><a href="#m-byteplus-dreamina-seedance-2-0-fast-260128">Seedance 2.0 Fast</a>, <a href="#m-veo-veo-3-1-fast-generate-001">Veo 3.1 Fast</a></td></tr>
     </table>
-    <h4 class="picks">Your own footage</h4>
+    <h4 class="picks">Changing a clip you have</h4>
     <table class="picks">
       <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
-      <tr><td>Restyle it: season, time of day, weather, look</td><td><a href="#m-flux-3-video-edit">FLUX 3 Video Edit</a> (cheap and quick)</td><td><a href="#m-modify-video">Luma Modify</a> (keeps the performance)</td></tr>
-      <tr><td>Swap a product, an outfit or the background</td><td><a href="#m-kling-o3-video2video-edit">Kling O3 Video Edit</a> (with the item in the kit)</td><td><a href="#m-p-video-edit">Pruna P Video Edit</a></td></tr>
-      <tr><td>Recast the person in it</td><td><a href="#m-p-video-replace">Pruna P Video Replace</a></td><td></td></tr>
-      <tr><td>Make it longer</td><td><a href="#m-flux-3-extend-video">FLUX 3 Extend</a></td><td><a href="#m-pixverse-v6-extend">PixVerse V6 Extend</a></td></tr>
-      <tr><td>Fix one moment without redoing the clip</td><td><a href="#m-ltx-retake-video">LTX Retake Video</a></td><td></td></tr>
-      <tr><td>Cut a presenter out of the background</td><td><a href="#m-veed-video-background-removal">VEED Video Background Removal</a></td><td></td></tr>
-      <tr><td>A bigger, cleaner file to deliver</td><td><a href="#m-topaz-video-upscale">Topaz Video Upscale</a></td><td></td></tr>
+      <tr><td>Restyle it: season, time of day, weather, look</td><td><a href="#m-bfl-video-edit-v1">FLUX Video Edit</a></td><td><a href="#m-runway-aleph2">Runway Aleph 2</a></td></tr>
+      <tr><td>Change something in it, said in a sentence</td><td><a href="#m-wan-wan2-7-videoedit">Wan 2.7 Video Edit</a></td><td><a href="#m-runway-aleph2">Runway Aleph 2</a></td></tr>
+      <tr><td>Recast the person in it, keeping the motion</td><td><a href="#m-higgsfield-higgsfield-genjutsu-motion-transfer-v1-0">Recast</a></td><td></td></tr>
+      <tr><td>A bigger, cleaner file to deliver</td><td><a href="#m-bfl-video-upscale-v1">FLUX Video Upscale</a></td><td><a href="#m-fal-crystal-video-upscaler">Crystal Video Upscaler</a></td></tr>
     </table>
-    <p class="warn">Real people: Google's video models (Veo, Gemini Omni) refuse them, Seedance and Sora reject a real face as a start frame. On footage or photos of real people, check the entry first.</p>
-    <p class="warn">Sora 2 and Sora 2 Pro: OpenAI retired them on 24 September 2026. Segmind still lists them, but expect them to fail. Use <a href="#m-veo-3-1">Veo 3.1</a>.</p>
+    <p class="warn">Real people: Google's video models (Veo) refuse a real person's likeness, and Seedance refuses keyframes of realistic people. On footage or photos of real people, try Wan, LTX or Kling.</p>
   </section>
   <section class="topic" id="reading-entry" data-keys="badge facts older legacy pick seed reference start frame end frame real people sound price">
     <h3>Reading an entry</h3>
     <ul>
       <li><b>The facts line</b> comes straight from the model's live settings: the average price of one run (the provider's figure, so the real charge can differ with length or size), how long it usually takes, sizes and lengths, and what you can attach.</li>
       <li><b>Our pick</b>: one of the models at the top of the picker, chosen as the best of its kind.</li>
-      <li><b>Older version</b>: a newer model from the same family is in the list; the entry links to it. <b>Legacy</b>: an earlier generation, still useful for a particular look or price.</li>
       <li><b>Reference pictures</b> keep a person, product or style. <b>Start frame</b> and <b>end frame</b> mean a clip can begin or finish on a still you choose (that's how the Board animates keyframes).</li>
       <li><b>No real people</b>: Google's video models refuse a real person's likeness, so they're no use on real footage of people.</li>
       <li><b>Repeatable with a seed</b>: the same seed and settings give the same result again.</li>
     </ul>
-    <p>These notes come from the makers' own documentation, Segmind's write-ups, independent reviews and our own runs. Models change: if a note turns out wrong, correct it in model_notes.json.</p>
+    <p>Models change. The facts come from each model's live settings, so they stay current with every release.</p>
   </section>
   {% if dir.makers %}
   <section class="topic" id="makers" data-keys="maker company who made provider family china google openai">

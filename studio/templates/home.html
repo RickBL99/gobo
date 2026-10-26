@@ -141,7 +141,7 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
     <a href="{{ api }}/guide">Guide</a>
   </nav>
   <span class="grow"></span>
-  <a class="chip bal" id="bal" href="{{ 'https://platform.comfy.org/' if keys.comfy else 'https://www.segmind.com/' }}" target="_blank" rel="noopener" title="Your balance">{{ 'Comfy' if keys.comfy else 'Segmind' }} <b>…</b></a>
+  <a class="chip bal" id="bal" href="https://platform.comfy.org/" target="_blank" rel="noopener" title="Your balance">Comfy <b>…</b></a>
   <div class="me">
     <div class="avatar" aria-hidden="true">{{ (user or "?")[:1] | upper }}</div>
     <span class="nm">{{ user }}</span>
@@ -220,13 +220,12 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
   <div class="sh"><h2>This studio</h2></div>
   <div class="status">
     <span class="chip {{ 'ok' if keys.comfy else 'off' }}">Comfy Router <b>{{ 'connected' if keys.comfy else 'no key' }}</b></span>
-    {% if keys.segmind %}<span class="chip ok">Segmind <b>connected</b></span>{% endif %}
     <span class="chip {{ 'ok' if keys.claude else 'off' }}">Director · planner <b>{{ ('on' + (' via Comfy' if not keys.anthropic else '')) if keys.claude else 'no key' }}</b></span>
     <span class="chip ok">Rust <b>scrim · flag · dingle · direction</b></span>
     <span class="chip {{ 'ok' if keys.openai or keys.claude else 'off' }}">Prompts from a reference <b>{{ 'GPT-4o' if keys.openai else ('on' if keys.claude else 'off') }}</b></span>
     <span class="chip {{ 'ok' if sign_in else 'off' }}">Sign-in <b>{{ 'on' if sign_in else 'off' }}</b></span>
   </div>
-  {% if not keys.comfy and not keys.segmind %}<div class="warn">No model key: nothing can be generated. Add <code>COMFY_API_KEY</code> to <code>.env</code> (platform.comfy.org) and restart.</div>{% endif %}
+  {% if not keys.comfy %}<div class="warn">No model key: nothing can be generated. Add <code>COMFY_API_KEY</code> to <code>.env</code> (platform.comfy.org) and restart.</div>{% endif %}
   {% if not sign_in %}<div class="warn">Sign-in is off: anyone who can reach this address can use it and spend your credits. Set <code>STUDIO_PASSWORD</code> in <code>.env</code>.</div>{% endif %}
 </section>
 
@@ -242,7 +241,7 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "
     const d = await r.json();
     if (r.ok && d.left != null) {
       const el = document.getElementById("bal");
-      el.innerHTML = `${esc(d.bank || "Segmind")} <b>$${Number(d.left).toFixed(2)}</b>`;
+      el.innerHTML = `${esc(d.bank || "Comfy")} <b>$${Number(d.left).toFixed(2)}</b>`;
       if (d.low) el.classList.add("low");
     }
   } catch (e) { /* the balance is a nicety */ }

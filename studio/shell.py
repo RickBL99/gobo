@@ -148,8 +148,7 @@ async def home(request: Request):
         "sign_in": settings.sign_in_on(), "samples": _samples(), "release": settings.RELEASE,
         "release_date": settings.RELEASE_DATE,
         "model_count": len(M.MODELS),
-        "keys": {"segmind": bool(settings.SEGMIND_API_KEY) and not settings.VISITOR_KEYS,
-                 "comfy": bool(comfy.api_key()),
+        "keys": {"comfy": bool(comfy.api_key()),
                  "claude": M.claude_on(), "anthropic": bool(settings.ANTHROPIC_API_KEY) and not settings.VISITOR_KEYS,
                  "openai": bool(settings.OPENAI_API_KEY) and not settings.VISITOR_KEYS}})
 

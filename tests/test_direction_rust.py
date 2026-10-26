@@ -30,7 +30,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, ROOT)
 os.chdir(ROOT)
 os.environ.update(STUDIO_ENV_FILE="", STUDIO_DIR=tempfile.mkdtemp(prefix="direction-test-"),
-                  SEGMIND_API_KEY="", STUDIO_PASSWORD="", STUDIO_USERS="")
+                  STUDIO_PASSWORD="", STUDIO_USERS="")
 
 from studio import direction as D  # noqa: E402
 from studio import routes  # noqa: E402

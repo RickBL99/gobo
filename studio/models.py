@@ -1,5 +1,5 @@
 # =========================================================
-# studio_models.py – one shot, any model on Comfy Router or Segmind.
+# studio_models.py – one shot, any model on Comfy Router.
 #
 # The studio speaks ONE request (prompt, negative, seed, aspect, resolution,
 # duration, audio, references, first/last frame, source video). Every model
@@ -8,26 +8,18 @@
 # published input schema is read once into ROLES (which field is the prompt,
 # which takes the starting frame, which sets the size) and the request is
 # mapped onto them, snapping to the nearest option the model offers.
-# This is Comfy's canonical-parameter layer, applied to Segmind's schemas.
 #
-# Two engines, one request. Segmind's models run on its v2 queue (POST
-# /v2/<slug> → request_id, poll, fetch); Comfy Router's (comfy.py: ids with a
-# slash, "bfl/flux-3-image") on Router's queue, where each model takes its
-# provider's own body, so the flat payload built here is shaped into it last.
-# Either way nothing holds a worker for the minutes a clip takes.
+# Comfy Router runs every model (comfy.py: ids with a slash, "bfl/flux-3-image")
+# on its queue, where each model takes its provider's own body, so the flat
+# payload built here is shaped into it last. Nothing holds a worker for the
+# minutes a clip takes.
 # =========================================================
-import base64, hashlib, io, json, math, mimetypes, os, re, time
-from datetime import datetime, timedelta, timezone
+import json, math, os, re, time
 from typing import Callable, Dict, List, Optional, Tuple
 
 import requests
 
-from . import catalog as C
 from . import comfy, settings
-
-SEG_BASE = "https://api.segmind.com/v1"
-SEG_V2 = "https://api.segmind.com/v2"
-SEG_UPLOAD = "https://workflows-api.segmind.com/upload-asset"
 
 
 class RunError(Exception):
@@ -271,116 +263,16 @@ def _bucket(px: int) -> str:
     return "1K" if px <= 1200 else "1.5K" if px <= 1700 else "2K" if px <= 2600 else "4K"
 
 
-# ── the curated front of the list ───────────────────────────────────────────
-# Featured models come first, in this order and under these groups; a
-# "family" is one entry that switches slug when a reference or a starting
-# frame is attached (Comfy's generate/edit and generate/animate pairs).
-FEATURED = {
-    "image": [
-        ("Flagship", [
-            ("gpt-image-2.5-sunburst", "GPT Image 2.5 Sunburst", None),
-            ("nano-banana-2.1", "Nano Banana 2.1", None),
-            ("seedream-5-pro", "Seedream 5.0 Pro", None),
-            ("flux-3", "FLUX 3", {"t": "flux-3-text-to-image", "edit": "flux-3-image-edit"}),
-            ("nano-banana-pro", "Nano Banana Pro", None),
-            ("gpt-image-2.5-flare", "GPT Image 2.5 Flare", None),
-            ("flux-2-max", "FLUX 2 Max", None),
-            ("grok-imagine-image-2", "Grok Imagine Image 2", None),
-            ("wan2.7-image-pro", "Wan 2.7 Image Pro", None),
-            ("kling-3-image", "Kling 3.0", {"t": "kling-3-text2image", "edit": "kling-3-image2image"}),
-        ]),
-        ("Typography & design", [
-            ("ideogram-4.5", "Ideogram 4.5", {"t": "ideogram-4.5", "edit": "ideogram-4.5-edit"}),
-            ("recraft-v4-pro", "Recraft V4 Pro", None),
-            ("recraft-v4", "Recraft V4", None),
-            ("qwen-image-2.1-pro", "Qwen Image 2.1 Pro", None),
-            ("p-image-ideogram", "P Image (Ideogram)", None),
-        ]),
-        ("Fast & cheap", [
-            ("flux-3-klein", "FLUX 3 Klein", {"t": "flux-3-klein-text-to-image", "edit": "flux-3-klein-image-edit"}),
-            ("qwen-image-2.1-turbo", "Qwen Image 2.1 Turbo", None),
-            ("seedream-v5-lite", "Seedream 5.0 Lite", {"t": "seedream-v5-lite-text-to-image", "edit": "seedream-v5-lite-image-to-image"}),
-            ("z-image-turbo", "Z Image Turbo", None),
-            ("p-image", "P Image", None),
-            ("hidream-l1-fast", "HiDream I1 Fast", None),
-        ]),
-        ("Edit & reference", [
-            ("flux-kontext-max", "FLUX Kontext Max", None),
-            ("gpt-image-1.5", "GPT Image 1.5", {"t": "gpt-image-1.5", "edit": "gpt-image-1.5-edit"}),
-            ("seedream-4.5", "Seedream 4.5", None),
-            ("qwen-image-edit-plus", "Qwen Image Edit Plus", None),
-            ("p-image-edit", "P Image Edit", None),
-            ("bria-expand-image", "Bria Expand (outpaint)", None),
-        ]),
-    ],
-    "video": [
-        ("Flagship", [
-            ("veo-3.1", "Veo 3.1", None),
-            ("kling-3-pro", "Kling 3.0 Pro", {"t": "kling-3-pro-text2video", "i2v": "kling-3-pro-image2video"}),
-            ("seedance-2.5", "Seedance 2.5", None),
-            ("sora-2-pro", "Sora 2 Pro", None),
-            ("wan3.0-video", "Wan 3.0", None),
-            ("flux-3-video", "FLUX 3 Video", {"t": "flux-3-text-to-video", "i2v": "flux-3-image-to-video"}),
-            ("gemini-omni-1.1", "Gemini Omni 1.1", None),
-            ("kling-o3", "Kling O3", {"t": "kling-o3-text2video", "i2v": "kling-o3-image2video"}),
-            ("grok-imagine-video-1.5", "Grok Imagine Video 1.5", {"t": "grok-imagine-video-1.5-text-to-video", "i2v": "grok-imagine-video-1.5-image-to-video"}),
-            ("luma-ray-3-2", "Luma Ray 3.2", None),
-        ]),
-        ("Fast & cheap", [
-            ("veo-3.1-fast", "Veo 3.1 Fast", None),
-            ("seedance-2.0-fast", "Seedance 2.0 Fast", None),
-            ("seedance-2.0-mini", "Seedance 2.0 Mini", None),
-            ("minimax-h3", "MiniMax H3", {"t": "minimax-h3-text-to-video", "i2v": "minimax-h3-image-to-video"}),
-            ("minimax-h3-max-turbo", "MiniMax H3 Max Turbo", None),
-            ("ltx-2.5-fast", "LTX 2.5 Fast", None),
-            ("pixverse-v6", "PixVerse V6", None),
-            ("p-video-2-pro", "P Video 2 Pro", None),
-            ("wan3.0-video-prime", "Wan 3.0 Prime", None),
-        ]),
-        ("Cinema control", [
-            ("ltx-2.5-pro", "LTX 2.5 Pro", None),
-            ("sora-2", "Sora 2", None),
-            ("kling-3-standard", "Kling 3.0 Standard", {"t": "kling-3-standard-text2video", "i2v": "kling-3-standard-image2video"}),
-            ("hailuo-2.3", "Hailuo 2.3", None),
-            ("runway-gen4-turbo", "Runway Gen-4 Turbo", None),
-            ("happyhorse-1.1", "HappyHorse 1.1", None),
-            ("pixverse-5-transition", "PixVerse 5 Transition", None),
-            ("wan2.7", "Wan 2.7", {"t": "wan2.7-t2v", "i2v": "wan2.7-i2v"}),
-        ]),
-        ("Edit & extend a clip", [
-            ("pixverse-v6-extend", "PixVerse V6 Extend", None),
-            ("flux-3-extend-video", "FLUX 3 Extend", None),
-            ("gemini-omni-1.1-video-extend", "Gemini Omni Extend", None),
-            ("runway-gen4-aleph", "Runway Aleph", None),
-            ("kling-o3-video2video-edit", "Kling O3 Video Edit", None),
-            ("wan2.7-videoedit", "Wan 2.7 Video Edit", None),
-            ("flux-3-video-edit", "FLUX 3 Video Edit", None),
-            ("modify-video", "Luma Modify", None),
-        ]),
-    ],
-    "upscale": [("Upscale", [
-        ("clarityai-crystal-upscaler", "Crystal Upscaler", None),
-        ("topaz-image-upscale", "Topaz Image Upscale", None),
-        ("clarity-upscaler", "Clarity Upscaler", None),
-        ("bria-increase-resolution", "Bria Increase Resolution", None),
-        ("bria-remove-background", "Bria Remove Background", None),
-    ])],
-    "vupscale": [("Upscale", [
-        ("topaz-video-upscale", "Topaz Video Upscale", None),
-        ("kandinsky-6-vsr", "Kandinsky 6 VSR", None),
-        ("bria-increase-video-resolution", "Bria Video Resolution", None),
-    ])],
-}
 # promptless finishing tools, run on a finished still like an upscaler
-POST_TOOLS = {"bria-remove-background": "cutout", "bg-removal-v2": "cutout"}
-CUTOUT = "bria-remove-background"
-DEFAULT_UPSCALER = "clarityai-crystal-upscaler"
-DEFAULT_VIDEO_UPSCALER = "topaz-video-upscale"
+POST_TOOLS = {"bria/image-edit-remove-background": "cutout"}
+CUTOUT = "bria/image-edit-remove-background"
+DEFAULT_UPSCALER = "fal/crystal-upscaler"
+DEFAULT_VIDEO_UPSCALER = "bfl/video-upscale-v1"
 TEXT_MODELS = ("ideogram", "recraft", "gpt-image", "qwen-image", "p-image-ideogram", "nano-banana")
 
 PROVIDERS = {"BYTEDANCE": "ByteDance", "GOOGLE": "Google", "OPENAI": "OpenAI", "BLACK_FOREST_LABS": "Black Forest Labs",
              "BFL": "Black Forest Labs", "KUAIVISION": "Kling", "KLING": "Kling", "ALIBABA": "Alibaba", "XAI": "xAI",
-             "MINIMAX": "MiniMax", "SEGMIND": "Segmind", "RECRAFT": "Recraft", "IDEOGRAM": "Ideogram",
+             "MINIMAX": "MiniMax", "RECRAFT": "Recraft", "IDEOGRAM": "Ideogram",
              "PRUNA": "Pruna", "LUMA": "Luma", "RUNWAY": "Runway", "LIGHTRICKS": "Lightricks", "PIXVERSE": "PixVerse",
              "BRIA": "Bria", "TOPAZ": "Topaz", "STABILITY": "Stability", "TENCENT": "Tencent", "QWEN": "Qwen",
              "STABILITY_AI": "Stability AI", "LTX_STUDIO": "Lightricks", "RUNWAY_ML": "Runway", "CLARITYAI": "Clarity AI",
@@ -396,66 +288,11 @@ def _provider(p: str) -> str:
 _registry: Dict = {"t": None, "models": {}, "order": [], "recs": {}}
 
 
-# ── your LoRAs ──────────────────────────────────────────────────────────────
-# Style fine-tunes trained in the LoRA Manager (/api/lora) are Segmind
-# endpoints of their own, listed in its registry. They are FLUX underneath and
-# take FLUX's inputs; the trigger word has to lead the prompt or the style
-# doesn't show, and without an explicit step count they under-diffuse (blurry).
-LORA_REGISTRY = os.path.join(os.path.abspath(os.getenv("STUDIO_DIR") or "data"), "loras", "registry.json")
-LORA_ASPECTS = ["1:1", "2:3", "3:4", "4:5", "9:16", "3:2", "4:3", "16:9", "21:9"]
-LORA_DEFAULTS = {"num_inference_steps": 28, "steps": 28, "guidance_scale": 3.5, "scheduler": "euler"}
-
-
-def _lora_mtime() -> float:
-    try:
-        return os.path.getmtime(LORA_REGISTRY)
-    except OSError:
-        return 0.0
-
-
-def lora_records() -> List[Dict]:
-    """The registry's ready LoRAs as catalogue records, so they are picked,
-    priced and built like any other model."""
-    try:
-        with open(LORA_REGISTRY) as f:
-            reg = json.load(f)
-    except Exception:
-        return []
-    out = []
-    for e in reg if isinstance(reg, list) else []:
-        if e.get("status") != "AVAILABLE" or not e.get("endpoint_slug"):
-            continue
-        out.append({"slug": e["endpoint_slug"], "name": e.get("name") or "LoRA", "provider": "lora",
-                    "category": "text-to-image", "listed": True, "cost": None, "latency": None,
-                    "desc": f"Your FLUX style LoRA · trigger word {e.get('trigger_word') or '—'}",
-                    "inputs": {"prompt": {"t": "string", "req": True},
-                               "aspect_ratio": {"t": "string", "o": LORA_ASPECTS, "d": "1:1"},
-                               "seed": {"t": "integer"}},
-                    "lora": {"id": e.get("id"), "trigger": e.get("trigger_word") or ""}})
-    return out
-
-
-def engines() -> Tuple[bool, bool]:
-    """(Comfy Router, Segmind): which catalogues the studio offers. Comfy
-    whenever its key is set; Segmind when its key is, or when no key is set at
-    all (the catalogue still shows). STUDIO_ENGINES overrides both."""
-    if settings.VISITOR_KEYS:                    # the demo spends only visitors' Comfy keys
-        return True, False
-    want = settings.ENGINES
-    if want:
-        return "comfy" in want, "segmind" in want
-    return bool(settings.COMFY_API_KEY), bool(settings.SEGMIND_API_KEY or not settings.COMFY_API_KEY)
-
-
 def _registry_build() -> Dict:
-    use_comfy, use_seg = engines()
-    cat = C.load() if use_seg else []
-    crecs = comfy.records() if use_comfy else []
-    if (_registry["t"] is cat and _registry.get("cr") is crecs and _registry.get("lm") == _lora_mtime()
-            and _registry.get("eng") == (use_comfy, use_seg)):
+    crecs = comfy.records()
+    if _registry.get("cr") is crecs:
         return _registry
-    loras = lora_records() if use_seg else []
-    recs = {m["slug"]: m for m in cat + loras + crecs}
+    recs = {m["slug"]: m for m in crecs}
     roles = {}
     for slug, rec in recs.items():
         try:
@@ -467,67 +304,33 @@ def _registry_build() -> Dict:
             roles[slug] = r
     models, order, claimed = {}, [], set()
 
-    def entry(mid, label, group, variants, featured):
-        base_slug = variants.get("t") if variants else mid
-        R = roles.get(base_slug)
+    def entry(mid, label, group, featured):
+        R = roles.get(mid)
         if not R:
             return None
-        rec = recs[base_slug]
-        m = {"id": mid, "label": label or rec.get("name") or mid, "kind": R["kind"],
-             "provider": _provider(rec.get("provider")), "group": group, "featured": featured,
-             "slugs": {"t": base_slug}, "roles": {"t": R}}
-        for k in ("edit", "i2v"):
-            if variants and variants.get(k) in roles:
-                m["slugs"][k] = variants[k]
-                m["roles"][k] = roles[variants[k]]
-        m["cost"] = rec.get("cost")
-        m["latency"] = rec.get("latency")
-        m["new"] = rec.get("new")
-        m["desc"] = rec.get("desc") or ""
-        m["created"] = rec.get("created") or ""
-        m["pop"] = rec.get("pop") or 0
-        m["engine"] = rec.get("engine") or "segmind"
-        m["price_per"] = rec.get("price_per")
-        return m
+        rec = recs[mid]
+        return {"id": mid, "label": label or rec.get("name") or mid, "kind": R["kind"],
+                "provider": _provider(rec.get("provider")), "group": group, "featured": featured,
+                "slugs": {"t": mid}, "roles": {"t": R}, "cost": rec.get("cost"), "latency": rec.get("latency"),
+                "new": rec.get("new"), "desc": rec.get("desc") or "", "created": rec.get("created") or "",
+                "pop": rec.get("pop") or 0, "engine": comfy.ENGINE, "price_per": rec.get("price_per")}
 
     for kind, groups in comfy.HEROES.items():
         for group, items in groups:
             for mid, label in items:
-                m = entry(mid, label, group, None, True)
+                m = entry(mid, label, group, True)
                 if m:
                     models[mid] = m
                     order.append(mid)
                     claimed.add(mid)
-    for kind, groups in FEATURED.items():
-        for group, items in groups:
-            for mid, label, variants in items:
-                m = entry(mid, label, group, variants, True)
-                if m:
-                    models[mid] = m
-                    order.append(mid)
-                    claimed |= set(m["slugs"].values())
-    for rec in loras:
-        m = entry(rec["slug"], rec["name"], "Your LoRAs", None, True)
-        if m:
-            m["provider"] = "Your LoRA"
-            m["lora"] = rec["lora"]
-            mid = f"lora-{(rec['lora'].get('id') or rec['slug'])[:8]}"
-            m["id"] = mid
-            models[mid] = m
-            order.append(mid)
-            claimed.add(rec["slug"])
     rest = sorted((s for s in roles if s not in claimed),
                   key=lambda s: (-(recs[s].get("pop") or 0), s))
     for s in rest:
-        R = roles[s]
-        group = (f"Comfy · {recs[s].get('provider')}" if recs[s].get("engine") == comfy.ENGINE
-                 else f"All · {_provider(recs[s].get('provider'))}")
-        m = entry(s, recs[s].get("name"), group, None, False)
+        m = entry(s, recs[s].get("name"), f"Comfy · {recs[s].get('provider')}", False)
         if m:
             models[s] = m
             order.append(s)
-    _registry.update(t=cat, cr=crecs, lm=_lora_mtime(), eng=(use_comfy, use_seg),
-                     models=models, order=order, recs=recs)
+    _registry.update(cr=crecs, models=models, order=order, recs=recs)
     return _registry
 
 
@@ -574,7 +377,7 @@ def public_models() -> List[Dict]:
         R = m["roles"]["t"]
         pm = {"id": mid, "label": m["label"], "kind": m["kind"], "provider": m["provider"],
               "group": m["group"], "featured": m["featured"], "notes": m["desc"][:110],
-              "engine": m.get("engine") or "segmind",
+              "engine": m.get("engine") or comfy.ENGINE,
               "price": round(m["cost"], 4) if isinstance(m.get("cost"), (int, float)) else None,
               "price_per": m.get("price_per"),
               "latency": round(m["latency"]) if isinstance(m.get("latency"), (int, float)) else None,
@@ -620,16 +423,9 @@ def public_models() -> List[Dict]:
 # ── footage: how long a stretch each tool takes ─────────────────────────────
 # Seconds of source clip a footage tool accepts, where a hard limit is known.
 # A stretch outside it fails at the provider with nothing useful to say ("did
-# not produce an output"), so it is stopped before it is sent. Kling's edit
-# tools: Segmind's page gives no limit, Leonardo's and RunComfy's Kling docs
-# cap the source at 10 s, and on prod 11.9 s and 10.7 s both failed
-# (2026-10-23). The rest are from each model's Segmind page.
-SOURCE_SECONDS = {
-    "kling-o3-video2video-edit": (3, 10), "kling-o3-video2video-reference": (3, 10),
-    "kling-o1-video-to-video-edit": (3, 10), "kling-o1-video-to-video-reference": (3, 10),
-    "wan2.7-videoedit": (2, 10), "gemini-omni-1.1-video-edit": (0, 10), "gemini-omni-1.1-video-extend": (0, 10),
-    "flux-3-video-edit": (0, 15), "p-video-edit": (0, 15), "pixverse-v6-extend": (0, 30),
-}
+# not produce an output"), so it is stopped before it is sent. Both limits are
+# the makers' own: Wan 2.7's edit takes 2 to 10 s, FLUX's up to 15 s.
+SOURCE_SECONDS = {"wan/wan2.7-videoedit": (2, 10), "bfl/video-edit-v1": (0, 15)}
 
 
 def fit_source(mid: str, seconds: float, duration=None) -> Tuple[Optional[int], str]:
@@ -684,7 +480,7 @@ def failure_hint(t: Dict) -> str:
                 "a real person or a brand." + (" Google's models refuse real people: for footage of people, "
                                                "pick a tool that isn't Google's." if google else ""))
     if reason == "credits":
-        return "The Segmind account is out of credits. Top it up at segmind.com, then run it again."
+        return "The Comfy account is out of credits. Add some in ComfyUI (Settings, Plan & Credits), then run it again."
     if reason == "rateLimit":
         return "Too many runs at once. Wait a minute and run it again."
     if reason == "busy":
@@ -693,7 +489,7 @@ def failure_hint(t: Dict) -> str:
     if reason == "unavailable":
         return f"{label} is down or overloaded right now. Try again in a few minutes, or pick another model."
     if reason == "network":
-        return "We couldn't reach Segmind. Run it again in a moment."
+        return "We couldn't reach Comfy Router. Run it again in a moment."
     if reason == "timeout":
         return ("We stopped waiting after the run went quiet. Click Check again in the Shot view: if it "
                 "finished, the result is collected.")
@@ -705,7 +501,7 @@ def failure_hint(t: Dict) -> str:
 
 # ── the model directory: what each model is good at, in plain English ───────
 # Hand-written notes (model_notes.json, researched from the makers'
-# docs, Segmind's write-ups, reviews and our own runs) laid over the live
+# docs, reviews and our own runs) laid over the live
 # catalogue. The facts line is built from the specs, so prices and lengths
 # never go stale in the prose; a model with no note yet still gets an entry.
 NOTES_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_notes.json")
@@ -856,9 +652,8 @@ def directory() -> Dict:
         e["keys"] = " ".join(filter(None, [pm["id"], maker, e["host"], pm["provider"], pm["category"].replace("-", " "),
                                             " ".join(pm.get("tags") or []), e["status"], "pick" if e["pick"] else ""]))
         sid = _section(pm)
-        own = pm["group"] == "Your LoRAs"
         bucket = picks if pm["featured"] else rest
-        g = pm["group"] if own else f"Our picks · {pm['group']}" if bucket is picks else maker
+        g = f"Our picks · {pm['group']}" if bucket is picks else maker
         bucket.setdefault(sid, {}).setdefault(g, []).append(e)
     for sid, sec in sections.items():
         for g, es in (picks.get(sid) or {}).items():
@@ -875,74 +670,6 @@ def directory() -> Dict:
                 e["maker_anchor"] = has.get(e["maker"])
     return {"sections": [s for s in sections.values() if s["groups"]], "makers": makers,
             "count": len(pub), "written": sum(1 for m in pub if m["id"] in notes["models"])}
-
-
-# ── media: a public URL the provider can fetch ──────────────────────────────
-# Segmind's providers fetch inputs by URL, and this app sits behind a login,
-# so a reference can't be linked from here. It goes to a private blob
-# container with a 48-hour read link (our account, our expiry); if that is
-# not configured it goes to Segmind's own storage instead (public, and the
-# URL carries the account email — the fallback, not the default).
-_url_cache: Dict[str, Tuple[str, float]] = {}
-BLOB_CONTAINER = os.getenv("STUDIO_BLOB_CONTAINER", "studio-inputs")
-SAS_HOURS = 48
-
-
-def _blob_url(path: str) -> Optional[str]:
-    conn = settings.AZURE_STORAGE_CONNECTION_STRING
-    if not conn:
-        return None
-    from azure.storage.blob import BlobServiceClient, BlobSasPermissions, generate_blob_sas
-    svc = BlobServiceClient.from_connection_string(conn)
-    cont = svc.get_container_client(BLOB_CONTAINER)
-    try:
-        cont.create_container()                  # private by default
-    except Exception:
-        pass
-    with open(path, "rb") as f:
-        data = f.read()
-    name = f"{hashlib.sha1(data).hexdigest()[:20]}{os.path.splitext(path)[1].lower()}"
-    blob = cont.get_blob_client(name)
-    if not blob.exists():
-        from azure.storage.blob import ContentSettings
-        blob.upload_blob(data, overwrite=True, content_settings=ContentSettings(
-            content_type=mimetypes.guess_type(path)[0] or "application/octet-stream"))
-    acct = svc.account_name
-    key = svc.credential.account_key
-    sas = generate_blob_sas(account_name=acct, container_name=BLOB_CONTAINER, blob_name=name,
-                            account_key=key, permission=BlobSasPermissions(read=True),
-                            expiry=datetime.now(timezone.utc) + timedelta(hours=SAS_HOURS))
-    return f"https://{acct}.blob.core.windows.net/{BLOB_CONTAINER}/{name}?{sas}"
-
-
-def _segmind_url(path: str) -> str:
-    with open(path, "rb") as f:
-        data = f.read()
-    mime = mimetypes.guess_type(path)[0] or "image/jpeg"
-    r = requests.post(SEG_UPLOAD, headers={"x-api-key": settings.SEGMIND_API_KEY, "Content-Type": "application/json"},
-                      json={"data_urls": [f"data:{mime};base64,{base64.b64encode(data).decode()}"]}, timeout=180)
-    if r.status_code != 200:
-        raise RunError(f"Could not upload the reference to Segmind ({r.status_code}).", "upload")
-    urls = (r.json() or {}).get("file_urls") or []
-    if not urls:
-        raise RunError("Segmind's storage returned no link for the reference.", "upload")
-    return urls[0]
-
-
-def media_url(path: str) -> str:
-    key = f"{path}:{os.path.getmtime(path)}"
-    hit = _url_cache.get(key)
-    if hit and hit[1] > time.time() + 3600:
-        return hit[0]
-    url = None
-    try:
-        url = _blob_url(path)
-    except Exception as e:
-        print(f"[studio] blob upload failed, using Segmind storage: {e}")
-    if not url:
-        url = _segmind_url(path)
-    _url_cache[key] = (url, time.time() + SAS_HOURS * 3600)
-    return url
 
 
 # ── canonical request → native payload ──────────────────────────────────────
@@ -986,10 +713,9 @@ def build(model_id: str, req: Dict, find: Callable[[str], Optional[str]]) -> Dic
     inp = rec.get("inputs") or {}
     P: Dict = {}
     video = m["kind"] in ("video", "vupscale")
-    on_comfy = rec.get("engine") == comfy.ENGINE
-    # Segmind fetches references by link; for Comfy they stay local files until
-    # comfy.shape knows whether the model wants a link, a data URL or base64
-    media = comfy.file_ref if on_comfy else media_url
+    # references stay local files until comfy.shape knows whether the model
+    # wants a link, a data URL or base64
+    media = comfy.file_ref
 
     def path_of(name):
         p = find(name) if name else None
@@ -1124,16 +850,8 @@ def build(model_id: str, req: Dict, find: Callable[[str], Optional[str]]) -> Dic
         P[R["base64"]] = False
     for k, v in (R.get("required_defaults") or {}).items():
         P.setdefault(k, v)
-    if m.get("lora"):
-        trig = m["lora"].get("trigger") or ""
-        if trig and R.get("prompt") and not str(P.get(R["prompt"], "")).lower().startswith(trig.lower()):
-            P[R["prompt"]] = f"{trig}, {P.get(R['prompt'], '')}"
-        for k, v in LORA_DEFAULTS.items():
-            P.setdefault(k, v)
-    if on_comfy:
-        return {"endpoint": slug, "payload": comfy.shape(rec, P), "label": m["label"], "engine": comfy.ENGINE,
-                "kind": m["kind"]}
-    return {"endpoint": slug, "payload": P, "label": m["label"]}
+    return {"endpoint": slug, "payload": comfy.shape(rec, P), "label": m["label"], "engine": comfy.ENGINE,
+            "kind": m["kind"]}
 
 
 def elide(obj, limit: int = 160):
@@ -1148,14 +866,9 @@ def elide(obj, limit: int = 160):
     return obj
 
 
-# ── Segmind v2 queue ────────────────────────────────────────────────────────
-def _headers() -> Dict:
-    return {"x-api-key": settings.SEGMIND_API_KEY, "Content-Type": "application/json"}
-
-
-_POLICY = re.compile(r"policy|safety|moderat|nsfw|sensitive|inappropriate|blocked", re.I)
+# ── the queue ───────────────────────────────────────────────────────────────
 # a provider at its limit of runs at once ("Concurrent generation limit reached
-# (4)", Luma via Segmind): not a failure but a wait, so the take goes back in line
+# (4)", Luma): not a failure but a wait, so the take goes back in line
 _BUSY = re.compile(r"concurren|too many (?:active|running|pending|simultaneous|parallel)|parallel (?:task|request|generation)s? limit", re.I)
 
 
@@ -1165,107 +878,13 @@ def busy_limit(msg: str) -> Optional[int]:
     return int(m.group(1)) if m and 0 < int(m.group(1)) < 100 else None
 
 
-def _error_of(r: requests.Response) -> RunError:
-    try:
-        j = r.json()
-        msg = j.get("error") or j.get("message") or j.get("detail") or json.dumps(j)[:300]
-        if isinstance(msg, (dict, list)):
-            msg = json.dumps(msg)[:300]
-    except Exception:
-        msg = (r.text or "")[:300]
-    msg = str(msg)
-    s = r.status_code
-    if s == 401:
-        return RunError("Segmind rejected the API key.", "unavailable")
-    if s == 402 or re.search(r"credit|balance|insufficient", msg, re.I):
-        return RunError("Not enough Segmind credits for this shot. Top up at segmind.com.", "credits")
-    if _BUSY.search(msg):
-        return RunError(msg[:300], "busy")
-    if s == 429:
-        return RunError("Too many runs at once (Segmind allows 50 a minute). Wait a moment and try again.", "rateLimit")
-    if re.search(r"temporarily unavailable|try again in a few|overloaded|capacity", msg, re.I):
-        return RunError(f"{msg[:240]} Try another model, or again in a few minutes.", "unavailable")
-    if _POLICY.search(msg):
-        return RunError(f"The model blocked the prompt or a reference under its content policy. {msg[:200]}", "policy")
-    if s in (400, 406, 422):
-        return RunError(f"The model rejected these inputs: {msg[:300]}", "validation")
-    if s == 404:
-        return RunError("Segmind doesn't know this model or request any more.", "unavailable")
-    return RunError(f"The run failed at Segmind ({s}): {msg[:240]}", "provider")
-
-
 def submit(call: Dict) -> Dict:
-    if call.get("engine") == comfy.ENGINE:
-        return comfy.submit(call["endpoint"], call["payload"], call.get("key"),
-                            kind=call.get("kind", ""), sync=bool(call.get("sync")))
-    url = f"{SEG_V2}/{call['endpoint']}"
-    try:
-        r = requests.post(url, headers=_headers(), json=call["payload"], timeout=60)
-    except requests.RequestException as e:
-        raise RunError(f"Couldn't reach Segmind: {e}", "network")
-    if r.status_code >= 300:
-        raise _error_of(r)
-    j = r.json()
-    rid = j.get("request_id") or j.get("id")
-    if not rid:
-        raise RunError(f"Segmind accepted the run but returned no request id: {json.dumps(j)[:200]}", "response")
-    return {"request_id": rid, "poll_url": f"{SEG_V2}/requests/{rid}/status"}
+    return comfy.submit(call["endpoint"], call["payload"], call.get("key"),
+                        kind=call.get("kind", ""), sync=bool(call.get("sync")))
 
 
 def poll(poll_url: str, model: str = "") -> Dict:
-    if poll_url.startswith(comfy.BASE):
-        return comfy.poll(poll_url, (MODELS.get(model) or {}).get("kind") or "")
-    try:
-        r = requests.get(poll_url, headers=_headers(), timeout=30)
-    except requests.RequestException as e:
-        return {"pending": True, "progress": f"network: {e}"[:80]}
-    if r.status_code == 404:
-        raise RunError("Segmind no longer has this request (records expire soon after they finish).", "response")
-    if r.status_code == 422:
-        raise _error_of(r)
-    if r.status_code >= 300:
-        if r.status_code >= 500 or r.status_code == 429:
-            return {"pending": True}
-        raise _error_of(r)
-    j = r.json()
-    st = str(j.get("status") or "").upper()
-    if st in ("QUEUED", "PROCESSING", "IN_PROGRESS", "PENDING", "RUNNING", ""):
-        return {"pending": True, "progress": st.lower() or None}
-    if st == "FAILED":
-        msg = str(j.get("error") or j.get("message") or "The model failed.")
-        reason = ("busy" if _BUSY.search(msg)
-                  else "unavailable" if re.search(r"temporarily unavailable|try again in a few", msg, re.I)
-                  else "policy" if _POLICY.search(msg) else "provider")
-        raise RunError(msg[:400], reason)
-    # COMPLETED → fetch the result body
-    res_url = poll_url[:-len("/status")] if poll_url.endswith("/status") else poll_url
-    r2 = requests.get(res_url, headers=_headers(), timeout=60)
-    if r2.status_code >= 300:
-        raise _error_of(r2)
-    body = r2.json()
-    url = _output_url(body)
-    if not url:
-        raise RunError(f"Segmind finished but returned no file: {json.dumps(body)[:200]}", "response")
-    metrics = body.get("metrics") or j.get("metrics") or {}
-    return {"url": url, "cost": metrics.get("cost"), "seed": body.get("seed")}
-
-
-def _output_url(body) -> Optional[str]:
-    if isinstance(body, str):
-        return body if body.startswith("http") else None
-    if isinstance(body, list):
-        for x in body:
-            u = _output_url(x)
-            if u:
-                return u
-        return None
-    if isinstance(body, dict):
-        for k in ("video", "images", "image", "output", "audio", "url", "outputs", "result", "file"):
-            if k in body:
-                u = _output_url(body[k])
-                if u:
-                    return u
-    return None
+    return comfy.poll(poll_url, (MODELS.get(model) or {}).get("kind") or "")
 
 
 _EXT = {"image/jpeg": ".jpg", "image/jpg": ".jpg", "image/png": ".png", "image/webp": ".webp",

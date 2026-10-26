@@ -9,4 +9,3 @@ itsdangerous==2.2.0
 pillow==13.0.0
 wasmtime==50.0.1        # runs the Rust (studio/static/*.wasm) on the server: studio/rust.py
 anthropic==0.112.0
-azure-storage-blob==12.31.0

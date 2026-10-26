@@ -10,27 +10,20 @@ health check.
 """
 import os
 import re
-from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import jobs as J, loras, prompts, settings, shell, visitors
+from . import jobs as J, prompts, settings, shell, visitors
 from .routes import router
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 
 
-@asynccontextmanager
-async def lifespan(app):
-    loras.start()            # your trained LoRAs, from Segmind, in the background
-    yield
-
-
-app = FastAPI(title="Gobo", lifespan=lifespan,
-              description="Direct a shot like a cinematographer; run it on any Comfy Router (or Segmind) image or video model.")
+app = FastAPI(title="Gobo",
+              description="Direct a shot like a cinematographer; run it on any Comfy Router image or video model.")
 
 
 @app.middleware("http")
@@ -98,8 +91,7 @@ async def favicon():
 
 @app.get("/healthz", include_in_schema=False)
 async def healthz():
-    return JSONResponse({"ok": True, "name": "Gobo", "segmind_key": bool(settings.SEGMIND_API_KEY),
-                         "comfy_key": bool(settings.COMFY_API_KEY),
+    return JSONResponse({"ok": True, "name": "Gobo", "comfy_key": bool(settings.COMFY_API_KEY),
                          "keys": "visitor" if settings.VISITOR_KEYS else "server",
                          "sign_in": settings.sign_in_on(), "release": settings.RELEASE,
                          "release_id": settings.RELEASE_ID})

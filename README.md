@@ -56,7 +56,7 @@ Sign in with any name and the password you set.
 
 Some typical prices: a FLUX 3 keyframe is about 7¢, and Nano Banana about 6¢. Clips are priced per second: Wan 3.0 and Veo 3.1 Fast about 10¢, LTX 2.5 Fast and MiniMax H3 about 13¢, LTX 2.5 Pro about 17¢, Seedance 2.0 Fast about 17¢. A ten-second Autopilot film costs roughly $0.80 to $3, depending on the models.
 
-That one key runs everything, including the Director and the planner. `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` and `SEGMIND_API_KEY` are optional extras (see [Settings](#settings)).
+That one key runs everything, including the Director and the planner. `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are optional extras (see [Settings](#settings)).
 
 ### Without Docker
 
@@ -95,7 +95,6 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 | `STUDIO_DIR` | Where reels live (`/data` in Docker). Reels untouched for `STUDIO_REEL_TTL_DAYS` (60) are cleared. |
 | `ANTHROPIC_API_KEY` | Optional: the Director and the planner straight from Anthropic, instead of through Comfy Router. |
 | `OPENAI_API_KEY` | Optional: GPT-4o writes "prompts from a reference". |
-| `SEGMIND_API_KEY` | Optional: a second catalogue of about 300 more models on [Segmind](https://segmind.com). `STUDIO_ENGINES=comfy` hides it again. |
 | `STUDIO_COMFY_SYNC=1` | Run every take on Router's direct route. Gobo switches to it on its own when Router's queue stops moving. |
 | `STUDIO_SOURCE_URL` | Where the sign-in and About pages say the code lives. Defaults to this repo; a fork points it at its own. |
 | `STUDIO_KEEP_GB` | A ceiling on the data folder, for a public demo on shared storage. Over it, whole reels go, the one touched longest ago first; a reel used in the last hour stays. Unset (the default): no ceiling, and nothing is ever deleted for space. |
@@ -107,7 +106,7 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 - Each visitor signs in with their own Comfy key. Comfy checks it, and Gobo keeps it in the server's memory only: never on disk, never in a cookie, never in a log.
 - Every Comfy call made for that visitor uses their key. That includes takes the server finishes after they close the tab.
 - Visitors see only their own reels.
-- The server's own keys are never spent: no Segmind, Anthropic or OpenAI.
+- The server's own keys are never spent: no Anthropic or OpenAI key is used.
 - A restart forgets every key. A browser that was asked to remember the key signs straight back in, and a visitor's reels are still there: they belong to the key, not the session.
 - On shared storage, set `STUDIO_KEEP_GB` so visitors' films can't fill it. The demo keeps 4 GB.
 

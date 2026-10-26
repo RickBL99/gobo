@@ -152,7 +152,7 @@ function openModelSheet(multi) {
     return out.join("");
   };
   const kinds = STILLS || boardOn() ? "" : `<span class="seg" id="mKind">${["image", "video"].map(k => `<button data-k="${k}" class="${S.mode === k ? "on" : ""}">${k === "image" ? "Image" : "Video"} · ${byKind(k).length}</button>`).join("")}</span>`;
-  el.innerHTML = `<h3>${sheetMulti ? "Shootout — run one shot on several models" : "Choose a model"} ${kinds} <span class="r"><a class="btn small" href="${API}/guide#directory" target="studioguide" title="What every model is good at, in plain English">Model directory</a>${MODELS.some(m => m.engine === "segmind") ? ` <button class="btn small" id="mRefresh" title="Pull Segmind's current catalogue — new models appear without a deploy">Refresh from Segmind</button>` : ""} <button class="btn small" data-close>Done</button></span></h3>
+  el.innerHTML = `<h3>${sheetMulti ? "Shootout — run one shot on several models" : "Choose a model"} ${kinds} <span class="r"><a class="btn small" href="${API}/guide#directory" target="studioguide" title="What every model is good at, in plain English">Model directory</a> <button class="btn small" data-close>Done</button></span></h3>
     <div class="mfilters"><input class="field" id="mq" placeholder="Search ${list.length} models" value="${esc(mQuery)}">
       ${(MFILTERS[S.mode] || []).map(([k, l]) => `<button class="chipbtn ${mFilter.has(k) ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
     ${Object.keys(groups).length ? Object.entries(groups).map(([g, ms]) => `<div class="mgroup"><h4>${esc(g)}</h4>${ms.map(m => `
@@ -183,26 +183,7 @@ function openModelSheet(multi) {
     }
   });
   $$("[data-close]", el).forEach(b => b.onclick = () => { closePop(); onShotChange(); });
-  if ($("#mRefresh", el)) $("#mRefresh", el).onclick = refreshCatalogue;
   const clr = $("[data-clear]", el); if (clr) clr.onclick = () => { S.shootout[S.mode] = []; openModelSheet(true); };
-}
-
-async function refreshCatalogue() {
-  const b = $("#mRefresh"); if (b) { b.disabled = true; b.textContent = "Refreshing…"; }
-  let st = await api("/catalogue/refresh", { method: "POST" });
-  const tick = async () => {
-    st = await api("/catalogue/status");
-    const r = st.refresh || {};
-    const bb = $("#mRefresh");
-    if (r.running) { if (bb) bb.textContent = `Reading ${r.done || 0} of ${r.total || "…"}`; return setTimeout(tick, 1500); }
-    if (r.error) { toast("Refresh failed: " + r.error, true); if (bb) { bb.disabled = false; bb.textContent = "Refresh from Segmind"; } return; }
-    const c = await api("/catalogue");
-    if (c.models) { MODELS.length = 0; c.models.forEach(m => MODELS.push(m)); }
-    toast(`${st.count} Segmind models read; ${MODELS.length} the studio can drive.`);
-    if ($("#modelSheet") && !$("#modelSheet").classList.contains("hidden")) openModelSheet(sheetMulti);
-    onShotChange();
-  };
-  setTimeout(tick, 800);
 }
 
 // ── popovers ───────────────────────────────────────────────────────────
@@ -591,7 +572,7 @@ function refused(text, model) {
   const m = model && modelById(model), title = m ? `${m.label}: not run` : "Not run";
   const same = refusals.find(r => r.title === title && r.text === text);     // clicked again: point at it, don't stack it
   if (!same) refusals.push({ id: `r${++refusalN}`, title, text });
-  if (/(Segmind|Comfy) has \$/.test(text)) loadCredits(true);
+  if (/Comfy has \$/.test(text)) loadCredits(true);
   renderFails();
   if (same) { const c = $(`#fails [data-fail="${same.id}"]`); if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } }
 }
@@ -733,7 +714,7 @@ function renderActions() {
     vid ? `<button class="btn" data-a="continue" title="Start the next clip from this clip's last frame">Continue shot</button>` : "",
     vid ? `<button class="btn" data-a="grab" title="Pull the paused frame out as a still">Grab frame</button>` : "",
     vid ? `<button class="btn" data-a="change" title="Restyle it, change the season or the light, swap the product or wardrobe from a reference — motion kept">Change clip</button>` : "",
-    vid ? `<button class="btn" data-a="extend" title="Carry the clip on past its end, camera move and all">Extend clip</button>` : "",
+    vid && extendTools().length ? `<button class="btn" data-a="extend" title="Carry the clip on past its end, camera move and all">Extend clip</button>` : "",
     vid ? `<button class="btn" data-a="leadin" title="Make a shot that ends exactly on this clip's first frame">Lead into it</button>` : "",
     `<span class="sep"></span>`,
     comfyNode(t.model) ? `<a class="btn" href="${API}/reels/${t.reel}/comfyui?tid=${t.id}" title="This take as a ComfyUI workflow: drop workflow_api.json on the ComfyUI canvas (keyframes included)">Open in ComfyUI</a>` : "",
@@ -1394,20 +1375,20 @@ async function loadCredits(fresh) {
   if (!r || r.error || r.credits == null) { el.title = "The balance didn't come back. Click to ask again."; return; }
   creditsAt = Date.now();
   const busy = (r.rendering || 0) + (r.waiting || 0), usd = v => `$${(+v).toFixed(2)}`;
-  const comfy = r.bank === "Comfy", topup = comfy ? "https://docs.comfy.org/interface/credits" : "https://www.segmind.com/";
-  el.innerHTML = `${esc(r.bank || "Segmind")} ${usd(r.credits)}${busy ? ` <span class="pend">· ≈${usd(busy)} in progress</span>` : ""}`
+  const topup = "https://docs.comfy.org/interface/credits";
+  el.innerHTML = `Comfy ${usd(r.credits)}${busy ? ` <span class="pend">· ≈${usd(busy)} in progress</span>` : ""}`
     + (r.low ? ` <a href="${topup}" target="_blank" rel="noopener">top up ↗</a>` : "");
   el.classList.toggle("low", !!r.low);
-  el.title = `Live from ${r.bank || "Segmind"} at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`
+  el.title = `Live from Comfy at ${new Date().toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}.`
     + (busy ? ` About ${usd(busy)} is rendering or waiting in line, so about ${usd(r.left)} is left after that.` : "")
-    + (r.low ? ` That's under ${usd(r.low_at)}: top up ${comfy ? "in ComfyUI (Plan & Credits)" : "at segmind.com"}.` : "") + " Click to check again.";
+    + (r.low ? ` That's under ${usd(r.low_at)}: top up in ComfyUI (Plan & Credits).` : "") + " Click to check again.";
 }
 const creditsSoon = () => { clearTimeout(creditsT); creditsT = setTimeout(() => loadCredits(true), 2500); };
 
 // ── Content Generator: prompts from a reference image, or a folder ─────
 // GPT-4o reads the reference and writes N prompts at the chosen variation;
 // they run as one shot, one take each. A folder runs that per image, with at
-// most THROTTLE takes rendering at once so a big folder doesn't flood Segmind.
+// most THROTTLE takes rendering at once so a big folder doesn't flood the provider.
 const REF = { file: null, files: [], style: "photography", n: 4, prompts: [], busy: false, stop: false };
 const THROTTLE = 8;
 const IMG_RE = /\.(jpe?g|png|webp)$/i;
@@ -1606,8 +1587,8 @@ const isGoogle = m => /google/i.test(m.provider || "");
 const toolOrder = (a, b) => isGoogle(a) - isGoogle(b) || (a.price ?? 99) - (b.price ?? 99);
 const changeTools = () => byKind("video").filter(m => m.requires_source && m.category === "video-edit" && !/^sam/i.test(m.label)).sort(toolOrder);
 const extendTools = () => byKind("video").filter(m => m.requires_source && m.category === "video-extend").sort(toolOrder);
-const defaultChange = () => changeTools().find(m => m.id === "flux-3-video-edit") || changeTools()[0];
-const defaultExtend = () => extendTools().find(m => m.id === "pixverse-v6-extend") || extendTools()[0];
+const defaultChange = () => changeTools().find(m => m.id === "bfl/video-edit-v1") || changeTools()[0];
+const defaultExtend = () => extendTools()[0];               // none on Router today: the Board then offers only changes
 const toolOf = s => modelById(s.tool) || defaultChange();
 const FOOTAGE_MAX = 100 * 1024 * 1024;
 function pickFootage(cb) { pickFile("video/mp4,video/quicktime,video/webm,.mov,.mp4,.m4v,.webm", cb); }
@@ -1804,7 +1785,7 @@ function footageCardHtml(s, i) {
     <div class="bbody">
       <textarea class="field" data-f="scene" placeholder="What's in this footage. Gobo plans the AI shots around it.">${esc(s.scene)}</textarea>
       <div class="btool ${durs.length ? "" : "nodur"}"><select class="field" data-f="tool" aria-label="What to do with the footage">
-          <optgroup label="Change it">${changeTools().map(opt).join("")}</optgroup><optgroup label="Extend it">${extendTools().map(opt).join("")}</optgroup></select>
+          <optgroup label="Change it">${changeTools().map(opt).join("")}</optgroup>${extendTools().length ? `<optgroup label="Extend it">${extendTools().map(opt).join("")}</optgroup>` : ""}</select>
         ${durs.length ? `<select class="field" data-f="tooldur" aria-label="How much longer">${durs.map(d => `<option value="${d}" ${+d === nearest(+s.tooldur || 5, durs) ? "selected" : ""}>+${d}s</option>`).join("")}</select>` : ""}</div>
       ${m && m.takes_prompt ? `<input class="field" data-f="change" value="${esc(s.change)}" placeholder="${ext ? "What happens next: she keeps walking and turns the corner" : "The change: snowy winter afternoon; the Icebox bottle in her hand"}">`
         : `<span class="hint">${esc(m ? m.label : "This tool")} takes no instructions${m && m.refs ? ": tick what to swap in from the kit" : ""}.</span>`}

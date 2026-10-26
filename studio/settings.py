@@ -50,21 +50,13 @@ RELEASE_ID = f"take-{TAKE}"                 # the git tag and the image tag
 BUILD = RELEASE_DATE or "dev"
 
 # providers
-SEGMIND_API_KEY = os.getenv("SEGMIND_API_KEY", "")
-ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")     # Director and Board planner; optional
-# Comfy Router (api.comfy.org): ~260 hosted models behind one key. With it set,
-# the studio leads with Comfy's models; STUDIO_ENGINES ("comfy", "segmind" or
-# both, comma-separated) picks which catalogues are shown.
+# Comfy Router (api.comfy.org): ~260 hosted models behind one key. Every take,
+# the Director and the planner run on it.
 COMFY_API_KEY = os.getenv("COMFY_API_KEY", "")
-ENGINES = {e.strip().lower() for e in os.getenv("STUDIO_ENGINES", "").split(",") if e.strip()}
+ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")     # the Director and planner from Anthropic instead; optional
 # "Prompts from a reference" in the Content Generator: GPT-4o when this is set,
 # Claude otherwise.
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-
-# Reference images are handed to Segmind as URLs. With an Azure storage
-# account they go to a private container behind a short-lived SAS link;
-# without one, Segmind's own upload endpoint is used instead.
-AZURE_STORAGE_CONNECTION_STRING = os.getenv("AZURE_STORAGE_CONNECTION_STRING", "")
 
 # where the studio lives in the URL space; everything hangs off it
 PREFIX = "/" + os.getenv("STUDIO_PREFIX", "/studio").strip("/")

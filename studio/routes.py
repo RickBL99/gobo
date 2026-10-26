@@ -1,31 +1,26 @@
 # =========================================================
-# routes.py – Gobo: direct a shot, run it on any Comfy Router (or Segmind) model,
-# animate it, continue it, stitch the reel.  Mounted at settings.PREFIX.
+# routes.py – Gobo: direct a shot, run it on any Comfy Router model, animate
+# it, continue it, stitch the reel.  Mounted at settings.PREFIX.
 #
-# Comfy's Cinematic Studio (comfy.org/hub/apps/cinematic-studio) is the brief:
-# a camera, framing, light, film, look and grade compiled into a prompt, takes
-# run in parallel, a still animated into a clip. This goes further where a
-# picture desk needs it: angle, camera movement and composition as their own
-# controls, negative prompt and seed, several models on one shot (a shootout),
-# Claude as a director that rewrites the brief for the chosen model, a reel
-# that persists, and the video tools — grab a frame, continue a shot from its
-# last frame, stitch takes into one clip.
+# A camera, framing, angle, light, film, look, grade, composition and camera
+# movement compiled into a prompt; takes run in parallel; negative prompt and
+# seed; several models on one shot (a shootout); a Director that rewrites the
+# brief for the chosen model; a reel that persists; and the video tools: grab a
+# frame, continue a shot from its last frame, stitch takes into one clip.
 #
-#   studio_direction.py  vocabulary + prompt compiler (pure)
-#   studio_models.py     every Segmind model: capabilities, payload, result
-#   studio_jobs.py       reels and takes on disk (multi-worker safe)
+#   direction.py   vocabulary + prompt compiler (pure)
+#   models.py      every Comfy Router model: capabilities, payload, result
+#   jobs.py        reels and takes on disk (multi-worker safe)
 # =========================================================
 import base64, contextvars, io, json, math, os, re, shutil, subprocess, threading, time, uuid, zipfile
 from typing import Dict, List, Optional
 
-import requests
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Response, StreamingResponse
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 from PIL import Image
 
-from . import catalog as C
 from . import comfy
 from . import comfy_export as CX
 from . import direction as D
@@ -61,7 +56,7 @@ POLL_EVERY = 4.0          # seconds between provider polls for one take
 
 
 # ── the pump: advances every running clip, page open or not ────────────────
-# A clip lands minutes after it was asked for, and Segmind's request record
+# A clip lands minutes after it was asked for, and a provider's result link
 # expires soon after that. Waiting for the page to ask would lose any take
 # whose tab was closed. So each worker runs one small loop over the active
 # list; the per-take lock means only one of them polls a given take.
@@ -143,7 +138,7 @@ def _lane(t: Dict) -> str:
     m = M.MODELS.get(t.get("model")) or {}
     clip = (m.get("kind") or t.get("kind")) in ("video", "vupscale")
     who = m.get("provider") or t.get("model") or "?"
-    if m.get("engine") == "comfy":              # Router's limits aren't Segmind's
+    if m.get("engine") == "comfy":              # Router's limits, per provider behind it
         who = f"Comfy · {who}"
     return f"{who} {'clips' if clip else 'stills'}"
 
@@ -258,7 +253,6 @@ async def studio_page(request: Request, stills: int = 0):
     return templates.TemplateResponse(request, "studio.html", {
         "catalogue": json.dumps(D.catalogue()),
         "models": json.dumps(models),
-        "source": json.dumps(C.source()),
         "stills": bool(stills),
         "api": PREFIX,
     })
@@ -282,21 +276,7 @@ async def app_js():
 
 @router.get("/catalogue", response_class=JSONResponse)
 async def catalogue():
-    return {"direction": D.catalogue(), "models": M.public_models(), "source": C.source()}
-
-
-@router.post("/catalogue/refresh", response_class=JSONResponse)
-async def catalogue_refresh():
-    """Pull Segmind's public catalogue again (no key, no spend): new models
-    appear without a deploy. Runs in the background; poll /catalogue/status."""
-    if V.on():
-        return _err("The demo's catalogue is refreshed when it's deployed.", 403)
-    return C.refresh_live()
-
-
-@router.get("/catalogue/status", response_class=JSONResponse)
-async def catalogue_status():
-    return C.source()
+    return {"direction": D.catalogue(), "models": M.public_models()}
 
 
 # ── prompt ──────────────────────────────────────────────────────────────────
@@ -317,7 +297,7 @@ async def compile_prompt(request: Request):
 
 @router.post("/direct", response_class=JSONResponse)
 async def direct(request: Request):
-    """Claude, as the director: the brief rewritten for the chosen model."""
+    """The Director: the brief rewritten for the chosen model."""
     b = await request.json()
     kw = _shot_inputs(b)
     brief = D.compile_prompt(kw.pop("scene"), kw.pop("direction"), **kw)
@@ -447,7 +427,7 @@ async def put_board(reel: str, request: Request):
 
 @router.post("/reels/{reel}/board/plan", response_class=JSONResponse)
 async def plan_board(reel: str, request: Request):
-    """Claude, as the spot's director: the brief as a shot list that runs to
+    """The planner, as the spot's director: the brief as a shot list that runs to
     the target length on the chosen clip model's durations."""
     if not _reel_or_404(reel):
         return _err("No such reel.", 404)
@@ -1539,49 +1519,29 @@ async def library_download(items: str = "", size: int = 0):
     return _zip_response(buf, "library", size)
 
 
-# ── the balance (Comfy's when Comfy Router is on, else Segmind's) ───────────
-# The header read the balance once, when the page opened: two clips later it
-# still said $55 while Segmind had $51 and was asking for a top-up (2026-10-24).
+# ── the balance ─────────────────────────────────────────────────────────────
+# The header once read the balance only when the page opened: two clips later
+# it still showed what the account had before them.
 # So the balance is read live (cached a few seconds across the page's asks),
 # shown next to what is already committed (runs rendering or in line, at
-# Segmind's average price), turns amber below STUDIO_LOW_CREDIT, and a run
-# the account can't cover is refused before anything is sent.
-LOW_CREDIT = float(os.getenv("STUDIO_LOW_CREDIT", "50"))
-LOW_CREDIT_COMFY = float(os.getenv("STUDIO_LOW_CREDIT_COMFY", "5"))      # a personal Comfy account runs leaner
+# each model's price), turns amber below STUDIO_LOW_CREDIT, and a run the
+# account can't cover is refused before anything is sent.
+LOW_CREDIT = float(os.getenv("STUDIO_LOW_CREDIT", "5"))
 _bal: Dict[str, Dict] = {}            # whose balance (a visitor's, on the demo) → {t, v}
 _bal_lock = threading.Lock()
 
 
-def _bank() -> str:
-    """Whose balance the studio watches."""
-    return "Comfy" if M.engines()[0] else "Segmind"
-
-
 def _balance(max_age: float = 10.0) -> Optional[float]:
-    """Dollars left at Comfy (or Segmind, paid + free), or None when it can't be asked."""
+    """Dollars left on the Comfy account, or None when it can't be asked."""
     who = V.current.get()
     with _bal_lock:
         hit = _bal.get(who)
         if hit and time.time() - hit["t"] < max_age:
             return hit["v"]
-    if _bank() == "Comfy":
-        v = comfy.balance()
-        if v is not None:
-            with _bal_lock:
-                _bal[who] = {"t": time.time(), "v": v}
-        return v
-    try:
-        r = requests.get(f"{M.SEG_BASE}/get-user-credits",
-                         headers={"x-api-key": settings.SEGMIND_API_KEY}, timeout=10)
-        j = r.json() if r.status_code == 200 else {}
-        v = j.get("credits", j.get("remaining_credits", j.get("balance")))
-        if v is None:
-            return None
-        v = round(float(v) + float(j.get("free-credits") or 0), 2)
-    except Exception:
-        return None
-    with _bal_lock:
-        _bal[who] = {"t": time.time(), "v": v}
+    v = comfy.balance()
+    if v is not None:
+        with _bal_lock:
+            _bal[who] = {"t": time.time(), "v": v}
     return v
 
 
@@ -1612,22 +1572,21 @@ def _cant_afford(need: float) -> Optional[str]:
         return None
     bal = _balance()
     if bal is None:
-        return None                          # Segmind can't say: let the run decide
+        return None                          # Comfy can't say: let the run decide
     waiting = _committed()["waiting"]
     if bal - waiting >= need:
         return None
     line = f" and about ${waiting:.2f} is already waiting in line" if waiting else ""
-    where = "platform.comfy.org" if _bank() == "Comfy" else "segmind.com"
-    return (f"{_bank()} has ${bal:.2f}{line}, and this needs about ${need:.2f}. "
-            f"Top up at {where}, then run it again.")
+    return (f"Comfy has ${bal:.2f}{line}, and this needs about ${need:.2f}. "
+            "Add credits in ComfyUI (Settings, Plan & Credits), then run it again.")
 
 
 @router.get("/credits", response_class=JSONResponse)
 async def credits(fresh: int = 0):
     bal = await run_in_threadpool(_balance, 0.0 if fresh else 10.0)
     if bal is None:
-        return _err(f"{_bank()} didn't say what the balance is.", 502)
+        return _err("Comfy didn't say what the balance is.", 502)
     c = await run_in_threadpool(_committed)
     left = round(bal - c["rendering"] - c["waiting"], 2)
-    low_at = LOW_CREDIT_COMFY if _bank() == "Comfy" else LOW_CREDIT
-    return {"credits": bal, "bank": _bank(), **c, "left": left, "low": left < low_at, "low_at": low_at, "as_of": time.time()}
+    return {"credits": bal, "bank": "Comfy", **c, "left": left, "low": left < LOW_CREDIT, "low_at": LOW_CREDIT,
+            "as_of": time.time()}

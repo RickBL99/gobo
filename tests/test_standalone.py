@@ -18,8 +18,8 @@ os.chdir(ROOT)
 
 TMP = tempfile.mkdtemp(prefix="studio-shell-test-")
 os.environ["STUDIO_DIR"] = os.path.join(TMP, "reels")
-os.environ.update(STUDIO_ENV_FILE="", SEGMIND_API_KEY="test-key", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
-                  AZURE_STORAGE_CONNECTION_STRING="", STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_PREFIX="/studio")
+os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
+                  STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_PREFIX="/studio")
 
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402

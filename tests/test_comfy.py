@@ -18,8 +18,8 @@ os.chdir(ROOT)
 
 TMP = tempfile.mkdtemp(prefix="comfy-test-")
 os.environ["STUDIO_DIR"] = os.path.join(TMP, "reels")
-os.environ.update(STUDIO_ENV_FILE="", SEGMIND_API_KEY="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
-                  AZURE_STORAGE_CONNECTION_STRING="", STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_ENGINES="")
+os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
+                  STUDIO_PASSWORD="", STUDIO_USERS="")
 
 from PIL import Image  # noqa: E402
 
@@ -48,24 +48,20 @@ class Resp:
 
 
 def comfy_only():
-    """Patch the keys so only Comfy Router is on, files 'hosted' without a network."""
-    ps = [mock.patch.object(settings, "COMFY_API_KEY", "ck-test"), mock.patch.object(settings, "SEGMIND_API_KEY", ""),
-          mock.patch.object(settings, "ENGINES", set()), mock.patch.object(comfy, "host", lambda p: HOSTED)]
+    """A Comfy key, and files 'hosted' without a network."""
+    ps = [mock.patch.object(settings, "COMFY_API_KEY", "ck-test"), mock.patch.object(comfy, "host", lambda p: HOSTED)]
     for p in ps:
         p.start()
     return ps
 
 
 class Engines(unittest.TestCase):
-    def test_which_catalogues_show(self):
-        with mock.patch.object(settings, "ENGINES", set()):
-            for comfy_key, seg_key, want in (("", "", (False, True)), ("c", "", (True, False)),
-                                             ("c", "s", (True, True)), ("", "s", (False, True))):
-                with mock.patch.object(settings, "COMFY_API_KEY", comfy_key), \
-                        mock.patch.object(settings, "SEGMIND_API_KEY", seg_key):
-                    self.assertEqual(M.engines(), want, (comfy_key, seg_key))
-        with mock.patch.object(settings, "ENGINES", {"comfy"}), mock.patch.object(settings, "SEGMIND_API_KEY", "s"):
-            self.assertEqual(M.engines(), (True, False))
+    def test_comfy_router_is_the_one_catalogue(self):
+        # with a key or without one (the page still shows what you could run)
+        for key in ("", "ck-test"):
+            with mock.patch.object(settings, "COMFY_API_KEY", key):
+                pm = M.public_models()
+                self.assertTrue(len(pm) > 100 and all(m["engine"] == "comfy" for m in pm), len(pm))
 
 
 class Catalogue(unittest.TestCase):

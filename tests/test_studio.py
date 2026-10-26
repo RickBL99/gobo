@@ -1,7 +1,7 @@
 """
 Tests for Gobo's studio (/studio): the prompt compiler, the
-schema-driven mapping of one shot onto every Segmind model, the on-disk reel
-store, and the HTTP flow end to end. Hermetic: Segmind, blob storage and
+schema-driven mapping of one shot onto every Comfy Router model, the on-disk reel
+store, and the HTTP flow end to end. Hermetic: Comfy Router, its storage and
 the planner are mocked; ffmpeg runs for real (frames, posters, stitching).
 
     python3 tests/test_studio.py
@@ -27,15 +27,14 @@ os.chdir(ROOT)
 
 TMP = tempfile.mkdtemp(prefix="studio-test-")
 os.environ["STUDIO_DIR"] = os.path.join(TMP, "reels")
-# hermetic: no .env, no real keys, no blob storage, no sign-in
-os.environ.update(STUDIO_ENV_FILE="", SEGMIND_API_KEY="test-key", ANTHROPIC_API_KEY="",
-                  OPENAI_API_KEY="", AZURE_STORAGE_CONNECTION_STRING="", STUDIO_PASSWORD="",
-                  STUDIO_USERS="", STUDIO_PREFIX="/studio")
+# hermetic: no .env, no real keys, no sign-in
+os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="",
+                  OPENAI_API_KEY="", STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_PREFIX="/studio")
 
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from studio import catalog as C, direction as D, jobs as J, models as M  # noqa: E402
+from studio import comfy, direction as D, jobs as J, models as M  # noqa: E402
 from studio import routes as studio  # noqa: E402  (the older tests call it `studio`)
 from studio.media import probe  # noqa: E402
 from studio.app import app as APP  # noqa: E402
@@ -123,13 +122,13 @@ class Compiler(unittest.TestCase):
         self.assertEqual(line.count("#"), 8)
 
 
-# ── mapping one shot onto Segmind models ────────────────────────────────────
+# ── mapping one shot onto Comfy Router models ───────────────────────────────
 FIND = staticmethod(lambda n: "/x/" + n)
 
 
 class Mapping(unittest.TestCase):
     def setUp(self):
-        self.p = mock.patch.object(M, "media_url", lambda path: "https://media/" + os.path.basename(path))
+        self.p = mock.patch.object(comfy, "host", lambda path: "https://hosted/" + os.path.basename(path))
         self.p.start()
 
     def tearDown(self):
@@ -138,75 +137,61 @@ class Mapping(unittest.TestCase):
     def build(self, mid, **req):
         return M.build(mid, req, lambda n: "/x/" + n)
 
-    def test_catalogue_is_big_and_featured_resolve(self):
+    def test_catalogue_is_comfy_routers_and_the_picks_resolve(self):
         pm = M.public_models()
         kinds = {k: sum(1 for m in pm if m["kind"] == k) for k in ("image", "video", "upscale", "vupscale")}
-        self.assertGreater(kinds["image"], 150, kinds)
-        self.assertGreater(kinds["video"], 90, kinds)
-        missing = [mid for g in M.FEATURED.values() for _, items in g for mid, _, _ in items if mid not in M.MODELS]
-        self.assertEqual(missing, [])
+        self.assertGreater(kinds["image"], 50, kinds)
+        self.assertGreater(kinds["video"], 40, kinds)
+        self.assertTrue(kinds["upscale"] and kinds["vupscale"], kinds)
+        self.assertTrue(all(m["engine"] == "comfy" for m in pm))
+        for mid in (M.DEFAULT_UPSCALER, M.DEFAULT_VIDEO_UPSCALER, M.CUTOUT):
+            self.assertIn(mid, M.MODELS, mid)
 
-    def test_aspect_and_tier(self):
-        c = self.build("seedream-5-pro", prompt="P", aspect="21:9", resolution="2K")
-        self.assertEqual(c["payload"], {"prompt": "P", "aspect_ratio": "21:9", "size": "2K", "watermark": False})
+    def test_aspect_and_size(self):
+        self.assertEqual(self.build("byteplus/seedream-5-0-260128", prompt="P", aspect="21:9", resolution="2K")["payload"],
+                         {"prompt": "P", "size": "3024x1296", "watermark": False})
+        # no 16:9 option: the nearest LANDSCAPE, never a square
+        w, h = map(int, self.build("openai/gpt-image-2.5-sunburst", prompt="P", aspect="16:9", resolution="2K")["payload"]["size"].split("x"))
+        self.assertGreater(w, h)
 
-    def test_size_strings_pick_aspect_then_size(self):
-        self.assertEqual(self.build("gpt-image-2.5-sunburst", prompt="P", aspect="16:9", resolution="2K")["payload"]["size"], "2048x1152")
-        # no 3:2 option: the nearest LANDSCAPE, never a square
-        size = self.build("qwen-image-2.1-pro", prompt="P", aspect="3:2", resolution="2K")["payload"]["size"]
-        w, h = map(int, size.split("*"))
-        self.assertGreater(w, h, size)
-
-    def test_family_switches_slug(self):
-        self.assertEqual(self.build("flux-3", prompt="P")["endpoint"], "flux-3-text-to-image")
-        c = self.build("flux-3", prompt="P", refs=["a.jpg"])
-        self.assertEqual(c["endpoint"], "flux-3-image-edit")
-        self.assertEqual(c["payload"]["images"], ["https://media/a.jpg"])
-        self.assertEqual(self.build("kling-3-pro", prompt="P", duration=10)["endpoint"], "kling-3-pro-text2video")
-        c = self.build("kling-3-pro", prompt="P", duration=10, first_frame="f.jpg")
-        self.assertEqual(c["endpoint"], "kling-3-pro-image2video")
-        self.assertEqual(c["payload"]["start_image_url"], "https://media/f.jpg")
-        self.assertEqual(c["payload"]["duration"], "10")          # the model's own type (a string)
-
-    def test_video_frames_audio_codec(self):
-        c = self.build("veo-3.1", prompt="P", aspect="16:9", resolution="1080p", duration=7, audio=True,
-                       first_frame="f.jpg", last_frame="l.jpg")["payload"]
-        self.assertEqual((c["duration"], c["image"], c["last_frame"], c["generate_audio"]),
-                         (8, "https://media/f.jpg", "https://media/l.jpg", True))
-        self.assertEqual(self.build("seedance-2.5", prompt="P", duration=12)["payload"]["output_codec"], "h264")
+    def test_video_frames_audio_and_length(self):
+        p = self.build("veo/veo-3.1-generate-001", prompt="P", aspect="16:9", resolution="1080p", duration=7, audio=True)["payload"]["parameters"]
+        self.assertEqual((p["durationSeconds"], p["generateAudio"], p["aspectRatio"]), (8, True, "16:9"))   # 7 s: the nearest Veo makes
+        c = self.build("kling/kling-v3-omni", prompt="P", duration=10, first_frame="f.jpg")["payload"]
+        self.assertEqual(c["image_list"], [{"image_url": "https://hosted/f.jpg", "type": "first_frame"}])
+        self.assertEqual(c["duration"], "10")          # the model's own type (a string)
 
     def test_keyframes_list_for_flux3_video(self):
-        c = self.build("flux-3-video", prompt="P", first_frame="f.jpg")
-        self.assertEqual(c["endpoint"], "flux-3-image-to-video")
-        self.assertEqual(c["payload"]["keyframes"], ["https://media/f.jpg"])
+        self.assertEqual(self.build("bfl/flux-3-video", prompt="P", first_frame="f.jpg")["payload"]["keyframes"], ["https://hosted/f.jpg"])
 
     def test_refusals_say_what_is_missing(self):
+        needs = next(m["id"] for m in M.public_models() if m["kind"] == "image" and m.get("requires_ref"))
         with self.assertRaises(M.RunError) as cm:
-            self.build("p-image-edit", prompt="P")
+            self.build(needs, prompt="P")
         self.assertIn("add a reference", str(cm.exception))
         with self.assertRaises(M.RunError) as cm:
-            self.build("sora-2", prompt="P", source_video="v.mp4")
+            self.build("wan/wan3.0-video", prompt="P", source_video="v.mp4")
         self.assertIn("doesn't take a video", str(cm.exception))
-        rw = M.MODELS.get("runway-gen4-turbo")
-        self.assertIsNotNone(rw)
-        with self.assertRaises(M.RunError):
-            self.build("runway-gen4-turbo", prompt="P")         # starts from a still
+        with self.assertRaises(M.RunError) as cm:
+            self.build("runway/gen4_turbo", prompt="P")         # starts from a still
+        self.assertIn("add a starting frame", str(cm.exception))
 
     def test_negative_seed_types(self):
-        with_neg = [mid for mid, m in M.MODELS.items() if m["featured"] and m["roles"]["t"].get("negative")
-                    and m["kind"] == "image" and not m["roles"]["t"].get("refs_min")]
-        self.assertTrue(with_neg)
-        R = M.MODELS[with_neg[0]]["roles"]["t"]
-        c = self.build(with_neg[0], prompt="P", negative_prompt="text, watermark", seed="42")["payload"]
+        flat = [mid for mid, m in M.MODELS.items() if m["kind"] == "image" and m["roles"]["t"].get("negative")
+                and not m["roles"]["t"].get("refs_min")
+                and m["roles"]["t"]["negative"] in self.build(mid, prompt="P", negative_prompt="x")["payload"]]
+        self.assertTrue(flat)
+        R = M.MODELS[flat[0]]["roles"]["t"]
+        c = self.build(flat[0], prompt="P", negative_prompt="text, watermark", seed="42")["payload"]
         self.assertEqual(c[R["negative"]], "text, watermark")
-        if R.get("seed"):
+        if R.get("seed") in c:
             self.assertEqual(c[R["seed"]], 42)            # an int, not the string the page sent
 
     def test_upscalers_and_tools(self):
-        c = self.build("clarityai-crystal-upscaler", source="x.jpg", scale=2)["payload"]
-        self.assertEqual(c, {"image": "https://media/x.jpg", "scale_factor": 2})
-        self.assertEqual(self.build("topaz-video-upscale", source="v.mp4")["payload"]["target_resolution"], "1080p")
-        self.assertEqual(M.MODELS["bria-remove-background"]["kind"], "upscale")
+        self.assertEqual(self.build(M.DEFAULT_UPSCALER, source="x.jpg", scale=2)["payload"],
+                         {"image_url": "https://hosted/x.jpg", "scale_factor": 2.0})
+        self.assertEqual(self.build(M.DEFAULT_VIDEO_UPSCALER, source="v.mp4")["payload"]["input_video"], "https://hosted/v.mp4")
+        self.assertEqual(M.MODELS[M.CUTOUT]["kind"], "upscale")
 
     def test_every_drivable_model_builds_a_payload(self):
         """The registry must never offer a model whose payload then fails to
@@ -230,86 +215,46 @@ class Mapping(unittest.TestCase):
                 bad.append((pm["id"], str(e)[:80]))
         self.assertEqual(bad, [])
 
-    def test_elide_hides_sas_tokens(self):
-        e = M.elide({"image": "https://acct.blob.core.windows.net/c/x.jpg?sv=2024&sig=SECRET", "p": "x" * 500})
+    def test_elide_hides_signed_links(self):
+        e = M.elide({"image": "https://storage.example/c/x.jpg?Expires=1&Signature=SECRET", "p": "x" * 500})
         self.assertNotIn("SECRET", json.dumps(e))
         self.assertLess(len(e["p"]), 200)
 
-    def test_output_url_shapes(self):
-        for body in ({"images": [{"url": "https://i/a.jpg"}]}, {"video": {"url": "https://i/a.mp4"}},
-                     {"output": "https://i/a.png"}, {"output": ["https://i/a.png"]}):
-            self.assertTrue(M._output_url(body).startswith("https://i/"), body)
-        self.assertIsNone(M._output_url({"output": "done"}))
-
 
 class Errors(unittest.TestCase):
-    def resp(self, code, body):
-        r = mock.Mock(status_code=code, text=json.dumps(body))
-        r.json = lambda: body
-        return r
-
-    def test_reasons(self):
-        self.assertEqual(M._error_of(self.resp(401, {})).reason, "unavailable")
-        self.assertEqual(M._error_of(self.resp(402, {"error": "x"})).reason, "credits")
-        self.assertEqual(M._error_of(self.resp(400, {"error": "Insufficient credits"})).reason, "credits")
-        self.assertEqual(M._error_of(self.resp(429, {})).reason, "rateLimit")
-        self.assertEqual(M._error_of(self.resp(422, {"error": "Content policy violation"})).reason, "policy")
-        self.assertEqual(M._error_of(self.resp(422, {"error": "duration must be one of"})).reason, "validation")
-        self.assertEqual(M._error_of(self.resp(422, {"error": "The model is temporarily unavailable. Please try again in a few minutes."})).reason, "unavailable")
+    def test_a_busy_provider_names_its_limit(self):
         luma = 'Generation request failed: {"detail":"Concurrent generation limit reached (4)"}'
-        self.assertEqual(M._error_of(self.resp(422, {"error": luma})).reason, "busy")
         self.assertEqual((M.busy_limit(luma), M.busy_limit("too many concurrent tasks"), M.busy_limit("duration must be 5")), (4, None, None))
 
     def test_footage_lengths(self):
-        k, f, ext = "kling-o3-video2video-edit", "flux-3-video-edit", "pixverse-v6-extend"
-        if not all(m in M.MODELS for m in (k, f, ext)):
-            self.skipTest("footage tools not in the catalogue")
+        k, f = "wan/wan2.7-videoedit", "bfl/video-edit-v1"
         self.assertIsNone(M.fit_source(k, 10.7)[0])
         self.assertIn("10 s or less apart", M.fit_source(k, 10.7)[1])
-        self.assertIn("at least 3 s", M.fit_source(k, 2.0)[1])
+        self.assertIn("at least 2 s", M.fit_source(k, 1.0)[1])
         self.assertEqual(M.fit_source(k, 7.3), (7, ""))                  # told the stretch's length
         self.assertEqual(M.fit_source(k, 7.3, 8), (8, ""))               # a length the page chose stands
         self.assertEqual(M.fit_source(k, 7.3, "5.6"), (6, ""))           # sent as text, still read
         self.assertEqual(M.fit_source(k, 7.3, "soon"), (7, ""))          # nonsense is ignored, not a crash
         self.assertEqual(M.fit_source(f, 12.0), (None, ""))              # no length setting: nothing to say
         self.assertIn("up to 15 s", M.fit_source(f, 16.0)[1])
-        self.assertEqual(M.fit_source(ext, 20.0, 5), (5, ""))            # an extend length is how much it adds
         self.assertEqual(M.fit_source("no-such-model", 99.0), (None, ""))
         pm = {m["id"]: m for m in M.public_models()}
-        self.assertEqual((pm[k]["source_min"], pm[k]["source_max"]), (3, 10))
-        self.assertNotIn("source_max", pm.get("sam-v2-video", {}))
+        self.assertEqual((pm[k]["source_min"], pm[k]["source_max"]), (2, 10))
 
     def test_failures_in_plain_english(self):
         nothing = "The model rejected these inputs: Prediction failed: The model did not produce an output. Adjust the input or retry."
-        h = M.failure_hint({"label": "Kling O3 Video Edit", "model": "kling-o3-video2video-edit", "reason": "validation", "error": nothing,
+        h = M.failure_hint({"label": "Wan 2.7 Video Edit", "model": "wan/wan2.7-videoedit", "reason": "validation", "error": nothing,
                             "request": {"source_video": "f.mp4"}})
         self.assertIn("made nothing", h); self.assertIn("up to 10 s", h); self.assertIn("In and Out", h)
         self.assertIn("simpler prompt", M.failure_hint({"label": "X", "reason": "validation", "error": nothing, "request": {}}))
-        g = M.failure_hint({"label": "Veo 3.1", "model": "veo-3.1", "reason": "policy", "error": "blocked", "request": {}})
+        g = M.failure_hint({"label": "Veo 3.1", "model": "veo/veo-3.1-generate-001", "reason": "policy", "error": "blocked", "request": {}})
         self.assertIn("Google's models refuse real people", g)
-        self.assertNotIn("Google", M.failure_hint({"label": "Kling", "model": "kling-2.6", "reason": "policy", "error": "x", "request": {}}))
+        self.assertNotIn("Google", M.failure_hint({"label": "Kling", "model": "kling/kling-v3-omni", "reason": "policy", "error": "x", "request": {}}))
         self.assertIn("Check again", M.failure_hint({"label": "X", "reason": "timeout", "error": "", "request": {}}))
-        self.assertIn("segmind.com", M.failure_hint({"label": "X", "reason": "credits", "error": "", "request": {}}))
+        self.assertIn("Plan & Credits", M.failure_hint({"label": "X", "reason": "credits", "error": "", "request": {}}))
         for reason in ("unavailable", "rateLimit", "network", "validation", "provider", "client", ""):
             hint = M.failure_hint({"label": "X", "reason": reason, "error": "y", "request": {}})
             self.assertTrue(hint and not any(w in hint.lower() for w in BANNED), (reason, hint))
-
-    def test_poll_states(self):
-        seq = {"s": None}
-
-        def get(url, headers, timeout):
-            if url.endswith("/status"):
-                return self.resp(200, {"status": seq["s"]})
-            return self.resp(200, {"video": {"url": "https://i/out.mp4"}, "metrics": {"cost": 0.4}})
-        with mock.patch.object(M.requests, "get", get):
-            seq["s"] = "PROCESSING"
-            self.assertTrue(M.poll("https://api.segmind.com/v2/requests/abc/status")["pending"])
-            seq["s"] = "COMPLETED"
-            self.assertEqual(M.poll("https://api.segmind.com/v2/requests/abc/status"),
-                             {"url": "https://i/out.mp4", "cost": 0.4, "seed": None})
-            seq["s"] = "FAILED"
-            with self.assertRaises(M.RunError):
-                M.poll("https://api.segmind.com/v2/requests/abc/status")
 
 
 # ── the reel store ──────────────────────────────────────────────────────────
@@ -386,6 +331,9 @@ class Store(unittest.TestCase):
 
 
 # ── HTTP, end to end ────────────────────────────────────────────────────────
+PRICED = "ltx/ltx-2-5-fast"                 # a clip model Router publishes a price for
+
+
 class Flow(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -401,11 +349,11 @@ class Flow(unittest.TestCase):
             if os.path.exists(f):
                 os.remove(f)
         self.patches = [
-            mock.patch.object(M, "media_url", lambda p: "https://media/" + os.path.basename(p)),
+            mock.patch.object(comfy, "host", lambda p: "https://hosted/" + os.path.basename(p)),
             mock.patch.object(M, "submit", self.fake_submit),
             mock.patch.object(studio, "_balance", lambda max_age=10.0: self.balance),
         ]
-        self.balance = 1000.0                          # Segmind is never asked in tests
+        self.balance = 1000.0                          # Comfy is never asked in tests
         for p in self.patches:
             p.start()
         # background work in tests: run it inline so the order is deterministic
@@ -461,7 +409,7 @@ class Flow(unittest.TestCase):
     def test_image_takes_run_and_land(self):
         reel = self.reel()
         r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "A boat at dawn.", "direction": D.DEFAULTS,
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A boat at dawn.", "direction": D.DEFAULTS,
             "aspect": "16:9", "resolution": "2K", "takes": 3, "seed": "100"}).json()
         self.assertEqual([t["letter"] for t in r["takes"]], ["A", "B", "C"])
         self.assertEqual(len(self.submitted), 3)
@@ -487,34 +435,34 @@ class Flow(unittest.TestCase):
     def test_shootout_one_take_per_model(self):
         reel = self.reel()
         r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "models": ["seedream-5-pro", "flux-3", "gpt-image-2.5-sunburst"],
+            "mode": "image", "models": ["byteplus/seedream-5-0-260128", "bfl/flux-3-image", "openai/gpt-image-2.5-sunburst"],
             "scene": "A boat.", "takes": 4}).json()
         self.assertEqual(len(r["takes"]), 3)
-        self.assertEqual({t["model"] for t in r["takes"]}, {"seedream-5-pro", "flux-3", "gpt-image-2.5-sunburst"})
+        self.assertEqual({t["model"] for t in r["takes"]}, {"byteplus/seedream-5-0-260128", "bfl/flux-3-image", "openai/gpt-image-2.5-sunburst"})
         self.assertEqual(len({t["shot"] for t in r["takes"]}), 1)
 
     def test_wrong_mode_and_missing_ref_are_refused(self):
         reel = self.reel()
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "veo-3.1", "scene": "x"}).status_code, 400)
+            "mode": "image", "model": "veo/veo-3.1-generate-001", "scene": "x"}).status_code, 400)
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "flux-3", "scene": "x", "refs": ["ref-nothere.jpg"]}).status_code, 400)
+            "mode": "image", "model": "bfl/flux-3-image", "scene": "x", "refs": ["ref-nothere.jpg"]}).status_code, 400)
 
     def test_model_failure_is_named(self):
         reel = self.reel()
         with mock.patch.object(M, "submit", side_effect=M.RunError("blocked", "policy")):
             t = self.c.post(f"/studio/reels/{reel}/run", json={
-                "mode": "image", "model": "seedream-5-pro", "scene": "x"}).json()["takes"][0]
+                "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
         t = J.get_take(reel, t["id"])
         self.assertEqual((t["status"], t["reason"]), ("failed", "policy"))
-        nt = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/retry", json={"model": "flux-3"}).json()["take"]
-        self.assertEqual(nt["model"], "flux-3")
+        nt = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/retry", json={"model": "bfl/flux-3-image"}).json()["take"]
+        self.assertEqual(nt["model"], "bfl/flux-3-image")
         self.assertEqual(nt["parent"], t["id"])
 
     def test_cancel_stays_cancelled_when_result_arrives(self):
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "x"}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
         self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/cancel")
         self.finish(reel, t["id"], jpeg(), ".jpg")
         self.assertEqual(J.get_take(reel, t["id"])["status"], "cancelled")
@@ -526,9 +474,10 @@ class Flow(unittest.TestCase):
         up = self.c.post(f"/studio/reels/{reel}/refs", files={"file": ("a.jpg", jpeg(), "image/jpeg")}).json()
         self.assertEqual((up["kind"], up["w"]), ("image", 320))
         self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "flux-3", "scene": "Her, in Paris.", "refs": [up["name"]]})
+            "mode": "image", "model": "bfl/flux-3-image", "scene": "Her, in Paris.", "refs": [up["name"]]})
         call = self.submitted[-1]
-        self.assertEqual(call["endpoint"], "flux-3-image-edit")
+        self.assertEqual(call["endpoint"], "bfl/flux-3-image")           # FLUX 3 on Router takes references itself
+        self.assertEqual(call["payload"]["images"], ["https://hosted/" + up["name"]])
         self.assertTrue(call["payload"]["prompt"].endswith("Keep the character from reference image 1."))
 
     @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg not installed")
@@ -539,7 +488,7 @@ class Flow(unittest.TestCase):
         ids = []
         for path in (a, b):
             t = self.c.post(f"/studio/reels/{reel}/run", json={
-                "mode": "video", "model": "seedance-2.5", "scene": "Waves.", "duration": 5}).json()["takes"][0]
+                "mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "Waves.", "duration": 5}).json()["takes"][0]
             with open(path, "rb") as f:
                 self.finish(reel, t["id"], f.read(), ".mp4", cost=0.3)
             ids.append(t["id"])
@@ -550,8 +499,8 @@ class Flow(unittest.TestCase):
         self.assertEqual((last["kind"], last["action"], last["w"]), ("image", "frame", 320))
         # continue the shot: the grabbed frame starts the next clip
         self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "kling-3-pro", "scene": "The wave breaks.", "first_frame": last["file"], "duration": 5})
-        self.assertEqual(self.submitted[-1]["endpoint"], "kling-3-pro-image2video")
+            "mode": "video", "model": "kling/kling-v3-omni", "scene": "The wave breaks.", "first_frame": last["file"], "duration": 5})
+        self.assertEqual(self.submitted[-1]["endpoint"], "kling/kling-v3-omni")
         st = self.c.post(f"/studio/reels/{reel}/stitch", json={"takes": ids}).json()["take"]
         self.assertEqual((st["kind"], st["action"], st["w"], st["h"]), ("video", "stitch", 320, 180))
         self.assertAlmostEqual(float(st["seconds"]), 2.0, delta=0.3)
@@ -571,7 +520,7 @@ class Flow(unittest.TestCase):
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{st['id']}/grade", json={}).status_code, 400)
         # stills stitch too, held for still_seconds, and the frame follows the first CLIP
         still = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "A beach."}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A beach."}).json()["takes"][0]
         self.finish(reel, still["id"], jpeg((640, 640)), ".jpg")
         mix = self.c.post(f"/studio/reels/{reel}/stitch",
                           json={"takes": [still["id"], ids[0]], "still_seconds": 2}).json()["take"]
@@ -585,7 +534,7 @@ class Flow(unittest.TestCase):
         z = zipfile.ZipFile(io.BytesIO(self.c.get(f"/studio/reels/{reel}/download?takes={still['id']},{ids[1]}").content))
         self.assertEqual(sorted(n.rsplit(".", 1)[-1] for n in z.namelist()), ["jpg", "json", "mp4"])
         busy = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "Still going."}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "Still going."}).json()["takes"][0]
         gone = self.c.post(f"/studio/reels/{reel}/takes/delete",
                            json={"takes": [still["id"], mix["id"], busy["id"]]}).json()
         self.assertEqual((sorted(gone["deleted"]), gone["kept"]), (sorted([still["id"], mix["id"]]), [busy["id"]]))
@@ -606,7 +555,7 @@ class Flow(unittest.TestCase):
         if r.returncode != 0:
             self.skipTest("no libx265 here")
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "seedance-2.5", "scene": "x", "duration": 5}).json()["takes"][0]
+            "mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "x", "duration": 5}).json()["takes"][0]
         with open(src, "rb") as f:
             self.finish(reel, t["id"], f.read(), ".mp4")
         self.assertTrue(J.get_take(reel, t["id"])["file"].endswith("-h264.mp4"))
@@ -614,11 +563,11 @@ class Flow(unittest.TestCase):
     def test_upscale_and_cutout_chain(self):
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "x"}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
         self.finish(reel, t["id"], jpeg(), ".jpg")
         up = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/upscale", json={}).json()["take"]
         self.assertEqual((up["model"], up["action"]), (M.DEFAULT_UPSCALER, "upscale"))
-        self.assertEqual(self.submitted[-1]["payload"]["image"].startswith("https://media/"), True)
+        self.assertTrue(self.submitted[-1]["payload"]["image_url"].startswith("https://hosted/"))
         cut = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/upscale", json={"tool": "cutout"}).json()["take"]
         self.assertEqual((cut["model"], cut["action"]), (M.CUTOUT, "cutout"))
 
@@ -630,28 +579,13 @@ class Flow(unittest.TestCase):
         self.assertIn("const STILLS = true;", r.text)
         models = json.loads(r.text.split("const MODELS = ", 1)[1].split(";\n", 1)[0])
         self.assertTrue(models and all(m["kind"] in ("image", "upscale") for m in models))
-        self.assertGreater(sum(m["kind"] == "image" for m in models), 150)
+        self.assertGreater(sum(m["kind"] == "image" for m in models), 50)
         self.assertIn("const STILLS = false;", self.c.get("/studio").text)
-
-    def test_loras_are_models(self):
-        reg = os.path.join(TMP, "loras.json")
-        with open(reg, "w") as f:
-            json.dump([{"id": "abcdef12-0000", "name": "house-style", "trigger_word": "sstk_house",
-                        "status": "AVAILABLE", "endpoint_slug": "1234-house-style"},
-                       {"id": "zzz", "name": "training", "status": "TRAINING", "endpoint_slug": "x"}], f)
-        with mock.patch.object(M, "LORA_REGISTRY", reg):
-            ls = [m for m in M.public_models() if m["group"] == "Your LoRAs"]
-            self.assertEqual([(m["id"], m["label"], m["kind"]) for m in ls], [("lora-abcdef12", "house-style", "image")])
-            call = M.build("lora-abcdef12", {"prompt": "A kitchen.", "aspect": "16:9", "resolution": "", "seed": 3, "refs": []}, lambda n: None)
-        self.assertEqual(call["endpoint"], "1234-house-style")
-        self.assertEqual(call["payload"]["prompt"], "sstk_house, A kitchen.")
-        self.assertEqual((call["payload"]["aspect_ratio"], call["payload"]["num_inference_steps"], call["payload"]["guidance_scale"]),
-                         ("16:9", 28, 3.5))
 
     def test_a_batch_of_prompts(self):
         reel = self.c.post("/studio/reels", json={"name": "Batch", "app": "cg"}).json()["id"]
         r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "enhance": False,
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "enhance": False,
             "prompts": [{"scene": "A red door.", "negative_prompt": "blur"}, "A blue door.", {"scene": "  "}]}).json()
         self.assertEqual([t["letter"] for t in r["takes"]], ["A", "B"])
         self.assertEqual(len({t["shot"] for t in r["takes"]}), 1)
@@ -660,10 +594,10 @@ class Flow(unittest.TestCase):
         self.assertEqual(J.get_take(reel, r["takes"][1]["id"])["settings"]["scene"], "A blue door.")
         # one still model only
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "models": ["seedream-5-pro", "flux-3"], "prompts": ["x"]}).status_code, 400)
+            "mode": "image", "models": ["byteplus/seedream-5-0-260128", "bfl/flux-3-image"], "prompts": ["x"]}).status_code, 400)
         # twenty is the cap, lettered past H
         r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "A pier.", "takes": 50}).json()
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier.", "takes": 50}).json()
         self.assertEqual(len(r["takes"]), 20)
         self.assertEqual(r["takes"][-1]["letter"], "T")
         # each page lists its own reels
@@ -673,7 +607,7 @@ class Flow(unittest.TestCase):
     def test_download_upsized_for_filing(self):
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "A pier."}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier."}).json()["takes"][0]
         self.finish(reel, t["id"], jpeg((640, 360)), ".jpg")
         r = self.c.get(f"/studio/reels/{reel}/download?size=4000")
         self.assertIn("-4k.zip", r.headers["content-disposition"])
@@ -687,7 +621,7 @@ class Flow(unittest.TestCase):
         # pump drop two live clips; both finished (and billed) and were never collected
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "seedance-2.5", "scene": "Rain on a window.", "duration": 5}).json()["takes"][0]
+            "mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "Rain on a window.", "duration": 5}).json()["takes"][0]
         self.assertTrue(J.is_active(reel, t["id"]))
         with mock.patch.object(J, "get_take", lambda r, x: None):       # unreadable, but there
             studio._pump_once()
@@ -711,7 +645,7 @@ class Flow(unittest.TestCase):
     def test_check_again_collects_a_stopped_take(self):
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "A pier."}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier."}).json()["takes"][0]
         self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/cancel")
         studio._pump_once()                                        # stopped: off the list
         self.assertFalse(J.is_active(reel, t["id"]))
@@ -734,7 +668,7 @@ class Flow(unittest.TestCase):
     def test_star_rename_delete_and_list(self):
         reel = self.reel()
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "x"}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
         self.finish(reel, t["id"], jpeg(), ".jpg")
         self.assertTrue(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/star", json={"starred": True}).json()["take"]["starred"])
         self.assertEqual(self.c.patch(f"/studio/reels/{reel}", json={"name": "Renamed"}).json()["name"], "Renamed")
@@ -749,7 +683,7 @@ class Flow(unittest.TestCase):
 
         def shoot(reel, scene, done=True):
             t = self.c.post(f"/studio/reels/{reel}/run", json={
-                "mode": "image", "model": "seedream-5-pro", "scene": scene}).json()["takes"][0]
+                "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": scene}).json()["takes"][0]
             if done:
                 self.finish(reel, t["id"], jpeg(), ".jpg")
             return t["id"]
@@ -847,7 +781,7 @@ class Flow(unittest.TestCase):
         reel = self.reel()
         src = self.reel()
         maya = self.c.post(f"/studio/reels/{src}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "Portrait of Maya."}).json()["takes"][0]
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "Portrait of Maya."}).json()["takes"][0]
         self.finish(src, maya["id"], jpeg(), ".jpg")
         # a still from another reel comes in as this reel's own reference file
         ref = self.c.post(f"/studio/reels/{reel}/refs/copy", json={"item": f"{src}:{maya['id']}"}).json()
@@ -856,7 +790,7 @@ class Flow(unittest.TestCase):
         self.c.put(f"/studio/reels/{reel}/board", json={"shots": [{"id": "card1", "n": 7}]})
         # keyframes: two variants on shot 7, the kit named in the prompt
         r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "seedream-5-pro", "scene": "Maya opens the fridge.", "takes": 2,
+            "mode": "image", "model": "bfl/flux-3-image", "scene": "Maya opens the fridge.", "takes": 2,
             "refs": [ref["name"]], "ref_names": ["Maya"], "shot": 7, "board": "card1", "role": "key", "seed": "77"}).json()["takes"]
         self.assertEqual([(t["shot"], t["letter"], t["board"], t["role"]) for t in r], [(7, "A", "card1", "key"), (7, "B", "card1", "key")])
         self.assertIn("Reference images: image 1 is Maya. Keep it exactly as shown.", r[0]["prompt"])
@@ -864,11 +798,11 @@ class Flow(unittest.TestCase):
         # the clip letters on from the keyframes
         self.finish(reel, r[0]["id"], jpeg(), ".jpg")
         c = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "seedance-2.5", "scene": "Maya opens the fridge.", "duration": 5,
+            "mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "Maya opens the fridge.", "duration": 5,
             "first_frame": J.get_take(reel, r[0]["id"])["file"], "shot": 7, "board": "card1", "role": "clip"}).json()["takes"][0]
         self.assertEqual((c["shot"], c["letter"], c["role"]), (7, "C", "clip"))
         # an ordinary Generate takes the next free number, past the board's
-        o = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "seedream-5-pro", "scene": "x"}).json()["takes"][0]
+        o = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
         self.assertEqual((o["shot"], o.get("board")), (8, None))
 
     @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg not installed")
@@ -876,7 +810,7 @@ class Flow(unittest.TestCase):
         reel = self.reel()
         a = os.path.join(TMP, "bd-a.mp4"); clip(a, 2.0, "red", audio=True)
         t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "seedance-2.5", "scene": "A run.", "duration": 5, "shot": 1, "board": "c1", "role": "clip"}).json()["takes"][0]
+            "mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "A run.", "duration": 5, "shot": 1, "board": "c1", "role": "clip"}).json()["takes"][0]
         with open(a, "rb") as f:
             self.finish(reel, t["id"], f.read(), ".mp4")
         # "continue": the next card's keyframe is the last frame of this clip, on the next card's shot
@@ -918,7 +852,7 @@ class Flow(unittest.TestCase):
                 self.assertIn("100 MB", self.c.post(f"/studio/reels/{reel}/footage", files={"file": ("a.mov", f, "video/quicktime")}).json()["error"])
         # a change runs on the trimmed stretch, not the whole clip
         c = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "video", "model": "flux-3-video-edit", "scene": "Make it winter.", "prompt_override": "Make it winter.",
+            "mode": "video", "model": "bfl/video-edit-v1", "scene": "Make it winter.", "prompt_override": "Make it winter.",
             "source_video": t["file"], "source_trim": [0.5, 2.0], "shot": 4, "board": "f1", "role": "clip", "action": "change"}).json()["takes"][0]
         sent = J.get_take(reel, c["id"])["request"]["source_video"]
         self.assertTrue(sent.startswith("cut-"))
@@ -926,34 +860,14 @@ class Flow(unittest.TestCase):
         self.assertEqual(self.submitted[-1]["payload"]["prompt"], "Make it winter.")
 
     @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg not installed")
-    def test_an_extension_says_where_its_new_part_starts(self):
-        reel = self.reel()
-        src = os.path.join(TMP, "x-src.mp4"); clip(src, 2.0, "red")
-        tail = os.path.join(TMP, "x-tail.mp4"); clip(tail, 2.0, "blue")
-        both = os.path.join(TMP, "x-both.mp4")
-        subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", src, "-i", tail, "-filter_complex", "[0:v][1:v]concat=n=2:v=1[v]",
-                        "-map", "[v]", "-c:v", "libx264", "-pix_fmt", "yuv420p", both], check=True, stdin=subprocess.DEVNULL)
-        with open(src, "rb") as f:
-            foot = self.c.post(f"/studio/reels/{reel}/footage", files={"file": ("s.mp4", f, "video/mp4")}).json()["take"]
-        for out, want in ((both, 2.0), (tail, 0.0)):
-            t = self.c.post(f"/studio/reels/{reel}/run", json={
-                "mode": "video", "model": "pixverse-v6-extend", "scene": "On.", "prompt_override": "On.", "source_video": foot["file"],
-                "duration": 2, "action": "extend"}).json()["takes"][0]
-            with open(out, "rb") as f:
-                self.finish(reel, t["id"], f.read(), ".mp4")
-            self.assertAlmostEqual(float(J.get_take(reel, t["id"])["new_from"]), want, delta=0.1)
-
-    @unittest.skipUnless(HAVE_FFMPEG, "ffmpeg not installed")
     def test_footage_a_tool_cant_take_is_stopped_before_it_is_sent(self):
-        # prod, 2026-10-23: a 10.7 s clip went whole to Kling O3 Video Edit with no length;
-        # Kling made nothing, three times. The server now checks, whatever page sent it.
-        if "kling-o3-video2video-edit" not in M.MODELS:
-            self.skipTest("Kling O3 Video Edit not in the catalogue")
+        # prod, 2026-10-23: a 10.7 s clip went whole to a 10-second edit tool with no length;
+        # it made nothing, three times. The server now checks, whatever page sent it.
         reel = self.reel()
         src = os.path.join(TMP, "k-src.mp4"); clip(src, 10.7, "gray")
         with open(src, "rb") as f:
             foot = self.c.post(f"/studio/reels/{reel}/footage", files={"file": ("dog.mp4", f, "video/mp4")}).json()["take"]
-        body = {"mode": "video", "model": "kling-o3-video2video-edit", "scene": "x", "prompt_override": "Have the woman holding an alligator.",
+        body = {"mode": "video", "model": "wan/wan2.7-videoedit", "scene": "x", "prompt_override": "Have the woman holding an alligator.",
                 "source_video": foot["file"], "duration": None, "action": "change", "role": "clip"}
         n = len(self.submitted)
         r = self.c.post(f"/studio/reels/{reel}/run", json=body)
@@ -963,9 +877,9 @@ class Flow(unittest.TestCase):
         # a stretch it takes goes, told its length
         t = self.c.post(f"/studio/reels/{reel}/run", json={**body, "source_trim": [2, 9.2]}).json()["takes"][0]
         self.assertEqual(J.get_take(reel, t["id"])["request"]["duration"], 7)
-        self.assertEqual(self.submitted[-1]["payload"]["duration"], "7")
+        self.assertEqual(self.submitted[-1]["payload"]["parameters"]["duration"], 7)
         # Try again on a take that slipped through checks it too
-        old = J.new_take(reel, 9, 0, kind="video", model="kling-o3-video2video-edit", label="Kling O3 Video Edit", prompt="p",
+        old = J.new_take(reel, 9, 0, kind="video", model="wan/wan2.7-videoedit", label="Wan 2.7 Video Edit", prompt="p",
                          aspect="16:9", request={"prompt": "p", "duration": None, "source_video": foot["file"], "refs": []}, settings={})
         J.update_take(reel, old["id"], status="failed", reason="validation",
                       error="The model rejected these inputs: Prediction failed: The model did not produce an output. Adjust the input or retry.")
@@ -978,7 +892,7 @@ class Flow(unittest.TestCase):
         self.assertIn("takes up to 10 s", seen["hint"])
 
     # ── the line: a provider gets only so many runs at once ──
-    def clips(self, reel, n, model="luma-ray-3-2"):
+    def clips(self, reel, n, model="luma_2/ray-3.2"):
         return [self.c.post(f"/studio/reels/{reel}/run", json={
             "mode": "video", "model": model, "scene": f"Shot {i}.", "prompt_override": f"Shot {i}.", "shot": i + 1}).json()["takes"][0]
             for i in range(n)]
@@ -991,7 +905,7 @@ class Flow(unittest.TestCase):
         self.assertEqual(len(self.submitted), 4)
         waiting = [J.get_take(reel, t["id"]) for t in takes[4:]]
         self.assertEqual([(w["status"], w["ahead"], w["lane"], w["lane_cap"]) for w in waiting],
-                         [("queued", 0, "Luma", 4), ("queued", 1, "Luma", 4)])
+                         [("queued", 0, "Comfy · Luma", 4), ("queued", 1, "Comfy · Luma", 4)])
         # waiting its turn is not "lost": the stale check leaves it alone however long it waits
         old = {**waiting[0], "beat": time.time() - 3600}
         self.assertEqual(J.stale_check(old)["status"], "queued")
@@ -1003,11 +917,11 @@ class Flow(unittest.TestCase):
         self.assertEqual(J.get_take(reel, takes[5]["id"])["ahead"], 0)
         # another provider's clip doesn't wait behind Luma's; stills aren't held back
         n = len(self.submitted)
-        self.clips(reel, 1, "veo-3.1")
+        self.clips(reel, 1, "veo/veo-3.1-generate-001")
         self.assertEqual(len(self.submitted), n + 1)
         n += 1
         for i in range(6):
-            self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "seedream-5-pro", "scene": f"Still {i}."})
+            self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": f"Still {i}."})
         self.assertEqual(len(self.submitted), n + 6)
         # stopped while waiting: never sent
         self.c.post(f"/studio/reels/{reel}/takes/{takes[5]['id']}/cancel")
@@ -1018,16 +932,16 @@ class Flow(unittest.TestCase):
         self.assertIn("Nothing was spent", J.get_take(reel, takes[5]["id"])["error"])
 
     def test_the_balance_is_live_and_says_whats_committed(self):
-        # 2026-10-24: the header said $55 (read when the page opened) while Segmind had $51 and asked for a top-up
+        # 2026-10-24: the header showed the balance read when the page opened, not what was left
         reel = self.reel()
-        self.clips(reel, 6)                                   # four rendering, two in line
-        p = studio._price("luma-ray-3-2")
+        self.clips(reel, 6, PRICED)                           # four rendering, two in line
+        p = studio._price(PRICED)
         self.assertGreater(p, 0)
-        self.balance = 51.03
+        self.balance = 5.03
         c = self.c.get("/studio/credits?fresh=1").json()
-        self.assertEqual((c["credits"], c["rendering"], c["waiting"]), (51.03, round(4 * p, 2), round(2 * p, 2)))
-        self.assertAlmostEqual(c["left"], 51.03 - 6 * p, places=2)
-        self.assertTrue(c["low"])                             # under $50 once what's committed is paid
+        self.assertEqual((c["credits"], c["rendering"], c["waiting"], c["bank"]), (5.03, round(4 * p, 2), round(2 * p, 2), "Comfy"))
+        self.assertAlmostEqual(c["left"], 5.03 - 6 * p, places=2)
+        self.assertTrue(c["low"])                             # under $5 once what's committed is paid
         self.balance = 500.0
         self.assertFalse(self.c.get("/studio/credits").json()["low"])
         self.balance = None
@@ -1035,33 +949,32 @@ class Flow(unittest.TestCase):
 
     def test_a_run_the_account_cant_cover_is_refused_before_it_is_sent(self):
         reel = self.reel()
-        p = studio._price("luma-ray-3-2")
+        p = studio._price(PRICED)
         self.balance = round(p * 1.5, 2)
-        self.clips(reel, 3)                                   # what's rendering may already be held: only the line counts
+        self.clips(reel, 3, PRICED)                           # what's rendering may already be held: only the line counts
         self.assertEqual(len(self.submitted), 3)
-        w = self.clips(reel, 1)[0]
+        w = self.clips(reel, 1, PRICED)[0]
         J.update_take(reel, w["id"], status="queued")
         J.unmark_active(reel, w["id"]); J.enqueue(reel, w["id"])   # one waiting in line, not yet charged
-        r = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": "luma-ray-3-2", "scene": "x", "prompt_override": "x"})
+        r = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": PRICED, "scene": "x", "prompt_override": "x"})
         self.assertEqual(r.status_code, 402)
         self.assertEqual(r.json()["reason"], "credits")
-        self.assertIn(f"Segmind has ${self.balance:.2f} and about ${p:.2f} is already waiting in line, and this needs about ${p:.2f}",
+        self.assertIn(f"Comfy has ${self.balance:.2f} and about ${p:.2f} is already waiting in line, and this needs about ${p:.2f}",
                       r.json()["error"])
         self.assertEqual(len(self.submitted), 4)
-        self.balance = None                                   # Segmind can't say: the run decides
-        self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": "luma-ray-3-2", "scene": "x", "prompt_override": "x"}).status_code, 200)
+        self.balance = None                                   # Comfy can't say: the run decides
+        self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": PRICED, "scene": "x", "prompt_override": "x"}).status_code, 200)
 
     def test_busy_goes_back_in_line_and_the_lane_learns(self):
         reel = self.reel()
         t = self.clips(reel, 1)[0]
-        luma = mock.Mock(status_code=422, text="")
-        luma.json = lambda: {"error": 'Generation request failed: {"detail":"Concurrent generation limit reached (3)"}'}
-        with mock.patch.object(M.requests, "get", lambda *a, **k: luma):
+        luma = M.RunError('Generation request failed: {"detail":"Concurrent generation limit reached (3)"}', "busy")
+        with mock.patch.object(M, "poll", side_effect=luma):
             studio._advance(reel, t["id"])
         w = J.get_take(reel, t["id"])
         self.assertEqual((w["status"], w["waits"], w["wait_reason"], w.get("poll_url")), ("queued", 1, "busy", None))
         self.assertTrue(J.is_queued(reel, t["id"]) and not J.is_active(reel, t["id"]))
-        self.assertEqual(J.lane_caps()["Luma clips"], 3)                      # the limit it named
+        self.assertEqual(J.lane_caps()["Comfy · Luma clips"], 3)                      # the limit it named
         self.assertNotIn("error", w)
         studio._dispatch()
         self.assertEqual(len(self.submitted), 1)                              # not before its wait is up
@@ -1070,12 +983,12 @@ class Flow(unittest.TestCase):
         self.assertEqual((len(self.submitted), J.get_take(reel, t["id"])["status"]), (2, "running"))
         # a slow-down on sending waits too, and teaches no limit
         with mock.patch.object(M, "submit", side_effect=M.RunError("Too many runs", "rateLimit")):
-            s = self.clips(reel, 1, "veo-3.1")[0]
+            s = self.clips(reel, 1, "veo/veo-3.1-generate-001")[0]
         self.assertEqual(J.get_take(reel, s["id"])["wait_reason"], "rateLimit")
-        self.assertEqual(set(J.lane_caps()), {"Luma clips"})
+        self.assertEqual(set(J.lane_caps()), {"Comfy · Luma clips"})
         # a provider that stays full: the take fails in the end, and says why
         J.update_take(reel, t["id"], waits=studio.MAX_WAITS)
-        with mock.patch.object(M.requests, "get", lambda *a, **k: luma):
+        with mock.patch.object(M, "poll", side_effect=luma):
             studio._advance(reel, t["id"])
         f = J.get_take(reel, t["id"])
         self.assertEqual((f["status"], f["reason"]), ("failed", "busy"))
@@ -1093,7 +1006,7 @@ class Flow(unittest.TestCase):
         with mock.patch.object(M, "director_rewrite", lambda brief, model, video=False, notes="": {
                 "prompt": "REWRITTEN " + brief[:10], "negative_prompt": "", "notes": "n", "brief": brief}):
             r = self.c.post("/studio/direct", json={"scene": "A boat.", "direction": D.DEFAULTS,
-                                                              "model": "veo-3.1", "mode": "video"}).json()
+                                                              "model": "veo/veo-3.1-generate-001", "mode": "video"}).json()
         self.assertTrue(r["prompt"].startswith("REWRITTEN Medium sho"))
         self.assertIn("continuous motion", r["brief"])
 
@@ -1110,7 +1023,7 @@ class Planner(unittest.TestCase):
                 {"scene": "The bottle.", "shot": "insert", "move": "push", "duration": 30, "elements": ["The Bottle"],
                  "start": "continue", "vo": "Stay cold.", "super": "ICEBOX"}]}
         with mock.patch.object(M, "_claude_json", fake):
-            out = M.plan_spot("A :15 for a bottle.", 15, "veo-3.1", [{"name": "Maya", "kind": "cast"}, {"name": "The bottle", "kind": "product"}],
+            out = M.plan_spot("A :15 for a bottle.", 15, "veo/veo-3.1-generate-001", [{"name": "Maya", "kind": "cast"}, {"name": "The bottle", "kind": "product"}],
                               {"light": "golden", "film": "d250"})
         # Veo makes 4, 6 or 8 seconds: the plan is snapped to them
         self.assertEqual([s["duration"] for s in out["shots"]], [8, 8])
@@ -1135,7 +1048,7 @@ class PlannerFootage(unittest.TestCase):
                 {"scene": "dup", "shot": "auto", "move": "auto", "duration": 1, "elements": [], "start": "cut", "vo": "", "super": "", "footage": "fA"},
                 {"scene": "She turns the corner.", "shot": "medium", "move": "track", "duration": 4, "elements": [], "start": "continue", "vo": "", "super": "", "footage": ""}]}
         with mock.patch.object(M, "_claude_json", fake):
-            out = M.plan_spot("A :15", 15, "veo-3.1", [], {}, [{"id": "fA", "seconds": 6.2, "notes": "Woman jogs on the pier"},
+            out = M.plan_spot("A :15", 15, "veo/veo-3.1-generate-001", [], {}, [{"id": "fA", "seconds": 6.2, "notes": "Woman jogs on the pier"},
                                                              {"id": "fB", "seconds": 3, "notes": "Bottle on a rail"}])
         self.assertIn("- fA (6.2 s): Woman jogs on the pier", seen["user"])
         self.assertEqual([(s["footage"], s["duration"]) for s in out["shots"]], [("", 4), ("fA", 6.2), ("", 4), ("fB", 3.0)])
@@ -1144,9 +1057,8 @@ class PlannerFootage(unittest.TestCase):
 
     def test_models_say_what_they_need(self):
         pm = {m["id"]: m for m in M.public_models()}
-        self.assertEqual((pm["pixverse-v6-extend"]["category"], pm["pixverse-v6-extend"]["requires_source"]), ("video-extend", True))
-        self.assertEqual((pm["p-video-replace"]["requires_ref"], pm["p-video-replace"]["takes_prompt"]), (True, False))
-        self.assertTrue(pm["flux-3-video-edit"]["takes_prompt"])
+        e = pm["bfl/video-edit-v1"]
+        self.assertEqual((e["category"], e["requires_source"], e["takes_prompt"]), ("video-edit", True, True))
 
 
 class Inline:
@@ -1156,27 +1068,6 @@ class Inline:
 
     def start(self):
         self.t(*self.a, **self.k)
-
-
-class Refresh(unittest.TestCase):
-    def test_live_schema_normalises(self):
-        ps = {"properties": {
-            "prompt": {"type": "string"},
-            "image": {"type": "string", "format": "uri", "x-file-metadata": {"allowed-types": ["image/*"]}},
-            "duration": {"type": "integer", "oneOf": [{"const": 4}, {"const": 8}], "default": 8},
-            "refs": {"type": "array", "maxItems": 3, "items": {"type": "string", "format": "uri"}},
-        }, "required": ["prompt"]}
-        n = C.normalize_schema(ps)
-        self.assertEqual(n["duration"]["o"], [4, 8])
-        self.assertEqual(n["image"]["md"], "image")
-        self.assertEqual((n["refs"]["mul"], n["refs"]["mi"]), (True, 3))
-        self.assertTrue(n["prompt"]["req"])
-
-    def test_empty_live_schema_keeps_snapshot_inputs(self):
-        prev = {"slug": "x", "inputs": {"prompt": {"t": "string"}}, "category": "text-to-image"}
-        rec = C.compact_from_live({"slug": "x", "name": "X", "parameters_schema": {}}, prev)
-        self.assertEqual(rec["inputs"], prev["inputs"])
-        self.assertIsNone(C.compact_from_live({"slug": "y", "parameters_schema": {}}, None))
 
 
 # ── the model directory ─────────────────────────────────────────────────────
@@ -1202,38 +1093,40 @@ class Directory(unittest.TestCase):
         ids = [e["id"] for e in es]
         self.assertEqual(sorted(ids), sorted(m["id"] for m in M.public_models()))
         self.assertEqual(len({e["anchor"] for e in es}), len(es))
-        self.assertEqual(M.anchor("veo-3.1"), "m-veo-3-1")
+        self.assertEqual(M.anchor("veo/veo-3.1-generate-001"), "m-veo-veo-3-1-generate-001")
 
     def test_facts_said_plainly(self):
         pub = {m["id"]: m for m in M.public_models()}
-        veo = M.model_facts(pub["veo-3.1"])
+        veo = M.model_facts(pub["veo/veo-3.1-generate-001"])
         for want in ("no real people", "can start from a still", "makes sound"):
             self.assertIn(want, veo)
-        self.assertTrue(veo[0].startswith("≈$") and veo[0].endswith("a clip"))
-        edit = M.model_facts(pub["kling-o3-video2video-edit"])
+        priced = next(m for m in pub.values() if m["kind"] == "video" and m.get("price"))
+        self.assertTrue(M.model_facts(priced)[0].startswith("≈$"), M.model_facts(priced))
+        edit = M.model_facts(pub["wan/wan2.7-videoedit"])
         self.assertIn("works on a clip you give it", edit)
         self.assertNotIn("no real people", edit)
         needs = next(m for m in pub.values() if m["kind"] == "image" and m.get("requires_ref"))
         self.assertIn("needs a picture to work on", M.model_facts(needs))
 
     def test_notes_laid_over_the_catalogue(self):
-        d = {"models": {"veo-3.1": {"summary": "Google's clip model.", "good": ["Sound"], "limits": ["No real people"],
-                                    "best_for": "Clips with dialogue", "status": "current"},
-                        "veo-3.1-fast": {"summary": "Quicker.", "status": "older", "newer": "veo-3.1"},
-                        "sora-2": {"summary": "x", "status": "older", "newer": "no-such-model"}},
+        V, F = "veo/veo-3.1-generate-001", "veo/veo-3.1-fast-generate-001"
+        d = {"models": {V: {"summary": "Google's clip model.", "good": ["Sound"], "limits": ["No real people"],
+                            "best_for": "Clips with dialogue", "status": "current"},
+                        F: {"summary": "Quicker.", "status": "older", "newer": V},
+                        "wan/wan3.0-video": {"summary": "x", "status": "older", "newer": "no-such-model"}},
              "makers": {"Google": "Search, Android, and DeepMind's models."}}
         with self.notes(d):
             es = {e["id"]: e for e in self.entries()}
-            v = es["veo-3.1"]
+            v = es[V]
             self.assertEqual((v["good"], v["limits"], v["best_for"], v["written"]), (["Sound"], ["No real people"], "Clips with dialogue", True))
             self.assertEqual(v["maker_anchor"], "maker-google")
-            self.assertEqual((es["veo-3.1-fast"]["newer_label"], es["veo-3.1-fast"]["newer_anchor"]), ("Veo 3.1", "m-veo-3-1"))
-            self.assertIsNone(es["sora-2"]["newer"])          # a successor that isn't in the list is dropped
-            self.assertFalse(es["flux-3"]["written"])          # no note yet: still listed, from Segmind's line
-            self.assertTrue(es["flux-3"]["summary"])
-            self.assertEqual(next(m for m in M.public_models() if m["id"] == "veo-3.1")["about"], "Clips with dialogue")
+            self.assertEqual((es[F]["newer_label"], es[F]["newer_anchor"]), ("Veo 3.1", "m-veo-veo-3-1-generate-001"))
+            self.assertIsNone(es["wan/wan3.0-video"]["newer"])     # a successor that isn't in the list is dropped
+            self.assertFalse(es["bfl/flux-3-image"]["written"])    # no note yet: still listed
+            self.assertEqual(next(m for m in M.public_models() if m["id"] == V)["about"], "Clips with dialogue")
             html = self.c.get("/studio/guide").text
-        for want in ('id="directory"', 'id="dir-video"', 'id="m-veo-3-1"', "Clips with dialogue", 'href="#m-veo-3-1"',
+        for want in ('id="directory"', 'id="dir-video"', 'id="m-veo-veo-3-1-generate-001"', "Clips with dialogue",
+                     'href="#m-veo-veo-3-1-generate-001"',
                      'id="maker-google"', 'id="fPicks"', "Not reviewed yet"):
             self.assertIn(want, html)
 
@@ -1241,28 +1134,9 @@ class Directory(unittest.TestCase):
         d = M.directory()
         video = next(s for s in d["sections"] if s["id"] == "dir-video")
         self.assertTrue(video["groups"][0]["pick"])
-        self.assertEqual(video["groups"][0]["models"][0]["id"], "veo-3.1")
+        self.assertEqual(video["groups"][0]["models"][0]["id"], "byteplus/dreamina-seedance-2-5-260628")
         footage = next(s for s in d["sections"] if s["id"] == "dir-footage")
         self.assertTrue(all(e["kind"] == "video" for g in footage["groups"] for e in g["models"]))
-
-    def test_shipped_notes_are_sound(self):
-        with open(M.NOTES_FILE) as f:
-            notes = json.load(f)
-        known = {m["id"] for m in M.public_models()}
-        for mid, n in notes["models"].items():
-            self.assertIn(mid, known, mid)
-            self.assertTrue(n.get("summary") and len(n["summary"]) <= 300, mid)
-            self.assertTrue(3 <= len(n.get("good") or []) <= 5, mid)
-            self.assertTrue(2 <= len(n.get("limits") or []) <= 4, mid)
-            self.assertTrue(all(len(x) <= 160 for x in n["good"] + n["limits"]), mid)
-            self.assertTrue(n.get("best_for") and len(n["best_for"]) <= 90, mid)
-            self.assertLessEqual(len(n.get("tip") or ""), 220, mid)
-            self.assertIn(n.get("status"), ("current", "older", "legacy"), mid)
-            if n.get("newer"):
-                self.assertIn(n["newer"], known, mid)
-            text = json.dumps(n).lower()
-            self.assertFalse([w for w in BANNED if w in text], mid)
-        self.assertGreaterEqual(len(notes["models"]), len(known) - 5)   # LoRAs are ours, not researched
 
     def test_every_guide_link_lands(self):
         import re
@@ -1270,7 +1144,7 @@ class Directory(unittest.TestCase):
         ids = set(re.findall(r'\bid="([^"]+)"', html))
         dead = sorted({h for h in re.findall(r'href="#([^"$]+)"', html) if h not in ids})   # $ = the script's own templates
         self.assertEqual(dead, [])
-        self.assertIn('href="#m-nano-banana-2-1"', html)              # the quick picks point into the directory
+        self.assertIn('href="#m-vertexai-gemini-nano-banana-2-1"', html)   # the quick picks point into the directory
 
     @classmethod
     def setUpClass(cls):

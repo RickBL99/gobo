@@ -18,8 +18,8 @@ os.chdir(ROOT)
 
 TMP = tempfile.mkdtemp(prefix="studio-visitor-test-")
 os.environ["STUDIO_DIR"] = os.path.join(TMP, "reels")
-os.environ.update(STUDIO_ENV_FILE="", SEGMIND_API_KEY="test-key", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
-                  AZURE_STORAGE_CONNECTION_STRING="", STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_PREFIX="/studio")
+os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OPENAI_API_KEY="",
+                  STUDIO_PASSWORD="", STUDIO_USERS="", STUDIO_PREFIX="/studio")
 
 from fastapi.testclient import TestClient  # noqa: E402
 
@@ -83,7 +83,7 @@ class Visitors(unittest.TestCase):
         self.assertEqual(b.patch(f"/studio/reels/{reel['id']}", json={"name": "Taken"}).status_code, 404)
         self.assertEqual(a.get(f"/studio/reels/{reel['id']}").json()["reel"]["name"], "Mine")
         self.assertEqual(b.post("/studio/library/claim", json={"items": []}).status_code, 403)
-        self.assertEqual(b.post("/studio/catalogue/refresh").status_code, 403)
+        self.assertIn(b.post("/studio/catalogue/refresh").status_code, (404, 405), "there's no catalogue to refresh")
         # the Library too, "Show everyone's" included: a visitor's work is theirs alone
         t = J.new_take(reel["id"], 1, 0, kind="image", status="done", file="001A-abcdef.jpg", by=V.visitor_id("key-aaa"))
         open(J.out_path(reel["id"], t["file"]), "wb").write(b"\xff\xd8\xff\xd9")

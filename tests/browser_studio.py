@@ -112,7 +112,7 @@ def main():
 
         n_img = tab.js("byKind('image').length")
         n_vid = tab.js("byKind('video').length")
-        check("catalogue loaded", n_img > 150 and n_vid > 90, f"{n_img} image, {n_vid} video")
+        check("catalogue loaded", n_img > 50 and n_vid > 40, f"{n_img} image, {n_vid} video")
         check("opens in video", tab.js("S.mode") == "video" and tab.js("$('#modeVideo').classList.contains('on') && model().kind === 'video'"))
         # a mode saved before video became the default is overridden once, then a choice sticks
         tab.js("localStorage.setItem('studio.shot', JSON.stringify({mode: 'image'})); localStorage.removeItem('studio.videoDefault'); 1")
@@ -122,16 +122,16 @@ def main():
         tab.call("Page.reload"); time.sleep(3)
         check("a chosen mode is remembered", tab.js("S.mode") == "image" and tab.js("$('#modeImage').classList.contains('on')"))
         check("a model is chosen", tab.js("!!model() && model().kind === 'image'"), tab.js("model() && model().label"))
-        # the balance is live, says what's committed, and turns amber when low (2026-10-24: it said $55 while Segmind asked for a top-up)
+        # the balance is live, says what's committed, and turns amber when low (2026-10-24: it showed the balance from when the page opened)
         tab.js("""window._cf = window.fetch; window._cr = {credits: 51.03, rendering: 7.5, waiting: 2.5, left: 41.03, low: true, low_at: 50};
           window.fetch = async (u, o) => String(u).includes('/credits') ? new Response(JSON.stringify(_cr), {headers: {'Content-Type': 'application/json'}}) : _cf(u, o);
           loadCredits(true); 1""")
         time.sleep(0.3)
         cr = tab.js("$('#credits').textContent + ' | ' + $('#credits').title")
-        check("credits: live, with what's in progress, amber with a top-up link when low", "Segmind $51.03 · ≈$10.00 in progress" in cr and "top up" in cr
-              and "about $41.03 is left" in cr and tab.js("$('#credits').classList.contains('low') && !!$('#credits a[href*=segmind]')"), cr)
+        check("credits: live, with what's in progress, amber with a top-up link when low", "Comfy $51.03 · ≈$10.00 in progress" in cr and "top up" in cr
+              and "about $41.03 is left" in cr and tab.js("$('#credits').classList.contains('low') && !!$('#credits a[href*=comfy]')"), cr)
         tab.js("_cr = {credits: 120, rendering: 0, waiting: 0, left: 120, low: false, low_at: 50}; $('#credits').click(); 1"); time.sleep(0.3)
-        check("credits: a click asks again; nothing pending, nothing low", tab.js("$('#credits').textContent") == "Segmind $120.00"
+        check("credits: a click asks again; nothing pending, nothing low", tab.js("$('#credits').textContent") == "Comfy $120.00"
               and tab.js("!$('#credits').classList.contains('low')"), tab.js("$('#credits').textContent"))
         tab.js("window.fetch = window._cf; 1")
         check("generate waits for a scene", tab.js("$('#genBtn').disabled"))
@@ -161,7 +161,7 @@ def main():
         tab.js("$('#pop [data-p=focal][data-o=\"85\"]').click(); $('#pop [data-p=body][data-o=film16]').click(); 1")
         time.sleep(0.8)
         seg = tab.js("$('#segs').textContent")
-        check("camera choice reaches the prompt", "85mm" in seg and "16mm film camera" in seg, seg[:160])
+        check("camera choice reaches the prompt", "85mm" in seg and "grainy 16mm film" in seg, seg[:160])
         tab.js("closePop(); 1")
 
         # framing tiles
@@ -209,12 +209,12 @@ def main():
         check("reference filter", 0 < refs_only < total, f"{refs_only}")
         tab.shot("04-model-sheet")
         tab.js("$('#modelSheet [data-f=refs]').click(); 1")
-        tab.js("$('#modelSheet [data-m=\"flux-kontext-max\"]') ? 1 : 0")
+        tab.js("$('#modelSheet [data-m=\"bfl/flux-kontext-max\"]') ? 1 : 0")
         # each row's ? opens that model's entry in the guide's directory, without choosing it
         tab.js("window._opened = []; window._open0 = window.open; window.open = (u, n) => { window._opened.push([u, n]); return null; }; 1")
         was = tab.js("S.model.image")
-        tab.js("$('#modelSheet [data-m=\"flux-kontext-max\"] [data-about]').click(); 1"); time.sleep(0.2)
-        check("picker: ? opens the model's directory entry", tab.js("window._opened") == [["/studio/guide#m-flux-kontext-max", "studioguide"]]
+        tab.js("$('#modelSheet [data-m=\"bfl/flux-kontext-max\"] [data-about]').click(); 1"); time.sleep(0.2)
+        check("picker: ? opens the model's directory entry", tab.js("window._opened") == [["/studio/guide#m-bfl-flux-kontext-max", "studioguide"]]
               and tab.js("S.model.image") == was, tab.js("window._opened"))
         check("picker: links the whole directory", tab.js("$('#modelSheet a[href$=\"#directory\"]') !== null"))
         tab.js("window.open = window._open0; 1")
@@ -366,9 +366,9 @@ def main():
         # starters
         tab.js("$('#starterBtn').click(); 1")
         time.sleep(0.3)
-        tab.js("$('#pop [data-s=portrait]').click(); 1")
+        tab.js("$('#pop [data-s=wok]').click(); 1")
         time.sleep(0.8)
-        check("starter fills the shot", "old fisherman" in tab.js("$('#scene').value") and tab.js("S.direction.focal") == "85")
+        check("starter fills the shot", "street cook" in tab.js("$('#scene').value") and tab.js("S.direction.focal") == "50")
         check("starter switches back to image", tab.js("S.mode") == "image")
 
         # phone width
@@ -597,7 +597,8 @@ def main():
         check("footage: a card of its own", "Footage" in tab.js(f"{card}.querySelector('.tag').textContent") and "Footage A" in tab.js(f"{card}.querySelector('[data-frame]').textContent")
               and tab.js("$$('#bTime .seg2.real').length") == 1)
         opts = tab.js(f"[...{card}.querySelectorAll('[data-f=tool] optgroup')].map(g => g.label + ':' + g.children.length)")
-        check("footage: change and extend tools", len(opts) == 2 and opts[0].startswith("Change it:") and opts[1].startswith("Extend it:"), opts)
+        check("footage: change tools, and extend tools when the catalogue has one", opts[0].startswith("Change it:")
+              and (len(opts) == 2 and opts[1].startswith("Extend it:")) == tab.js("!!defaultExtend()"), opts)
         check("footage: Google's tools sort last and say so", tab.js(f"(() => {{ const o = [...{card}.querySelectorAll('[data-f=tool] optgroup')[0].children].map(x => x.textContent); const g = o.findIndex(x => /no real people/.test(x)); return g < 0 || o.slice(g).every(x => /no real people/.test(x)); }})()"))
         tab.js(f"const ch = {card}.querySelector('[data-f=change]'); ch.value = 'Make it a snowy winter afternoon'; ch.dispatchEvent(new Event('input')); 1")
         tab.js(f"const ti = {card}.querySelectorAll('[data-trim]'); ti[1].value = '3'; ti[1].dispatchEvent(new Event('change', {{bubbles: true}})); 1"); time.sleep(0.2)
@@ -608,8 +609,8 @@ def main():
               and ch["role"] == "clip" and ch["board"] == tab.js("B.shots[1].id"), ch)
         check("footage: the change is the card's new version", "Changed" in tab.js(f"{card}.querySelector('[data-frame]').textContent"))
         # prod, 2026-10-23: a kit picture named in the instruction but not ticked never went, and a
-        # 11.9 s clip went to Kling with its default 5 s length — it made nothing, twice
-        kling = tab.js("(byKind('video').find(m => m.id === 'kling-o3-video2video-edit') || {}).id")
+        # 11.9 s clip went to a 10-second edit tool with its default 5 s length — it made nothing, twice
+        kling = tab.js("(byKind('video').find(m => m.id === 'wan/wan2.7-videoedit') || {}).id")
         if kling:
             tab.js(f"""window._n0 = _ft.runs.length; window._cl = pickOf(B.shots[1], 'clip'); window._cs = _cl.seconds; _cl.seconds = 20;
               B.elements.push({{id: 'eBl', name: 'Olive Blouse', kind: 'product', file: 'ref-blouse.jpg'}}); B.shots[1].tool = '{kling}';
@@ -633,14 +634,14 @@ def main():
         # failures stay on screen until read: a panel, and the card itself (prod 2026-10-23: a failed
         # Change on a footage card showed nothing but a red letter, because the card had its clip to show)
         tab.js("""window._fid = '17959999999999-fail99'; const s = B.shots[1], now = Date.now() / 1000;
-          mergeTakes([{id: _fid, reel: 'fttest00', shot: s.n, letter: 'F', kind: 'video', status: 'failed', label: 'Kling O3 Video Edit', board: s.id,
+          mergeTakes([{id: _fid, reel: 'fttest00', shot: s.n, letter: 'F', kind: 'video', status: 'failed', label: 'Wan 2.7 Video Edit', board: s.id,
             role: 'clip', action: 'change', aspect: '16:9', reason: 'validation', created: now - 40, finished: now,
             error: 'The model rejected these inputs: Prediction failed: The model did not produce an output.',
-            hint: 'Kling O3 Video Edit ran but made nothing. That usually means it could not use the footage. Set In and Out closer together.'}]); 1""")
+            hint: 'Wan 2.7 Video Edit ran but made nothing. That usually means it could not use the footage. Set In and Out closer together.'}]); 1""")
         time.sleep(0.3)
         panel = tab.js("$('#fails').textContent")
         check("failures: a failed run waits in the panel, in plain English", tab.js("!$('#fails').classList.contains('hidden')")
-              and "Change failed · Kling O3 Video Edit" in panel and "ran but made nothing" in panel and "What the model said" in panel and "Show me" in panel, panel)
+              and "Change failed · Wan 2.7 Video Edit" in panel and "ran but made nothing" in panel and "What the model said" in panel and "Show me" in panel, panel)
         tab.js("$('#fails details').open = true; renderFails(); S.takes = S.takes.slice(); renderFails(); 1")
         check("failures: polling leaves an opened explanation open", tab.js("$('#fails details').open"))
         ov = tab.js(f"({card}.querySelector('.st.fail') || {{}}).textContent || ''")
@@ -675,16 +676,19 @@ def main():
         tab.js(f"{card}.querySelector('[data-act=tool]').click(); 1"); time.sleep(0.5)
         check("failures: a run the server refuses stays said, with the model's name", "not run" in tab.js("$('#fails').textContent")
               and "The server said no." in tab.js("$('#fails').textContent"), tab.js("$('#fails').textContent"))
-        tab.js("_ft.refuse = null; $('#fails [data-fx]').click(); 1")
-        # extend: the result is the next card, playing only its new seconds
-        tab.js(f"const sel = {card}.querySelector('[data-f=tool]'); sel.value = defaultExtend().id; sel.dispatchEvent(new Event('change')); 1"); time.sleep(0.4)
-        tab.js(f"const ch2 = {card}.querySelector('[data-f=change]'); ch2.value = 'She keeps walking'; ch2.dispatchEvent(new Event('input')); {card}.querySelector('[data-act=tool]').click(); 1")
-        time.sleep(0.8)
-        ex = tab.js("_ft.runs[1]")
-        check("footage: extend makes the next card", ex and ex["action"] == "extend" and ex["board"] == tab.js("B.shots[2].id") and tab.js("B.shots.length") == 3
-              and ex["source_video"] == "r1.mp4" and ex["duration"] in tab.js("defaultExtend().durations"), ex)
-        check("footage: the extension plays only its new part", tab.js("B.shots[2].trim") == [4, 7] and "Extension of shot 2" in tab.js("$$('#board .bcard')[2].textContent"),
-              tab.js("B.shots[2].trim"))
+        tab.js("_ft.refuse = null; const fx = $('#fails [data-fx]'); if (fx) fx.click(); 1")
+        # extend: the result is the next card, playing only its new seconds (when the catalogue has an extend tool)
+        if not tab.js("!!defaultExtend()"):
+            check("footage: no extend tool, so none is offered", "Extend it" not in tab.js(f"{card}.textContent"))
+        else:
+            tab.js(f"const sel = {card}.querySelector('[data-f=tool]'); sel.value = defaultExtend().id; sel.dispatchEvent(new Event('change')); 1"); time.sleep(0.4)
+            tab.js(f"const ch2 = {card}.querySelector('[data-f=change]'); ch2.value = 'She keeps walking'; ch2.dispatchEvent(new Event('input')); {card}.querySelector('[data-act=tool]').click(); 1")
+            time.sleep(0.8)
+            ex = tab.js("_ft.runs[1]")
+            check("footage: extend makes the next card", ex and ex["action"] == "extend" and ex["board"] == tab.js("B.shots[2].id") and tab.js("B.shots.length") == 3
+                  and ex["source_video"] == "r1.mp4" and ex["duration"] in tab.js("defaultExtend().durations"), ex)
+            check("footage: the extension plays only its new part", tab.js("B.shots[2].trim") == [4, 7] and "Extension of shot 2" in tab.js("$$('#board .bcard')[2].textContent"),
+                  tab.js("B.shots[2].trim"))
         # lead-in: the AI shot before it ends on the first frame of the version the card uses
         tab.js("B.shots[0].scene = 'Drone over the pier toward her.'; B.shots[0].land = true; renderBoard(); 1"); time.sleep(0.3)
         check("footage: the default clip model can land on a frame", tab.js("!!framed(clipModel()).last_frame"), tab.js("clipModel().label"))
@@ -701,7 +705,8 @@ def main():
         tab.shot("19-board-footage")
         tab.js("$('#viewSeg [data-v=shot]').click(); select('17940000000000-foot00'); 1"); time.sleep(0.4)
         acts = tab.js("$('#actions').textContent")
-        check("footage: the Shot view can change, extend and lead into a clip", all(a in acts for a in ("Change clip", "Extend clip", "Lead into it")), acts)
+        check("footage: the Shot view can change and lead into a clip, and extend it when a tool can",
+              all(a in acts for a in ("Change clip", "Lead into it")) and ("Extend clip" in acts) == tab.js("!!defaultExtend()"), acts)
         tab.js("window.fetch = window._ff; upload = window._upl; newReel(); localStorage.removeItem('studio.view'); localStorage.removeItem('studio.reel'); 1")
 
         # ── the Content Generator: same page, stills only, batch tools ───────
@@ -710,10 +715,10 @@ def main():
         tab.js("localStorage.clear(); 1")
         tab.call("Page.reload")
         time.sleep(3)
-        check("cg: titled, stills only", tab.js("document.title") == "Content Generator" and tab.js("STILLS") is True
+        check("cg: titled, stills only", tab.js("document.title").startswith("Content Generator") and tab.js("STILLS") is True
               and tab.js("S.mode") == "image" and tab.js("$('.seg.big').classList.contains('hidden')"))
         check("cg: every model is a still model", tab.js("MODELS.every(m => m.kind === 'image' || m.kind === 'upscale')")
-              and tab.js("byKind('image').length") > 150, tab.js("byKind('image').length"))
+              and tab.js("byKind('image').length") > 50, tab.js("byKind('image').length"))
         check("cg: plain, undirected by default", tab.js("S.pmode") == "plain"
               and tab.js("Object.values(S.direction).every(v => v === 'auto')"))
         tab.js("const s=$('#scene'); s.value='A red tractor in a wheat field.'; s.dispatchEvent(new Event('input')); 1")
@@ -724,7 +729,6 @@ def main():
               and tab.js("Object.keys(localStorage).some(k => k.startsWith('cg.'))"))
         tab.js("$('#modelBtn').click(); 1"); time.sleep(0.3)
         check("cg: no video tab in the picker", not tab.js("!!$('#mKind')"))
-        check("cg: your LoRAs are in the picker", "Your LoRAs" in tab.js("$('#modelSheet').textContent"))
         tab.js("closePop(); 1")
         tab.js("for (let i = 0; i < 25; i++) $('#tPlus').click(); 1")
         check("cg: batches up to 20", tab.js("S.ntakes") == 20 and "Images" in tab.js("$('#fmt').textContent"),
@@ -794,7 +798,7 @@ def main():
               (n_models, n_catalog, seen, tab.js("$('#dirN').textContent")))
         tab.js("const q = $('#q'); q.value = 'kling'; q.dispatchEvent(new Event('input')); 1"); time.sleep(0.5)
         kl = tab.js("$$('.topic.model').filter(t => !t.classList.contains('hidden')).map(t => t.id)")
-        check("guide: a maker's name finds its models", 3 < len(kl) < n_models and all(x.startswith("m-") for x in kl) and "m-kling-o3-video2video-edit" in kl, len(kl))
+        check("guide: a maker's name finds its models", 3 < len(kl) < n_models and all(x.startswith("m-") for x in kl) and "m-kling-kling-v3-omni" in kl, len(kl))
         check("guide: empty directory groups fold away", tab.js("$$('.dgroup').every(g => g.classList.contains('hidden') === $$('.model', g).every(t => t.classList.contains('hidden')))"))
         tab.js("$('#q').dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1"); time.sleep(0.3)
         tab.js("$('#fPicks').click(); 1"); time.sleep(0.3)
@@ -802,12 +806,12 @@ def main():
         check("guide: Our picks only", 20 < len(picks) < n_models and set(picks) == {"1"} and tab.js("!$('#reading-entry').classList.contains('hidden')"), len(picks))
         tab.js("$('#fPicks').click(); $('#fCurrent').click(); 1"); time.sleep(0.3)
         st = tab.js("$$('.topic.model').filter(t => !t.classList.contains('hidden')).map(t => t.dataset.status)")
-        check("guide: Hide older versions", 0 < len(st) < n_models and set(st) == {"current"}, len(st))
+        check("guide: Hide older versions (none are written up as older)", len(st) == n_models and set(st) == {"current"}, len(st))
         tab.js("$('#fCurrent').click(); 1"); time.sleep(0.3)
         check("guide: filters off shows them all again", tab.js("$$('.topic.model.hidden').length") == 0)
-        tab.call("Page.navigate", url=f"{BASE}/studio/guide#m-kling-o3-video2video-edit"); time.sleep(2)
-        check("guide: a model link lands on its entry", abs(tab.js("$('#m-kling-o3-video2video-edit').getBoundingClientRect().top") - 84) < 40,
-              tab.js("$('#m-kling-o3-video2video-edit').getBoundingClientRect().top"))
+        tab.call("Page.navigate", url=f"{BASE}/studio/guide#m-wan-wan2-7-videoedit"); time.sleep(2)
+        check("guide: a model link lands on its entry", abs(tab.js("$('#m-wan-wan2-7-videoedit').getBoundingClientRect().top") - 84) < 40,
+              tab.js("$('#m-wan-wan2-7-videoedit').getBoundingClientRect().top"))
         tab.shot("22-directory")
         tab.call("Page.navigate", url=f"{BASE}/studio/guide"); time.sleep(2)
         tab.shot("20-guide")

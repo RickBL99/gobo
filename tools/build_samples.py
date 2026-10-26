@@ -6,8 +6,8 @@ picker differ only by the choice they illustrate.
     python tools/build_samples.py --only light:golden,light:neon
     python tools/build_samples.py --groups grade --force
 
-Spends real Segmind credit (FLUX 2 Pro ≈ $0.04 a tile; it takes a seed, FLUX 3
-does not). Existing tiles are kept unless --force. Writes
+Spends real Comfy credit (Nano Banana 2.1, about 6¢ a tile; it takes a seed,
+FLUX 3 does not). Existing tiles are kept unless --force. Writes
 studio/static/samples/<group>-<id>.webp plus
 samples.json (model, seed, scene and the exact prompt behind every tile), which
 the page picks up on its next load.
@@ -56,7 +56,7 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--groups", default="light,film,look")
     ap.add_argument("--only", default="", help="comma list of group:id")
-    ap.add_argument("--model", default="flux-2-pro")
+    ap.add_argument("--model", default="vertexai/gemini-nano-banana-2.1")
     ap.add_argument("--seed", type=int, default=4242)
     ap.add_argument("--force", action="store_true")
     a = ap.parse_args()
