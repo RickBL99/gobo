@@ -792,7 +792,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 {% endfor %}
 
 <div id="none" class="hidden"><b>Nothing matches.</b>Try fewer or different words, like "trim", "kit" or "cost".</div>
-<footer>Gobo {{ release }}</footer>
+<footer>Gobo {{ release }}{% if contact %} · Questions or something wrong here? <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}</footer>
   </main>
 </div>
 

@@ -230,7 +230,7 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
   {% if not sign_in %}<div class="warn">Sign-in is off: anyone who can reach this address can use it and spend your credits. Set <code>STUDIO_PASSWORD</code> in <code>.env</code>.</div>{% endif %}
 </section>
 
-<footer><span>Gobo · {{ release }}{% if release_date %} · {{ release_date }}{% endif %} · <a href="/about">About</a></span><span>Runs on Comfy Router · Graded in Rust</span></footer>
+<footer><span>Gobo · {{ release }}{% if release_date %} · {{ release_date }}{% endif %} · <a href="/about">About</a>{% if contact %} · <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}</span><span>Runs on Comfy Router · Graded in Rust</span></footer>
 
 <script>
 const API = {{ api | tojson }};

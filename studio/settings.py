@@ -89,6 +89,8 @@ FRONT = "studio" if os.getenv("STUDIO_FRONT", "director").strip().lower() == "st
 
 # Where the code is, for the sign-in and About pages (a fork points it at its own).
 SOURCE_URL = os.getenv("STUDIO_SOURCE_URL", "https://github.com/RickBL99/gobo").rstrip("/")
+# Who answers questions about this Gobo (a fork sets its own; empty: none shown).
+CONTACT = os.getenv("STUDIO_CONTACT", "help@gobo.video").strip()
 
 
 def sign_in_on() -> bool:

@@ -93,6 +93,13 @@ class SignIn(unittest.TestCase):
                       "Inspired by Higgsfield", 'class="made"'):
             self.assertIn(words, page)
 
+    def test_the_pages_say_who_answers_questions(self):
+        mail = 'href="mailto:help@gobo.video"'
+        for path in ("/login", "/about", "/f/nosuchfilm00"):
+            self.assertIn(mail, self.c.get(path).text, path)
+        with mock.patch.object(settings, "CONTACT", ""):
+            self.assertNotIn("mailto:", self.c.get("/about").text, "a fork can show none")
+
     def test_the_about_pill_is_on_the_home_page_and_in_the_studio(self):
         self.c.post("/login", data={"name": "Ada", "password": "s3cret"})
         self.assertIn('class="chip about" href="/about"', self.c.get("/home").text)

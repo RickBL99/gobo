@@ -276,7 +276,7 @@ async def guide(request: Request):
     """The users' guide: every feature, task by task, searchable."""
     from . import settings as version
     return templates.TemplateResponse(request, "studio_guide.html", {"release": version.RELEASE, "build": version.BUILD, "api": PREFIX,
-                                                                     "dir": M.directory()})
+                                                                     "dir": M.directory(), "contact": settings.CONTACT})
 
 
 @router.get("/app.js")

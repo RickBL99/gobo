@@ -229,7 +229,7 @@ footer { max-width: 980px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 3
 </main>
 
 <footer>
-  <span>Gobo · {{ release }}{% if release_date %} · {{ release_date }}{% endif %}</span>
+  <span>Gobo · {{ release }}{% if release_date %} · {{ release_date }}{% endif %}{% if contact %} · Questions: <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}</span>
   <span>An independent project, inspired by Higgsfield. Not affiliated with Comfy Org or Higgsfield.</span>
 </footer>
 </body>

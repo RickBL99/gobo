@@ -132,7 +132,7 @@ button:hover { filter: brightness(1.06); } button:active { transform: translateY
         <a href="https://www.comfy.org/open-source-higgsfield" target="_blank" rel="noopener">Comfy's Open Source Higgsfield challenge</a>
         <span>Inspired by Higgsfield's Cinema Studio</span>
       </div>
-      <p class="made">Made by <a href="https://picturenetcorp.com" target="_blank" rel="noopener">PictureNet Corp</a>, from the AI cinema system it built in-house for commercial production.</p>
+      <p class="made">Made by <a href="https://picturenetcorp.com" target="_blank" rel="noopener">PictureNet Corp</a>, from the AI cinema system it built in-house for commercial production.{% if contact %} Questions: <a href="mailto:{{ contact }}">{{ contact }}</a>.{% endif %}</p>
     </section>
 
     <form class="card" method="post" action="/login">

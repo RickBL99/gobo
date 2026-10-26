@@ -88,6 +88,6 @@ footer a { text-decoration: underline; }
   </div>
 {% endif %}
 </main>
-<footer>Gobo · open source{% if source %} · <a href="{{ source }}" target="_blank" rel="noopener">the code</a>{% endif %} · <a href="/about">About</a></footer>
+<footer>Gobo · open source{% if source %} · <a href="{{ source }}" target="_blank" rel="noopener">the code</a>{% endif %} · <a href="/about">About</a>{% if contact %} · <a href="mailto:{{ contact }}">{{ contact }}</a>{% endif %}</footer>
 </body>
 </html>

@@ -835,6 +835,8 @@ def main():
         tab.call("Page.navigate", url=f"{BASE}/direct"); time.sleep(3)
         tab.js("localStorage.clear(); 1"); tab.call("Page.reload"); time.sleep(3)
         check("director: opens on the line", tab.js("!$('#director').classList.contains('off')") and "film" in tab.js("$('#director h1').textContent"))
+        check("director: a way home, where the studio's Home goes", tab.js("$('#dHome').getAttribute('href')") == tab.js("$('.homebtn').getAttribute('href')")
+              and tab.js("$('#director .dlogo').getAttribute('href')") == tab.js("$('.homebtn').getAttribute('href')"), tab.js("$('#dHome').getAttribute('href')"))
         check("director: 13 looks, Let Gobo decide first", tab.js("$$('#director .look img').length") == 13
               and tab.js("$('#director .look.on').dataset.look") == "auto")
         c0 = tab.js("$('#dCost').textContent")

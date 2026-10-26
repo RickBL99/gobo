@@ -609,7 +609,7 @@ def end_slide(t: Tour, samples):
       <div style="width:96px;height:96px">{LOGO}</div><div style="font-size:88px;font-weight:800;letter-spacing:-.03em">Gobo</div></div>
     <div class="up" style="font-size:88px;font-weight:800;letter-spacing:-.035em;line-height:1.08;margin-top:30px;animation-delay:.4s">Bring your own Comfy key.<br><em>Pay only for what you run.</em></div>
     <div class="up" style="display:flex;gap:14px;justify-content:center;margin-top:40px;animation-delay:.9s">
-      <span class="chip gold">try.gobo.picturenetcorp.com</span><span class="chip">{repo}</span><span class="chip">Open source · MIT or Apache 2.0</span></div>
+      <span class="chip gold">try.gobo.video</span><span class="chip">{repo}</span><span class="chip">Open source · MIT or Apache 2.0</span></div>
     <div class="up" style="font-size:31px;color:#b3b1b9;margin-top:40px;animation-delay:1.3s">Built for Comfy’s Open Source Higgsfield challenge · Inspired by Higgsfield’s Cinema Studio</div>
     <div class="up" style="font-size:31px;color:#b3b1b9;margin-top:12px;animation-delay:1.5s">Made by PictureNet Corp</div>
   </div>

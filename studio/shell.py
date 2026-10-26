@@ -62,6 +62,7 @@ def _page(request: Request, **extra) -> dict:
     and the tour, if it has been made (tools/make_tour.py)."""
     tour = os.path.isfile(os.path.join(HERE, TOUR.lstrip("/")))
     return {"release": settings.RELEASE, "visitor": settings.VISITOR_KEYS, "source": settings.SOURCE_URL,
+            "contact": settings.CONTACT,
             "tour": TOUR if tour else "", "tour_poster": TOUR[:-4] + ".jpg" if tour else "",
             "model_count": len(M.MODELS), "front": settings.FRONT, **extra}
 
@@ -166,7 +167,7 @@ async def home(request: Request):
         "api": settings.PREFIX, "visitor": settings.VISITOR_KEYS,
         "user": "Your Comfy key" if settings.VISITOR_KEYS else request.session.get("user_name", ""),
         "sign_in": settings.sign_in_on(), "samples": _samples(), "release": settings.RELEASE,
-        "front": settings.FRONT,
+        "front": settings.FRONT, "contact": settings.CONTACT,
         "release_date": settings.RELEASE_DATE,
         "model_count": len(M.MODELS),
         "keys": {"comfy": bool(comfy.api_key()),
@@ -207,14 +208,16 @@ def _poster_path(s: dict, t: dict):
 async def shared_film(request: Request, token: str):
     s, t, _ = _shared(token)
     if not s:
-        return templates.TemplateResponse(request, "film.html", {"film": None, "release": settings.RELEASE},
+        return templates.TemplateResponse(request, "film.html", {"film": None, "release": settings.RELEASE,
+                                                                 "source": settings.SOURCE_URL, "contact": settings.CONTACT},
                                           status_code=404)
     base = str(request.base_url).rstrip("/")
     return templates.TemplateResponse(request, "film.html", {
         "film": {"title": s.get("title") or "A film made with Gobo", "kind": t["kind"],
                  "src": f"/f/{token}/film", "poster": f"/f/{token}/poster" if _poster_path(s, t) else "",
                  "w": t.get("w"), "h": t.get("h"), "seconds": t.get("seconds")},
-        "page": f"{base}/f/{token}", "base": base, "release": settings.RELEASE, "source": settings.SOURCE_URL})
+        "page": f"{base}/f/{token}", "base": base, "release": settings.RELEASE, "source": settings.SOURCE_URL,
+        "contact": settings.CONTACT})
 
 
 @router.get("/f/{token}/film")

@@ -82,7 +82,7 @@
 #director [hidden] { display: none !important; }
 #director .dtop { display: flex; align-items: center; gap: 10px; padding: 12px clamp(16px, 4vw, 40px); position: sticky; top: 0;
   background: rgba(11,11,13,.75); backdrop-filter: blur(10px); z-index: 2; }
-#director .dlogo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.02rem; }
+#director .dlogo { display: flex; align-items: center; gap: 9px; font-weight: 800; font-size: 1.02rem; color: var(--text); text-decoration: none; }
 #director .dlogo svg { width: 26px; height: 26px; }
 #director .grow { flex: 1; }
 #director .dchip { display: inline-flex; align-items: center; gap: 6px; border: 1px solid var(--line); background: var(--panel);
@@ -181,13 +181,17 @@
   D.className = DIRECTOR ? "" : "off";
   D.setAttribute("role", "dialog");
   D.setAttribute("aria-label", "Make a film");
+  // home is wherever the studio's own Home button goes: "/" on a studio-first
+  // Gobo, /home where this screen is the front door
+  const HOME = (document.querySelector(".homebtn") || { getAttribute: () => "/home" }).getAttribute("href") || "/home";
   D.innerHTML = `
   <header class="dtop">
-    <span class="dlogo"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
+    <a class="dlogo" href="${HOME}" title="Home: every tool"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
       <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>
-      <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>Gobo</span>
+      <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>Gobo</a>
     <span class="grow"></span>
     <span class="dchip" id="dCredits" title="Your balance"></span>
+    <a class="dchip" id="dHome" href="${HOME}" title="Home: every tool">Home</a>
     <a class="dchip hide-s" href="/about" target="_blank" rel="noopener">About</a>
     <button class="dchip" id="dSelf" title="Every control: camera, lens, light, the Board, the Lab and every model">Direct it yourself →</button>
     ${SIGN_IN ? `<a class="dchip hide-s" href="/logout">Sign out</a>` : ""}

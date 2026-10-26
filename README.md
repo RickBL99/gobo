@@ -15,7 +15,8 @@ When you want more, every control a cinematographer uses is underneath: camera b
 Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspired by Higgsfield's Cinema Studio.
 
 - **The tour:** [80 seconds of what's inside](studio/static/tour/gobo-tour.mp4), the film that plays on the demo's sign-in page.
-- **Live demo:** [try.gobo.picturenetcorp.com](https://try.gobo.picturenetcorp.com). Bring your own Comfy API key: it's held in memory while you work, never stored, and every run is charged to your account.
+- **Live demo:** [try.gobo.video](https://try.gobo.video). Bring your own Comfy API key: it's held in memory while you work, never stored, and every run is charged to your account.
+- **Questions:** [help@gobo.video](mailto:help@gobo.video).
 - **Made by** [PictureNet Corp](https://picturenetcorp.com), from the AI cinema system it built in-house for commercial production. See [Where Gobo came from](#where-gobo-came-from) and [How Gobo is built](#how-gobo-is-built).
 
 ---
@@ -100,12 +101,13 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 | `OPENAI_API_KEY` | Optional: GPT-4o writes "prompts from a reference". |
 | `STUDIO_COMFY_SYNC=1` | Run every take on Router's direct route. Gobo switches to it on its own when Router's queue stops moving. |
 | `STUDIO_SOURCE_URL` | Where the sign-in and About pages say the code lives. Defaults to this repo; a fork points it at its own. |
+| `STUDIO_CONTACT` | The address the pages give for questions. Defaults to help@gobo.video; a fork sets its own, or empty to show none. |
 | `STUDIO_FRONT=studio` | What `/` opens. Unset (or `director`): Make a film, the one-line front door. `studio`: the home page with every tool on it, as before Make a film; it's still at `/direct`. |
 | `STUDIO_KEEP_GB` | A ceiling on the data folder, for a public demo on shared storage. Over it, whole reels go, the one touched longest ago first; a reel used in the last hour stays. Unset (the default): no ceiling, and nothing is ever deleted for space. |
 
 ### Running a public demo
 
-`STUDIO_KEYS=visitor` turns Gobo into a bring-your-own-key demo, which is how [try.gobo.picturenetcorp.com](https://try.gobo.picturenetcorp.com) runs:
+`STUDIO_KEYS=visitor` turns Gobo into a bring-your-own-key demo, which is how [try.gobo.video](https://try.gobo.video) runs:
 
 - Each visitor signs in with their own Comfy key. Comfy checks it, and Gobo keeps it in the server's memory only: never on disk, never in a cookie, never in a log.
 - Every Comfy call made for that visitor uses their key. That includes takes the server finishes after they close the tab.
