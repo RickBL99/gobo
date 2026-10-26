@@ -1,0 +1,16 @@
+# docker compose up --build   →   http://localhost:8000
+services:
+  studio:
+    build: .
+    image: gobo:local
+    ports:
+      - "8000:8000"
+    env_file:
+      - path: .env
+        required: false
+    volumes:
+      - studio-data:/data
+    restart: unless-stopped
+
+volumes:
+  studio-data:

@@ -1,0 +1,10725 @@
+{
+ "built": "2026-10-25T06:43:58+00:00",
+ "listed": 263,
+ "models": [
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "Wan 2.7 Video Edit on Comfy Router (wan/wan2.7-videoedit).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "video",
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan 2.7 Video Edit",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.7-videoedit",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": 0.1,
+   "desc": "Wan 3.0 on Comfy Router (wan/wan3.0-video).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 2,
+     "mx": 15,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan 3.0",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "Alibaba",
+   "slug": "wan/wan3.0-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": 0.07,
+   "desc": "FLUX 3 on Comfy Router (bfl/flux-3-image).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "21:9",
+      "2:1",
+      "16:9",
+      "3:2",
+      "7:5",
+      "4:3",
+      "5:4",
+      "1:1",
+      "4:5",
+      "3:4",
+      "5:7",
+      "2:3",
+      "9:16",
+      "1:2",
+      "9:21"
+     ],
+     "t": "string"
+    },
+    "grounding": {
+     "d": true,
+     "t": "boolean"
+    },
+    "images": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "768sq",
+      "1k",
+      "1.5k",
+      "2k",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 4,
+     "t": "integer"
+    },
+    "version": {
+     "d": "latest",
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FLUX 3",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": "run",
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-3-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "FLUX 3 Video on Comfy Router (bfl/flux-3-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "21:9",
+      "2:1",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "draft_cache": {
+     "t": "string"
+    },
+    "duration": {
+     "mn": 5,
+     "mx": 20,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "keyframes": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "mode": {
+     "d": "t2v",
+     "o": [
+      "t2v",
+      "i2v"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "hd",
+      "fhd",
+      "qhd",
+      "uhd"
+     ],
+     "t": "string"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 4,
+     "t": "integer"
+    },
+    "start_video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "version": {
+     "d": "latest",
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FLUX 3 Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-3-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "FLUX Kontext Max on Comfy Router (bfl/flux-kontext-max).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "21:9",
+      "16:9",
+      "3:2",
+      "4:3",
+      "1:1",
+      "3:4",
+      "2:3",
+      "9:16",
+      "9:21"
+     ],
+     "t": "string"
+    },
+    "input_image": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_2": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_3": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_4": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "png",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": false,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FLUX Kontext Max",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-kontext-max",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "FLUX Video Edit on Comfy Router (bfl/video-edit-v1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 4,
+     "t": "integer"
+    },
+    "video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FLUX Video Edit",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/video-edit-v1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-upscale-enhance",
+   "cost": null,
+   "desc": "FLUX Video Upscale on Comfy Router (bfl/video-upscale-v1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "creativity": {
+     "d": 1,
+     "mn": 0,
+     "mx": 1,
+     "t": "integer"
+    },
+    "input_video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 4,
+     "t": "integer"
+    },
+    "upscale_factor": {
+     "d": 2,
+     "mn": 1.5,
+     "mx": 3,
+     "t": "number"
+    }
+   },
+   "ins": [
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FLUX Video Upscale",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/video-upscale-v1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "Bria Remove Background on Comfy Router (bria/image-edit-remove-background).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "preserve_alpha": {
+     "t": "boolean"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Bria Remove Background",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-remove-background",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.173,
+   "desc": "Seedance 2.0 Fast on Comfy Router (byteplus/dreamina-seedance-2-0-fast-260128).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 15,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedance 2.0 Fast",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "ByteDance",
+   "slug": "byteplus/dreamina-seedance-2-0-fast-260128",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.33,
+   "desc": "Seedance 2.5 on Comfy Router (byteplus/dreamina-seedance-2-5-260628).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 15,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedance 2.5",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "ByteDance",
+   "slug": "byteplus/dreamina-seedance-2-5-260628",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Seedream 5 on Comfy Router (byteplus/seedream-5-0-260128).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "mn": 1,
+     "mx": 10,
+     "t": "number"
+    },
+    "image": {
+     "md": "image",
+     "mi": 14,
+     "mul": true,
+     "t": "array"
+    },
+    "layer_decomposition": {
+     "d": false,
+     "t": "boolean"
+    },
+    "optimize_prompt_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "png",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "seed": {
+     "d": -1,
+     "mn": -1,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "sequential_image_generation": {
+     "o": [
+      "auto",
+      "disabled"
+     ],
+     "t": "string"
+    },
+    "sequential_image_generation_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "size": {
+     "o": [
+      "2048x2048",
+      "2304x1728",
+      "1728x2304",
+      "2560x1440",
+      "1440x2560",
+      "2496x1664",
+      "1664x2496",
+      "3024x1296",
+      "4096x4096",
+      "4608x3456",
+      "3456x4608",
+      "5120x2880",
+      "2880x5120",
+      "4992x3328",
+      "3328x4992",
+      "6048x2592"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "d": false,
+     "t": "boolean"
+    },
+    "watermark": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedream 5",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedream-5-0-260128",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.1,
+   "desc": "Veo 3.1 Fast on Comfy Router (veo/veo-3.1-fast-generate-001).",
+   "engine": "comfy",
+   "family": "veo",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "16:9",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "8",
+     "o": [
+      "4",
+      "6",
+      "8"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Veo 3.1 Fast",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "Google",
+   "slug": "veo/veo-3.1-fast-generate-001",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Veo 3.1 on Comfy Router (veo/veo-3.1-generate-001).",
+   "engine": "comfy",
+   "family": "veo",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "16:9",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "8",
+     "o": [
+      "4",
+      "6",
+      "8"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Veo 3.1",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "veo/veo-3.1-generate-001",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Nano Banana Pro on Comfy Router (vertexai/gemini-3-pro-image).",
+   "engine": "comfy",
+   "family": "gemini",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "4:5",
+      "5:4",
+      "16:9",
+      "9:16",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 6,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "2K",
+     "o": [
+      "1K",
+      "2K",
+      "4K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Nano Banana Pro",
+   "outs": [
+    "image",
+    "text"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "vertexai/gemini-3-pro-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": 0.06,
+   "desc": "Nano Banana 2.1 on Comfy Router (vertexai/gemini-nano-banana-2.1).",
+   "engine": "comfy",
+   "family": "gemini",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "4:5",
+      "5:4",
+      "16:9",
+      "9:16",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 6,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "2K",
+     "o": [
+      "1K",
+      "2K",
+      "4K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Nano Banana 2.1",
+   "outs": [
+    "image",
+    "text"
+   ],
+   "pop": 1000,
+   "price_per": "run",
+   "provider": "Google",
+   "slug": "vertexai/gemini-nano-banana-2.1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "Recast \u00b7 keep the motion, swap the cast on Comfy Router (higgsfield/higgsfield-genjutsu-motion-transfer-v1.0).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image_urls": {
+     "md": "image",
+     "mi": 8,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "resolution": {
+     "d": "720p",
+     "o": [
+      "480p",
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    },
+    "video_url": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video",
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recast \u00b7 keep the motion, swap the cast",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Higgsfield",
+   "slug": "higgsfield/higgsfield-genjutsu-motion-transfer-v1.0",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Ideogram (P Image) on Comfy Router (ideogram/p-image-ideogram).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1x3",
+      "3x1",
+      "1x2",
+      "2x1",
+      "9x16",
+      "16x9",
+      "10x16",
+      "16x10",
+      "2x3",
+      "3x2",
+      "3x4",
+      "4x3",
+      "4x5",
+      "5x4",
+      "1x1"
+     ],
+     "t": "string"
+    },
+    "enable_copyright_detection": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "t": "string"
+    },
+    "quality": {
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1K",
+      "2K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ideogram (P Image)",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Ideogram",
+   "slug": "ideogram/p-image-ideogram",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling 3 Turbo on Comfy Router (kling/kling-3.0-turbo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "options": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "settings": {
+     "obj": true,
+     "t": "object"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling 3 Turbo",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-3.0-turbo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Kling Image O1 on Comfy Router (kling/kling-image-o1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3",
+      "21:9",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "element_list": {
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "image_list": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "model_name": {
+     "t": "string"
+    },
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 9,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "1k",
+      "2k",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "result_type": {
+     "d": "single",
+     "o": [
+      "single",
+      "series"
+     ],
+     "t": "string"
+    },
+    "series_amount": {
+     "d": 4,
+     "mn": 2,
+     "mx": 9,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling Image O1",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-image-o1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling 3 Omni on Comfy Router (kling/kling-v3-omni).",
+   "engine": "comfy",
+   "family": "kling_omni",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "1080p",
+     "o": [
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling 3 Omni",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-v3-omni",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Krea 3 on Comfy Router (krea/krea-3).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "4:5",
+      "3:4",
+      "2:3",
+      "9:16",
+      "5:4",
+      "4:3",
+      "3:2",
+      "16:9",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "image_urls": {
+     "md": "image",
+     "mi": 8,
+     "mul": true,
+     "t": "array"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "regional_edit": {
+     "t": "boolean"
+    },
+    "resolution": {
+     "o": [
+      "1k",
+      "2k"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "thinking_mode": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Krea 3",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Krea",
+   "slug": "krea/krea-3",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.1287,
+   "desc": "LTX 2.5 Fast on Comfy Router (ltx/ltx-2-5-fast).",
+   "engine": "comfy",
+   "family": "ltx",
+   "inputs": {
+    "duration": {
+     "o": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20
+     ],
+     "req": true,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "fps": {
+     "d": 25,
+     "o": [
+      24,
+      25,
+      48,
+      50
+     ],
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1280x720",
+      "720x1280",
+      "1920x1080",
+      "1080x1920",
+      "2560x1440",
+      "1440x2560",
+      "3840x2160",
+      "2160x3840"
+     ],
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "LTX 2.5 Fast",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "Lightricks",
+   "slug": "ltx/ltx-2-5-fast",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.1716,
+   "desc": "LTX 2.5 Pro on Comfy Router (ltx/ltx-2-5-pro).",
+   "engine": "comfy",
+   "family": "ltx",
+   "inputs": {
+    "duration": {
+     "o": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      8,
+      10,
+      12,
+      14,
+      16,
+      18,
+      20
+     ],
+     "req": true,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "fps": {
+     "d": 25,
+     "o": [
+      24,
+      25,
+      48,
+      50
+     ],
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1280x720",
+      "720x1280",
+      "1920x1080",
+      "1080x1920"
+     ],
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "LTX 2.5 Pro",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "Lightricks",
+   "slug": "ltx/ltx-2-5-pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Luma Ray 3.2 on Comfy Router (luma_2/ray-3.2).",
+   "engine": "comfy",
+   "family": "luma",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "21:9",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "o": [
+      "5s",
+      "10s"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "360p",
+      "540p",
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Luma Ray 3.2",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma_2/ray-3.2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Luma Uni-1 Max on Comfy Router (luma_2/uni-1-max).",
+   "engine": "comfy",
+   "family": "luma",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "3:1",
+      "2:1",
+      "21:9",
+      "16:9",
+      "3:2",
+      "4:3",
+      "1:1",
+      "3:4",
+      "2:3",
+      "9:16",
+      "1:2",
+      "1:3"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 9,
+     "mul": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Luma Uni-1 Max",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma_2/uni-1-max",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": 0.1287,
+   "desc": "MiniMax H3 on Comfy Router (minimax/minimax-h3).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "aigc_watermark": {
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 15,
+     "req": true,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "21:9",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "2K",
+      "2k",
+      "768P",
+      "768p"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "MiniMax H3",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 1000,
+   "price_per": "second",
+   "provider": "MiniMax",
+   "slug": "minimax/minimax-h3",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "GPT Image 2.5 Sunburst on Comfy Router (openai/gpt-image-2.5-sunburst).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "background": {
+     "o": [
+      "transparent",
+      "opaque",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "mi": 16,
+     "mul": true,
+     "t": "array"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "output_compression": {
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "png",
+      "webp",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "partial_images": {
+     "mn": 0,
+     "mx": 3,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "auto",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "standard",
+      "hd"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "o": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "t": "boolean"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "GPT Image 2.5 Sunburst",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "OpenAI",
+   "slug": "openai/gpt-image-2.5-sunburst",
+   "soon": false
+  },
+  {
+   "alias": {
+    "duration": "duration_s"
+   },
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Pika 2.5 on Comfy Router (pika/pika-2.5-text-to-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "duration": {
+     "d": 5,
+     "o": [
+      5
+     ],
+     "t": "integer"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1080p",
+     "o": [
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Pika 2.5",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Pika",
+   "slug": "pika/pika-2.5-text-to-video",
+   "soon": false
+  },
+  {
+   "alias": {
+    "first_frame": "promptImage",
+    "video": "videoUri"
+   },
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "Runway Aleph 2 on Comfy Router (runway/aleph2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "contentModeration": {
+     "obj": true,
+     "t": "object"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "keyframes": {
+     "mi": 5,
+     "mul": true,
+     "t": "array"
+    },
+    "promptText": {
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video",
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Runway Aleph 2",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Runway",
+   "slug": "runway/aleph2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Runway Gen-4 Image on Comfy Router (runway/gen4_image).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "promptText": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "1920:1080",
+      "1080:1920",
+      "1024:1024",
+      "1360:768",
+      "1080:1080",
+      "1168:880",
+      "1440:1080",
+      "1080:1440",
+      "1808:768",
+      "2112:912"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "referenceImages": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Runway Gen-4 Image",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Runway",
+   "slug": "runway/gen4_image",
+   "soon": false
+  },
+  {
+   "alias": {
+    "first_frame": "promptImage"
+   },
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Runway Gen-4 Turbo on Comfy Router (runway/gen4_turbo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "duration": {
+     "o": [
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      8,
+      9,
+      10
+     ],
+     "req": true,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "promptText": {
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "1280:720",
+      "720:1280",
+      "1104:832",
+      "832:1104",
+      "960:960",
+      "1584:672",
+      "1280:768",
+      "768:1280"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 4294967295,
+     "req": true,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Runway Gen-4 Turbo",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "Runway",
+   "slug": "runway/gen4_turbo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-upscale-enhance",
+   "cost": null,
+   "desc": "FlashVSR on Comfy Router (wavespeed/flashvsr).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "duration": {
+     "req": true,
+     "t": "number"
+    },
+    "target_resolution": {
+     "d": "1080p",
+     "o": [
+      "720p",
+      "1080p",
+      "2k",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "FlashVSR",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "WaveSpeed",
+   "slug": "wavespeed/flashvsr",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "SeedVR2 Upscale on Comfy Router (wavespeed/seedvr2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "target_resolution": {
+     "d": "4k",
+     "o": [
+      "2k",
+      "4k",
+      "8k"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "SeedVR2 Upscale",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "WaveSpeed",
+   "slug": "wavespeed/seedvr2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "Crystal Upscaler on Comfy Router (fal/crystal-upscaler).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "creativity": {
+     "d": 0,
+     "mn": 0,
+     "mx": 10,
+     "t": "number"
+    },
+    "image_url": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpg",
+     "t": "string"
+    },
+    "scale_factor": {
+     "d": 2,
+     "mn": 1,
+     "mx": 200,
+     "t": "number"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Crystal Upscaler",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "fal",
+   "slug": "fal/crystal-upscaler",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "video-upscale-enhance",
+   "cost": null,
+   "desc": "Crystal Video Upscaler on Comfy Router (fal/crystal-video-upscaler).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "scale_factor": {
+     "d": 2,
+     "mn": 1,
+     "mx": 200,
+     "t": "number"
+    },
+    "video_url": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Crystal Video Upscaler",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "fal",
+   "slug": "fal/crystal-video-upscaler",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Grok Imagine Image Pro on Comfy Router (xai/grok-imagine-image-pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9",
+      "2:3",
+      "3:2",
+      "9:19.5",
+      "19.5:9",
+      "9:20",
+      "20:9",
+      "1:2",
+      "2:1",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "1k",
+      "2k"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Image Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-image-pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Grok Imagine Video 1.5 on Comfy Router (xai/grok-imagine-video-1.5).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 8,
+     "mn": 1,
+     "mx": 15,
+     "t": "integer"
+    },
+    "image": {
+     "obj": true,
+     "t": "object"
+    },
+    "output": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Video 1.5",
+   "outs": [
+    "video"
+   ],
+   "pop": 1000,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-video-1.5",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Qwen Image 3.0 on Comfy Router (qwen/qwen-image-3.0).",
+   "engine": "comfy",
+   "family": "qwen",
+   "inputs": {
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "prompt_extend_mode": {
+     "d": "direct",
+     "o": [
+      "direct",
+      "agent"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "t": "array"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "size": {
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Qwen Image 3.0",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "qwen/qwen-image-3.0",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Qwen Image 3.0 Pro on Comfy Router (qwen/qwen-image-3.0-pro).",
+   "engine": "comfy",
+   "family": "qwen",
+   "inputs": {
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "prompt_extend_mode": {
+     "d": "direct",
+     "o": [
+      "direct",
+      "agent"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "t": "array"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "size": {
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Qwen Image 3.0 Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "qwen/qwen-image-3.0-pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.0 Image\u2192Video on Comfy Router (wan/happyhorse-1.0-i2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.0 Image\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.0-i2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.0 Reference\u2192Video on Comfy Router (wan/happyhorse-1.0-r2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 5,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.0 Reference\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.0-r2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.0 Text\u2192Video on Comfy Router (wan/happyhorse-1.0-t2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.0 Text\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.0-t2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "Happyhorse 1.0 Video Edit on Comfy Router (wan/happyhorse-1.0-video-edit).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "video",
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.0 Video Edit",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.0-video-edit",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.1 Image\u2192Video on Comfy Router (wan/happyhorse-1.1-i2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.1 Image\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.1-i2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.1 Reference\u2192Video on Comfy Router (wan/happyhorse-1.1-r2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 5,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.1 Reference\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.1-r2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Happyhorse 1.1 Text\u2192Video on Comfy Router (wan/happyhorse-1.1-t2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Happyhorse 1.1 Text\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/happyhorse-1.1-t2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Wan2.5 Image\u2192Image Preview on Comfy Router (wan/wan2.5-i2i-preview).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "n": {
+     "d": 4,
+     "mn": 1,
+     "mx": 4,
+     "t": "integer"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "size": {
+     "d": "1280*1280",
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.5 Image\u2192Image Preview",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.5-i2i-preview",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.5 Image\u2192Video Preview on Comfy Router (wan/wan2.5-i2v-preview).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": false,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": false,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "audio",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.5 Image\u2192Video Preview",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.5-i2v-preview",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Wan2.5 Text\u2192Image Preview on Comfy Router (wan/wan2.5-t2i-preview).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "n": {
+     "d": 4,
+     "mn": 1,
+     "mx": 4,
+     "t": "integer"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "size": {
+     "d": "1280*1280",
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.5 Text\u2192Image Preview",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.5-t2i-preview",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.5 Text\u2192Video Preview on Comfy Router (wan/wan2.5-t2v-preview).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": false,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "audio",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.5 Text\u2192Video Preview",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.5-t2v-preview",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.6 Image\u2192Video on Comfy Router (wan/wan2.6-i2v).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 5,
+     "mx": 15,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": false,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": false,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "audio",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.6 Image\u2192Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.6-i2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.6 Reference\u2192Video on Comfy Router (wan/wan2.6-r2v).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": -1,
+     "mx": 30,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": false,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": false,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.6 Reference\u2192Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.6-r2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.6 Text\u2192Video on Comfy Router (wan/wan2.6-t2v).",
+   "engine": "comfy",
+   "family": "wan",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 5,
+     "mx": 15,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": false,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "audio",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.6 Text\u2192Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.6-t2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Wan2.7 Image\u2192Video on Comfy Router (wan/wan2.7-i2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 2,
+     "mx": 15,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "video",
+    "audio",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.7 Image\u2192Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.7-i2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Wan2.7 Reference\u2192Video on Comfy Router (wan/wan2.7-r2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 2,
+     "mx": 10,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 5,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.7 Reference\u2192Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.7-r2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan2.7 Text\u2192Video on Comfy Router (wan/wan2.7-t2v).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 2,
+     "mx": 15,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan2.7 Text\u2192Video",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan2.7-t2v",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Wan3.0 Video Prime on Comfy Router (wan/wan3.0-video-prime).",
+   "engine": "comfy",
+   "family": "wan_media",
+   "inputs": {
+    "audio_setting": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "origin"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 2,
+     "mx": 15,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_extend": {
+     "d": true,
+     "t": "boolean"
+    },
+    "ratio": {
+     "o": [
+      "adaptive",
+      "16:9",
+      "9:16",
+      "1:1",
+      "4:3",
+      "3:4"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480P",
+      "720P",
+      "1080P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "shot_type": {
+     "d": "single",
+     "o": [
+      "multi",
+      "single"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Wan3.0 Video Prime",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Alibaba",
+   "slug": "wan/wan3.0-video-prime",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Switchx on Comfy Router (beeble/switchx).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "alpha_mode": {
+     "o": [
+      "auto",
+      "fill",
+      "custom",
+      "select"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "alpha_uri": {
+     "t": "string"
+    },
+    "generation_type": {
+     "o": [
+      "image",
+      "video"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "max_resolution": {
+     "d": 1080,
+     "t": "integer"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "reference_image_uri": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "source_uri": {
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image",
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Switchx",
+   "outs": [
+    "image",
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Beeble",
+   "slug": "beeble/switchx",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Flux 2 Max on Comfy Router (bfl/flux-2-max).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "height": {
+     "d": 1024,
+     "mn": 256,
+     "mx": 2048,
+     "t": "integer"
+    },
+    "input_image": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_2": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_3": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_4": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_5": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_6": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_7": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_8": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_9": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": true,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 5,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "width": {
+     "d": 1024,
+     "mn": 256,
+     "mx": 2048,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux 2 Max",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-2-max",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Flux 2 Pro on Comfy Router (bfl/flux-2-pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "height": {
+     "d": 1024,
+     "mn": 256,
+     "mx": 2048,
+     "t": "integer"
+    },
+    "input_image": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_2": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_3": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_4": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_5": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_6": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_7": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_8": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_9": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": true,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 5,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "width": {
+     "d": 1024,
+     "mn": 256,
+     "mx": 2048,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux 2 Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-2-pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Flux Kontext Pro on Comfy Router (bfl/flux-kontext-pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "21:9",
+      "16:9",
+      "3:2",
+      "4:3",
+      "1:1",
+      "3:4",
+      "2:3",
+      "9:16",
+      "9:21"
+     ],
+     "t": "string"
+    },
+    "input_image": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_2": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_3": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "input_image_4": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "png",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": false,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux Kontext Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-kontext-pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Flux Pro 1.0 Expand on Comfy Router (bfl/flux-pro-1.0-expand).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "bottom": {
+     "mn": 0,
+     "mx": 2048,
+     "t": "integer"
+    },
+    "guidance": {
+     "mn": 1.5,
+     "mx": 100,
+     "t": "integer"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "left": {
+     "mn": 0,
+     "mx": 2048,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "t": "boolean"
+    },
+    "right": {
+     "mn": 0,
+     "mx": 2048,
+     "t": "integer"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "steps": {
+     "mn": 15,
+     "mx": 50,
+     "t": "integer"
+    },
+    "top": {
+     "mn": 0,
+     "mx": 2048,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux Pro 1.0 Expand",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-pro-1.0-expand",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Flux Pro 1.0 Fill on Comfy Router (bfl/flux-pro-1.0-fill).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance": {
+     "mn": 1.5,
+     "mx": 100,
+     "t": "integer"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "mask": {
+     "t": "string"
+    },
+    "output_format": {
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "steps": {
+     "mn": 15,
+     "mx": 50,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux Pro 1.0 Fill",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-pro-1.0-fill",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Flux Pro 1.1 on Comfy Router (bfl/flux-pro-1.1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "height": {
+     "d": 768,
+     "mn": 256,
+     "mx": 1440,
+     "t": "integer"
+    },
+    "image_prompt": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": false,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "width": {
+     "d": 1024,
+     "mn": 256,
+     "mx": 1440,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux Pro 1.1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-pro-1.1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Flux Pro 1.1 Ultra on Comfy Router (bfl/flux-pro-1.1-ultra).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "21:9",
+      "9:21",
+      "16:9"
+     ],
+     "t": "string"
+    },
+    "image_prompt": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "image_prompt_strength": {
+     "d": 0.1,
+     "mn": 0,
+     "mx": 1,
+     "t": "number"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_upsampling": {
+     "d": false,
+     "t": "boolean"
+    },
+    "raw": {
+     "d": false,
+     "t": "boolean"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 6,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux Pro 1.1 Ultra",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/flux-pro-1.1-ultra",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Vto v1 on Comfy Router (bfl/vto-v1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "garment": {
+     "req": true,
+     "t": "string"
+    },
+    "output_format": {
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "person": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "safety_tolerance": {
+     "d": 2,
+     "mn": 0,
+     "mx": 5,
+     "t": "integer"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Vto v1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Black Forest Labs",
+   "slug": "bfl/vto-v1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Fibo on Comfy Router (bria/fibo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "d": 5,
+     "mn": 3,
+     "mx": 5,
+     "t": "number"
+    },
+    "images": {
+     "md": "image",
+     "mi": 1,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "instruction": {
+     "t": "string"
+    },
+    "ip_signal": {
+     "d": false,
+     "t": "boolean"
+    },
+    "mask": {
+     "t": "string"
+    },
+    "model_version": {
+     "t": "string"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "steps_num": {
+     "d": 50,
+     "mn": 20,
+     "mx": 50,
+     "t": "integer"
+    },
+    "structured_instruction": {
+     "t": "string"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Fibo",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/fibo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Image on Comfy Router (bria/image).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "1:1",
+     "o": [
+      "1:1",
+      "2:3",
+      "3:2",
+      "3:4",
+      "4:3",
+      "4:5",
+      "5:4",
+      "9:16",
+      "16:9",
+      "16:10",
+      "10:16",
+      "2:1",
+      "1:2",
+      "21:9",
+      "9:21",
+      "3:1",
+      "1:3",
+      "4:1",
+      "1:4",
+      "5:1",
+      "1:5"
+     ],
+     "t": "string"
+    },
+    "images": {
+     "md": "image",
+     "mi": 1,
+     "mul": true,
+     "t": "array"
+    },
+    "ip_signal": {
+     "d": false,
+     "t": "boolean"
+    },
+    "model_version": {
+     "t": "string"
+    },
+    "output_type": {
+     "d": "png",
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "prompt_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    },
+    "resolution": {
+     "d": "1MP",
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "structured_prompt": {
+     "t": "string"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Add Object By Text on Comfy Router (bria/image-edit-add-object-by-text).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "instruction": {
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Add Object By Text",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-add-object-by-text",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Expand on Comfy Router (bria/image-edit-expand).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "mn": 0.5,
+     "mx": 3,
+     "t": "integer"
+    },
+    "canvas_size": {
+     "mi": 2,
+     "mul": true,
+     "t": "array"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "original_image_location": {
+     "mi": 2,
+     "mul": true,
+     "t": "array"
+    },
+    "original_image_size": {
+     "mi": 2,
+     "mul": true,
+     "t": "array"
+    },
+    "preserve_alpha": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "prompt_content_moderation": {
+     "t": "boolean"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Expand",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-expand",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Gen Fill on Comfy Router (bria/image-edit-gen-fill).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "mask": {
+     "req": true,
+     "t": "string"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "preserve_alpha": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_content_moderation": {
+     "t": "boolean"
+    },
+    "refine_prompt": {
+     "t": "boolean"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Gen Fill",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-gen-fill",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "Image Edit Increase Resolution on Comfy Router (bria/image-edit-increase-resolution).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "desired_increase": {
+     "t": "integer"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "preserve_alpha": {
+     "t": "boolean"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Increase Resolution",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-increase-resolution",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Product Holding on Comfy Router (bria/image-edit-product-holding).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "2:3",
+      "3:2",
+      "3:4",
+      "4:3",
+      "4:5",
+      "5:4",
+      "9:16",
+      "16:9"
+     ],
+     "t": "string"
+    },
+    "instruction": {
+     "t": "string"
+    },
+    "output_type": {
+     "t": "string"
+    },
+    "person_image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "product_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Product Holding",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-product-holding",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Product Virtual Tryon on Comfy Router (bria/image-edit-product-virtual-tryon).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "2:3",
+      "3:2",
+      "3:4",
+      "4:3",
+      "4:5",
+      "5:4",
+      "9:16",
+      "16:9"
+     ],
+     "t": "string"
+    },
+    "garment_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "req": true,
+     "t": "array"
+    },
+    "instruction": {
+     "t": "string"
+    },
+    "output_type": {
+     "t": "string"
+    },
+    "person_image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Product Virtual Tryon",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-product-virtual-tryon",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Remove Background Guided on Comfy Router (bria/image-edit-remove-background-guided).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "preserve_alpha": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_input_content_moderation": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Remove Background Guided",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-remove-background-guided",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Replace Background on Comfy Router (bria/image-edit-replace-background).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "enhance_ref_images": {
+     "t": "boolean"
+    },
+    "force_background_detection": {
+     "t": "boolean"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "mode": {
+     "t": "string"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "original_quality": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "prompt_content_moderation": {
+     "t": "boolean"
+    },
+    "ref_images": {
+     "md": "image",
+     "mul": true,
+     "t": "array"
+    },
+    "refine_prompt": {
+     "t": "boolean"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "sync": {
+     "t": "boolean"
+    },
+    "visual_output_content_moderation": {
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Replace Background",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-replace-background",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-edit",
+   "cost": null,
+   "desc": "Image Edit Replace Object By Text on Comfy Router (bria/image-edit-replace-object-by-text).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "instruction": {
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image Edit Replace Object By Text",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Bria",
+   "slug": "bria/image-edit-replace-object-by-text",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Dreamina Seedance 2 0 on Comfy Router (byteplus/dreamina-seedance-2-0-260128).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 15,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Dreamina Seedance 2 0",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/dreamina-seedance-2-0-260128",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Dreamina Seedance 2 0 Mini on Comfy Router (byteplus/dreamina-seedance-2-0-mini).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 15,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "video": {
+     "md": "video",
+     "t": "File (URL)"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Dreamina Seedance 2 0 Mini",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/dreamina-seedance-2-0-mini",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Seedance 1 0 Pro on Comfy Router (byteplus/seedance-1-0-pro-250528).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 3,
+     "mx": 12,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedance 1 0 Pro",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedance-1-0-pro-250528",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Seedance 1 0 Pro Fast on Comfy Router (byteplus/seedance-1-0-pro-fast-251015).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 3,
+     "mx": 12,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedance 1 0 Pro Fast",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedance-1-0-pro-fast-251015",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Seedance 1 5 Pro on Comfy Router (byteplus/seedance-1-5-pro-251215).",
+   "engine": "comfy",
+   "family": "content",
+   "inputs": {
+    "draft": {
+     "d": false,
+     "t": "boolean"
+    },
+    "duration": {
+     "mn": 4,
+     "mx": 12,
+     "t": "integer"
+    },
+    "execution_expires_after": {
+     "mn": 3600,
+     "mx": 259200,
+     "t": "integer"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "mp4",
+     "o": [
+      "mp4",
+      "mov"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "ratio": {
+     "o": [
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16",
+      "21:9",
+      "9:21",
+      "adaptive"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "480p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "return_last_frame": {
+     "d": false,
+     "t": "boolean"
+    },
+    "seed": {
+     "mn": -1,
+     "mx": 4294967295,
+     "t": "integer"
+    },
+    "service_tier": {
+     "o": [
+      "default",
+      "flex"
+     ],
+     "t": "string"
+    },
+    "watermark": {
+     "d": false,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedance 1 5 Pro",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedance-1-5-pro-251215",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Seedream 4 0 on Comfy Router (byteplus/seedream-4-0-250828).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "mn": 1,
+     "mx": 10,
+     "t": "number"
+    },
+    "image": {
+     "md": "image",
+     "mi": 14,
+     "mul": true,
+     "t": "array"
+    },
+    "layer_decomposition": {
+     "d": false,
+     "t": "boolean"
+    },
+    "optimize_prompt_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "png",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "seed": {
+     "d": -1,
+     "mn": -1,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "sequential_image_generation": {
+     "o": [
+      "auto",
+      "disabled"
+     ],
+     "t": "string"
+    },
+    "sequential_image_generation_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "size": {
+     "o": [
+      "2048x2048",
+      "1024x1024",
+      "4096x4096",
+      "2560x1440",
+      "3072x3072",
+      "1280x720"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "d": false,
+     "t": "boolean"
+    },
+    "watermark": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedream 4 0",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedream-4-0-250828",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Seedream 4 5 on Comfy Router (byteplus/seedream-4-5-251128).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "mn": 1,
+     "mx": 10,
+     "t": "number"
+    },
+    "image": {
+     "md": "image",
+     "mi": 14,
+     "mul": true,
+     "t": "array"
+    },
+    "layer_decomposition": {
+     "d": false,
+     "t": "boolean"
+    },
+    "optimize_prompt_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "png",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "seed": {
+     "d": -1,
+     "mn": -1,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "sequential_image_generation": {
+     "o": [
+      "auto",
+      "disabled"
+     ],
+     "t": "string"
+    },
+    "sequential_image_generation_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "size": {
+     "o": [
+      "2048x2048",
+      "2304x1728",
+      "1728x2304",
+      "2560x1440",
+      "1440x2560",
+      "2496x1664",
+      "1664x2496",
+      "3024x1296",
+      "4096x4096",
+      "4608x3456",
+      "3456x4608",
+      "5120x2880",
+      "2880x5120",
+      "4992x3328",
+      "3328x4992",
+      "6048x2592"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "d": false,
+     "t": "boolean"
+    },
+    "watermark": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedream 4 5",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedream-4-5-251128",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Seedream 5 0 Flash on Comfy Router (byteplus/seedream-5-0-flash-260915).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "mn": 1,
+     "mx": 10,
+     "t": "number"
+    },
+    "image": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "layer_decomposition": {
+     "d": false,
+     "t": "boolean"
+    },
+    "optimize_prompt_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "png",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "seed": {
+     "d": -1,
+     "mn": -1,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "sequential_image_generation": {
+     "o": [
+      "auto",
+      "disabled"
+     ],
+     "t": "string"
+    },
+    "sequential_image_generation_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "size": {
+     "o": [
+      "2048x2048",
+      "2304x1728",
+      "1728x2304",
+      "2560x1440",
+      "1440x2560",
+      "2496x1664",
+      "1664x2496",
+      "3024x1296",
+      "4096x4096",
+      "4608x3456",
+      "3456x4608",
+      "5120x2880",
+      "2880x5120",
+      "4992x3328",
+      "3328x4992",
+      "6048x2592"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "d": false,
+     "t": "boolean"
+    },
+    "watermark": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedream 5 0 Flash",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedream-5-0-flash-260915",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Seedream 5 0 Pro on Comfy Router (byteplus/seedream-5-0-pro-260628).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "guidance_scale": {
+     "mn": 1,
+     "mx": 10,
+     "t": "number"
+    },
+    "image": {
+     "md": "image",
+     "mi": 10,
+     "mul": true,
+     "t": "array"
+    },
+    "layer_decomposition": {
+     "d": false,
+     "t": "boolean"
+    },
+    "optimize_prompt_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "png",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "seed": {
+     "d": -1,
+     "mn": -1,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "sequential_image_generation": {
+     "o": [
+      "auto",
+      "disabled"
+     ],
+     "t": "string"
+    },
+    "sequential_image_generation_options": {
+     "obj": true,
+     "t": "object"
+    },
+    "size": {
+     "o": [
+      "2048x2048",
+      "2304x1728",
+      "1728x2304",
+      "2560x1440",
+      "1440x2560",
+      "2496x1664",
+      "1664x2496",
+      "3024x1296",
+      "4096x4096",
+      "4608x3456",
+      "3456x4608",
+      "5120x2880",
+      "2880x5120",
+      "4992x3328",
+      "3328x4992",
+      "6048x2592"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "d": false,
+     "t": "boolean"
+    },
+    "watermark": {
+     "d": true,
+     "t": "boolean"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Seedream 5 0 Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "ByteDance",
+   "slug": "byteplus/seedream-5-0-pro-260628",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "AI Image Upscaler Precision v2 on Comfy Router (freepik/ai-image-upscaler-precision-v2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "flavor": {
+     "o": [
+      "sublime",
+      "photo",
+      "photo_denoiser"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "scale_factor": {
+     "mn": 2,
+     "mx": 16,
+     "t": "integer"
+    },
+    "sharpen": {
+     "d": 7,
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "smart_grain": {
+     "d": 7,
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "ultra_detail": {
+     "d": 30,
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "AI Image Upscaler Precision v2",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Freepik",
+   "slug": "freepik/ai-image-upscaler-precision-v2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Veo 3.1 Lite Generate 001 on Comfy Router (veo/veo-3.1-lite-generate-001).",
+   "engine": "comfy",
+   "family": "veo",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "16:9",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "8",
+     "o": [
+      "4",
+      "6",
+      "8"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 3,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "o": [
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Veo 3.1 Lite Generate 001",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "veo/veo-3.1-lite-generate-001",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Gemini 2.5 Flash Image on Comfy Router (vertexai/gemini-2.5-flash-image).",
+   "engine": "comfy",
+   "family": "gemini",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "4:5",
+      "5:4",
+      "16:9",
+      "9:16",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 6,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "2K",
+     "o": [
+      "1K",
+      "2K",
+      "4K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Gemini 2.5 Flash Image",
+   "outs": [
+    "image",
+    "text"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "vertexai/gemini-2.5-flash-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Gemini 3.1 Flash Image on Comfy Router (vertexai/gemini-3.1-flash-image).",
+   "engine": "comfy",
+   "family": "gemini",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "4:5",
+      "5:4",
+      "16:9",
+      "9:16",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 6,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "2K",
+     "o": [
+      "1K",
+      "2K",
+      "4K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Gemini 3.1 Flash Image",
+   "outs": [
+    "image",
+    "text"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "vertexai/gemini-3.1-flash-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Gemini 3.1 Flash Lite Image on Comfy Router (vertexai/gemini-3.1-flash-lite-image).",
+   "engine": "comfy",
+   "family": "gemini",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "3:2",
+      "2:3",
+      "4:3",
+      "3:4",
+      "4:5",
+      "5:4",
+      "16:9",
+      "9:16",
+      "21:9"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 6,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "2K",
+     "o": [
+      "1K",
+      "2K",
+      "4K"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Gemini 3.1 Flash Lite Image",
+   "outs": [
+    "image",
+    "text"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Google",
+   "slug": "vertexai/gemini-3.1-flash-lite-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Ideogram 4 5 on Comfy Router (ideogram/ideogram-4-5).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "enable_copyright_detection": {
+     "t": "boolean"
+    },
+    "image": {
+     "obj": true,
+     "t": "object"
+    },
+    "images": {
+     "mi": 5,
+     "mul": true,
+     "t": "array"
+    },
+    "magic_prompt": {
+     "t": "string"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "num_images": {
+     "d": 1,
+     "mn": 1,
+     "mx": 8,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "very_low",
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "reference_images": {
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "seed": {
+     "mn": 0,
+     "mx": 2147483647,
+     "t": "integer"
+    },
+    "size": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ideogram 4 5",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Ideogram",
+   "slug": "ideogram/ideogram-4-5",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Ideogram V3 on Comfy Router (ideogram/ideogram-v3).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "t": "string"
+    },
+    "color_palette": {
+     "obj": true,
+     "t": "object"
+    },
+    "magic_prompt": {
+     "o": [
+      "AUTO",
+      "ON",
+      "OFF"
+     ],
+     "t": "string"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "num_images": {
+     "mn": 1,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "rendering_speed": {
+     "d": "DEFAULT",
+     "o": [
+      "DEFAULT",
+      "TURBO",
+      "QUALITY"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    },
+    "style_codes": {
+     "mul": true,
+     "t": "array"
+    },
+    "style_type": {
+     "d": "GENERAL",
+     "o": [
+      "AUTO",
+      "GENERAL",
+      "REALISTIC",
+      "DESIGN",
+      "FICTION"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ideogram V3",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Ideogram",
+   "slug": "ideogram/ideogram-v3",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Ideogram v4 on Comfy Router (ideogram/ideogram-v4).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "enable_copyright_detection": {
+     "t": "boolean"
+    },
+    "json_prompt": {
+     "obj": true,
+     "t": "object"
+    },
+    "rendering_speed": {
+     "d": "DEFAULT",
+     "o": [
+      "DEFAULT",
+      "TURBO",
+      "QUALITY"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "text_prompt": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ideogram v4",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Ideogram",
+   "slug": "ideogram/ideogram-v4",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling v2 5 Turbo on Comfy Router (kling/kling-v2-5-turbo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "camera_control": {
+     "obj": true,
+     "t": "object"
+    },
+    "cfg_scale": {
+     "d": 0.5,
+     "mn": 0,
+     "mx": 1,
+     "t": "number"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "mode": {
+     "d": "std",
+     "o": [
+      "std",
+      "pro"
+     ],
+     "t": "string"
+    },
+    "model_name": {
+     "t": "string"
+    },
+    "multi_prompt": {
+     "mi": 6,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "multi_shot": {
+     "d": false,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "shot_type": {
+     "o": [
+      "customize",
+      "intelligence"
+     ],
+     "t": "string"
+    },
+    "sound": {
+     "onoff": true,
+     "t": "boolean"
+    },
+    "voice_list": {
+     "mi": 2,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "watermark_info": {
+     "obj": true,
+     "t": "object"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling v2 5 Turbo",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-v2-5-turbo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling v2 6 on Comfy Router (kling/kling-v2-6).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "camera_control": {
+     "obj": true,
+     "t": "object"
+    },
+    "cfg_scale": {
+     "d": 0.5,
+     "mn": 0,
+     "mx": 1,
+     "t": "number"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "mode": {
+     "d": "std",
+     "o": [
+      "std",
+      "pro"
+     ],
+     "t": "string"
+    },
+    "model_name": {
+     "t": "string"
+    },
+    "multi_prompt": {
+     "mi": 6,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "multi_shot": {
+     "d": false,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "shot_type": {
+     "o": [
+      "customize",
+      "intelligence"
+     ],
+     "t": "string"
+    },
+    "sound": {
+     "onoff": true,
+     "t": "boolean"
+    },
+    "voice_list": {
+     "mi": 2,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "watermark_info": {
+     "obj": true,
+     "t": "object"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling v2 6",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-v2-6",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling V3 on Comfy Router (kling/kling-v3).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "camera_control": {
+     "obj": true,
+     "t": "object"
+    },
+    "cfg_scale": {
+     "d": 0.5,
+     "mn": 0,
+     "mx": 1,
+     "t": "number"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "mode": {
+     "d": "std",
+     "o": [
+      "std",
+      "pro"
+     ],
+     "t": "string"
+    },
+    "model_name": {
+     "t": "string"
+    },
+    "multi_prompt": {
+     "mi": 6,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "multi_shot": {
+     "d": false,
+     "t": "boolean"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "shot_type": {
+     "o": [
+      "customize",
+      "intelligence"
+     ],
+     "t": "string"
+    },
+    "sound": {
+     "onoff": true,
+     "t": "boolean"
+    },
+    "voice_list": {
+     "mi": 2,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "watermark_info": {
+     "obj": true,
+     "t": "object"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling V3",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-v3",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Kling Video O1 on Comfy Router (kling/kling-video-o1).",
+   "engine": "comfy",
+   "family": "kling_omni",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "16:9",
+      "9:16",
+      "1:1"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": "5",
+     "o": [
+      "3",
+      "4",
+      "5",
+      "6",
+      "7",
+      "8",
+      "9",
+      "10",
+      "11",
+      "12",
+      "13",
+      "14",
+      "15"
+     ],
+     "t": "string"
+    },
+    "first_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "generate_audio": {
+     "t": "boolean"
+    },
+    "last_frame": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 4,
+     "mul": true,
+     "t": "array"
+    },
+    "resolution": {
+     "d": "1080p",
+     "o": [
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Kling Video O1",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/kling-video-o1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Videos Avatar Image2video on Comfy Router (kling/videos-avatar-image2video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "audio_id": {
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "mode": {
+     "d": "std",
+     "o": [
+      "std",
+      "pro"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "sound_file": {
+     "md": "audio",
+     "t": "File (URL)"
+    },
+    "watermark_info": {
+     "obj": true,
+     "t": "object"
+    }
+   },
+   "ins": [
+    "image",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Videos Avatar Image2video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/videos-avatar-image2video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-extend",
+   "cost": null,
+   "desc": "Videos Video Extend on Comfy Router (kling/videos-video-extend).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "cfg_scale": {
+     "d": 0.5,
+     "mn": 0,
+     "mx": 1,
+     "t": "number"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "video_id": {
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Videos Video Extend",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Kling",
+   "slug": "kling/videos-video-extend",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Krea 2 on Comfy Router (krea/krea-2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "4:3",
+      "3:2",
+      "16:9",
+      "2.35:1",
+      "4:5",
+      "2:3",
+      "9:16"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "creativity": {
+     "d": "medium",
+     "o": [
+      "raw",
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "image_style_references": {
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "moodboards": {
+     "mi": 1,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1K"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "number"
+    },
+    "styles": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Krea 2",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Krea",
+   "slug": "krea/krea-2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Krea 2 Large on Comfy Router (krea/krea-2-large).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "4:3",
+      "3:2",
+      "16:9",
+      "2.35:1",
+      "4:5",
+      "2:3",
+      "9:16"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "creativity": {
+     "d": "medium",
+     "o": [
+      "raw",
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "image_style_references": {
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "moodboards": {
+     "mi": 1,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1K"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "number"
+    },
+    "styles": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Krea 2 Large",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Krea",
+   "slug": "krea/krea-2-large",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Krea 2 Medium on Comfy Router (krea/krea-2-medium).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "4:3",
+      "3:2",
+      "16:9",
+      "2.35:1",
+      "4:5",
+      "2:3",
+      "9:16"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "creativity": {
+     "d": "medium",
+     "o": [
+      "raw",
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "image_style_references": {
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "moodboards": {
+     "mi": 1,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1K"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "number"
+    },
+    "styles": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Krea 2 Medium",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Krea",
+   "slug": "krea/krea-2-medium",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Krea 2 Medium Turbo on Comfy Router (krea/krea-2-medium-turbo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "1:1",
+      "4:3",
+      "3:2",
+      "16:9",
+      "2.35:1",
+      "4:5",
+      "2:3",
+      "9:16"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "creativity": {
+     "d": "medium",
+     "o": [
+      "raw",
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "image_style_references": {
+     "mi": 10,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "moodboards": {
+     "mi": 1,
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "1K"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "seed": {
+     "t": "number"
+    },
+    "styles": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Krea 2 Medium Turbo",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Krea",
+   "slug": "krea/krea-2-medium-turbo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Photon 1 on Comfy Router (luma/photon-1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "21:9",
+      "9:21"
+     ],
+     "t": "string"
+    },
+    "character_ref": {
+     "obj": true,
+     "t": "object"
+    },
+    "generation_type": {
+     "d": "image",
+     "o": [
+      "image"
+     ],
+     "t": "string"
+    },
+    "image_ref": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "modify_image_ref": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "style_ref": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Photon 1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma/photon-1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Photon Flash 1 on Comfy Router (luma/photon-flash-1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "21:9",
+      "9:21"
+     ],
+     "t": "string"
+    },
+    "character_ref": {
+     "obj": true,
+     "t": "object"
+    },
+    "generation_type": {
+     "d": "image",
+     "o": [
+      "image"
+     ],
+     "t": "string"
+    },
+    "image_ref": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "modify_image_ref": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "style_ref": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Photon Flash 1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma/photon-flash-1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Ray 2 on Comfy Router (luma/ray-2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "21:9",
+      "9:21"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "duration": {
+     "o": [
+      "5s",
+      "9s"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "generation_type": {
+     "d": "video",
+     "o": [
+      "video"
+     ],
+     "t": "string"
+    },
+    "keyframes": {
+     "obj": true,
+     "t": "object"
+    },
+    "loop": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "540p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ray 2",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma/ray-2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Ray Flash 2 on Comfy Router (luma/ray-flash-2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "21:9",
+      "9:21"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "duration": {
+     "o": [
+      "5s",
+      "9s"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "generation_type": {
+     "d": "video",
+     "o": [
+      "video"
+     ],
+     "t": "string"
+    },
+    "keyframes": {
+     "obj": true,
+     "t": "object"
+    },
+    "loop": {
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "o": [
+      "540p",
+      "720p",
+      "1080p",
+      "4k"
+     ],
+     "req": true,
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ray Flash 2",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma/ray-flash-2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Uni 1 on Comfy Router (luma_2/uni-1).",
+   "engine": "comfy",
+   "family": "luma",
+   "inputs": {
+    "aspect_ratio": {
+     "o": [
+      "3:1",
+      "2:1",
+      "21:9",
+      "16:9",
+      "3:2",
+      "4:3",
+      "1:1",
+      "3:4",
+      "2:3",
+      "9:16",
+      "1:2",
+      "1:3"
+     ],
+     "t": "string"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "md": "image",
+     "mi": 9,
+     "mul": true,
+     "t": "array"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Uni 1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Luma",
+   "slug": "luma_2/uni-1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Image To Video on Comfy Router (moonvalley/image-to-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image_url": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "inference_params": {
+     "obj": true,
+     "t": "object"
+    },
+    "keyframes": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt_text": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Image To Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Moonvalley",
+   "slug": "moonvalley/image-to-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Text To Video on Comfy Router (moonvalley/text-to-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image_url": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "inference_params": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt_text": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Text To Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Moonvalley",
+   "slug": "moonvalley/text-to-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "video-edit",
+   "cost": null,
+   "desc": "Video To Video on Comfy Router (moonvalley/video-to-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "control_type": {
+     "o": [
+      "motion_control",
+      "pose_control"
+     ],
+     "req": true,
+     "t": "string"
+    },
+    "image_url": {
+     "md": "image",
+     "t": "File (URL)"
+    },
+    "inference_params": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt_text": {
+     "req": true,
+     "t": "string"
+    },
+    "video_url": {
+     "md": "video",
+     "req": true,
+     "t": "File (URL)"
+    }
+   },
+   "ins": [
+    "video",
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Video To Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Moonvalley",
+   "slug": "moonvalley/video-to-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "GPT Image 1 on Comfy Router (openai/gpt-image-1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "background": {
+     "o": [
+      "transparent",
+      "opaque",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "mi": 16,
+     "mul": true,
+     "t": "array"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "output_compression": {
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "png",
+      "webp",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "partial_images": {
+     "mn": 0,
+     "mx": 3,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "auto",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "standard",
+      "hd"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "o": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "t": "boolean"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "GPT Image 1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "OpenAI",
+   "slug": "openai/gpt-image-1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "GPT Image 1.5 on Comfy Router (openai/gpt-image-1.5).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "background": {
+     "o": [
+      "transparent",
+      "opaque",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "mi": 16,
+     "mul": true,
+     "t": "array"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "output_compression": {
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "png",
+      "webp",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "partial_images": {
+     "mn": 0,
+     "mx": 3,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "auto",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "standard",
+      "hd"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "o": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "t": "boolean"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "GPT Image 1.5",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "OpenAI",
+   "slug": "openai/gpt-image-1.5",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "GPT Image 2 on Comfy Router (openai/gpt-image-2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "background": {
+     "o": [
+      "transparent",
+      "opaque",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "mi": 16,
+     "mul": true,
+     "t": "array"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "output_compression": {
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "png",
+      "webp",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "partial_images": {
+     "mn": 0,
+     "mx": 3,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "auto",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "standard",
+      "hd"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "o": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "t": "boolean"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "GPT Image 2",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "OpenAI",
+   "slug": "openai/gpt-image-2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "GPT Image 2.5 Flare on Comfy Router (openai/gpt-image-2.5-flare).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "background": {
+     "o": [
+      "transparent",
+      "opaque",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "image": {
+     "md": "image",
+     "mi": 16,
+     "mul": true,
+     "t": "array"
+    },
+    "mask": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "output_compression": {
+     "mn": 0,
+     "mx": 100,
+     "t": "integer"
+    },
+    "output_format": {
+     "o": [
+      "png",
+      "webp",
+      "jpeg"
+     ],
+     "t": "string"
+    },
+    "partial_images": {
+     "mn": 0,
+     "mx": 3,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "auto",
+      "low",
+      "medium",
+      "high",
+      "xhigh",
+      "max",
+      "standard",
+      "hd"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "o": [
+      "1024x1024",
+      "1536x1024",
+      "1024x1536"
+     ],
+     "t": "string"
+    },
+    "stream": {
+     "t": "boolean"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "GPT Image 2.5 Flare",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "OpenAI",
+   "slug": "openai/gpt-image-2.5-flare",
+   "soon": false
+  },
+  {
+   "alias": {
+    "duration": "duration_s"
+   },
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "image-to-video",
+   "cost": null,
+   "desc": "Pika 2.5 Image To Video on Comfy Router (pika/pika-2.5-image-to-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "duration": {
+     "d": 5,
+     "o": [
+      5,
+      10
+     ],
+     "t": "integer"
+    },
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "negative_prompt": {
+     "t": "string"
+    },
+    "prompt": {
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1080p",
+     "o": [
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Pika 2.5 Image To Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Pika",
+   "slug": "pika/pika-2.5-image-to-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv2 on Comfy Router (recraft/recraftv2).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv2",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv2",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv3 on Comfy Router (recraft/recraftv3).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv3",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv3",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 on Comfy Router (recraft/recraftv4).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 on Comfy Router (recraft/recraftv4_1).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Pro on Comfy Router (recraft/recraftv4_1_pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Pro Vector on Comfy Router (recraft/recraftv4_1_pro_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Pro Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_pro_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Utility on Comfy Router (recraft/recraftv4_1_utility).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Utility",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_utility",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Utility Pro on Comfy Router (recraft/recraftv4_1_utility_pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Utility Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_utility_pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Utility Pro Vector on Comfy Router (recraft/recraftv4_1_utility_pro_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Utility Pro Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_utility_pro_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Utility Vector on Comfy Router (recraft/recraftv4_1_utility_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Utility Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_utility_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 1 Vector on Comfy Router (recraft/recraftv4_1_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 1 Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_1_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 Pro on Comfy Router (recraft/recraftv4_pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 Styles on Comfy Router (recraft/recraftv4_styles).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 Styles",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_styles",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 Styles Pro on Comfy Router (recraft/recraftv4_styles_pro).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 Styles Pro",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_styles_pro",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 Styles Pro Vector on Comfy Router (recraft/recraftv4_styles_pro_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 Styles Pro Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_styles_pro_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Recraftv4 Styles Vector on Comfy Router (recraft/recraftv4_styles_vector).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "controls": {
+     "obj": true,
+     "t": "object"
+    },
+    "n": {
+     "mn": 1,
+     "mx": 6,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "style_id": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Recraftv4 Styles Vector",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "Recraft",
+   "slug": "recraft/recraftv4_styles_vector",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "no"
+   },
+   "category": "upscale",
+   "cost": null,
+   "desc": "Ultimate Image Upscaler on Comfy Router (wavespeed/ultimate-image-upscaler).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "image": {
+     "md": "image",
+     "req": true,
+     "t": "File (URL)"
+    },
+    "output_format": {
+     "d": "jpeg",
+     "o": [
+      "jpeg",
+      "png",
+      "webp"
+     ],
+     "t": "string"
+    },
+    "target_resolution": {
+     "d": "4k",
+     "o": [
+      "2k",
+      "4k",
+      "8k"
+     ],
+     "t": "string"
+    }
+   },
+   "ins": [
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Ultimate Image Upscaler",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "WaveSpeed",
+   "slug": "wavespeed/ultimate-image-upscaler",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Flux 3 Max on Comfy Router (fal/flux-3-max).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "auto",
+      "21:9",
+      "2:1",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "mn": 5,
+     "mx": 20,
+     "t": "integer"
+    },
+    "generate_audio": {
+     "d": true,
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reasoning_level": {
+     "d": "high",
+     "o": [
+      "low",
+      "high"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "d": "720p",
+     "o": [
+      "720p",
+      "1080p"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Flux 3 Max",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "fal",
+   "slug": "fal/flux-3-max",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "H3 Max on Comfy Router (fal/h3-max).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "21:9",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "t": "integer"
+    },
+    "enable_safety_checker": {
+     "d": true,
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_expansion_mode": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "d": "768P",
+     "o": [
+      "480P",
+      "768P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image",
+    "video",
+    "audio"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "H3 Max",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "fal",
+   "slug": "fal/h3-max",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "unknown"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "H3 Max Turbo on Comfy Router (fal/h3-max-turbo).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "21:9",
+      "16:9",
+      "4:3",
+      "1:1",
+      "3:4",
+      "9:16"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 5,
+     "t": "integer"
+    },
+    "enable_safety_checker": {
+     "d": true,
+     "t": "boolean"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "prompt_expansion_mode": {
+     "req": true,
+     "t": "string"
+    },
+    "resolution": {
+     "d": "768P",
+     "o": [
+      "480P",
+      "768P"
+     ],
+     "t": "string"
+    },
+    "seed": {
+     "t": "integer"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "H3 Max Turbo",
+   "outs": [
+    "video",
+    "audio"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "fal",
+   "slug": "fal/h3-max-turbo",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Grok Imagine Image on Comfy Router (xai/grok-imagine-image).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9",
+      "2:3",
+      "3:2",
+      "9:19.5",
+      "19.5:9",
+      "9:20",
+      "20:9",
+      "1:2",
+      "2:1",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "1k",
+      "2k"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Image",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-image",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Grok Imagine Image 2.0 on Comfy Router (xai/grok-imagine-image-2.0).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9",
+      "2:3",
+      "3:2",
+      "9:19.5",
+      "19.5:9",
+      "9:20",
+      "20:9",
+      "1:2",
+      "2:1",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "1k",
+      "2k"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Image 2.0",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-image-2.0",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-image",
+   "cost": null,
+   "desc": "Grok Imagine Image Quality on Comfy Router (xai/grok-imagine-image-quality).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "auto",
+     "o": [
+      "1:1",
+      "3:4",
+      "4:3",
+      "9:16",
+      "16:9",
+      "2:3",
+      "3:2",
+      "9:19.5",
+      "19.5:9",
+      "9:20",
+      "20:9",
+      "1:2",
+      "2:1",
+      "auto"
+     ],
+     "t": "string"
+    },
+    "n": {
+     "d": 1,
+     "mn": 1,
+     "mx": 10,
+     "t": "integer"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "quality": {
+     "o": [
+      "low",
+      "medium",
+      "high"
+     ],
+     "t": "string"
+    },
+    "resolution": {
+     "d": "1k",
+     "o": [
+      "1k",
+      "2k"
+     ],
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "style": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Image Quality",
+   "outs": [
+    "image"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-image-quality",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Grok Imagine Video on Comfy Router (xai/grok-imagine-video).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 8,
+     "mn": 1,
+     "mx": 15,
+     "t": "integer"
+    },
+    "image": {
+     "obj": true,
+     "t": "object"
+    },
+    "output": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Video",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-video",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Grok Imagine Video 1.5 Lite on Comfy Router (xai/grok-imagine-video-1.5-lite).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 8,
+     "mn": 1,
+     "mx": 15,
+     "t": "integer"
+    },
+    "image": {
+     "obj": true,
+     "t": "object"
+    },
+    "output": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Video 1.5 Lite",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-video-1.5-lite",
+   "soon": false
+  },
+  {
+   "billing": {
+    "charges_on_policy_rejection": "yes"
+   },
+   "category": "text-to-video",
+   "cost": null,
+   "desc": "Grok Imagine Video 1.5 Preview on Comfy Router (xai/grok-imagine-video-1.5-preview).",
+   "engine": "comfy",
+   "family": "flat",
+   "inputs": {
+    "aspect_ratio": {
+     "d": "16:9",
+     "o": [
+      "1:1",
+      "16:9",
+      "9:16",
+      "4:3",
+      "3:4",
+      "3:2",
+      "2:3"
+     ],
+     "t": "string"
+    },
+    "duration": {
+     "d": 8,
+     "mn": 1,
+     "mx": 15,
+     "t": "integer"
+    },
+    "image": {
+     "obj": true,
+     "t": "object"
+    },
+    "output": {
+     "obj": true,
+     "t": "object"
+    },
+    "prompt": {
+     "req": true,
+     "t": "string"
+    },
+    "reference_images": {
+     "mul": true,
+     "obj": true,
+     "t": "array"
+    },
+    "resolution": {
+     "t": "string"
+    },
+    "size": {
+     "t": "string"
+    },
+    "user": {
+     "t": "string"
+    }
+   },
+   "ins": [
+    "text",
+    "image"
+   ],
+   "latency": null,
+   "listed": true,
+   "name": "Grok Imagine Video 1.5 Preview",
+   "outs": [
+    "video"
+   ],
+   "pop": 0,
+   "price_per": null,
+   "provider": "xAI",
+   "slug": "xai/grok-imagine-video-1.5-preview",
+   "soon": false
+  }
+ ]
+}

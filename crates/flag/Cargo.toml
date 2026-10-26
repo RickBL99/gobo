@@ -1,0 +1,14 @@
+[package]
+name = "flag"
+version = "0.1.0"
+edition = "2021"
+description = "Gobo's script supervisor: checks that one shot's last frame and the next shot's first frame match — exposure, white balance, colour, contrast, grain, framing — and says what jumped. Pure Rust; built into gobo.wasm."
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+scrim = { path = "../scrim" }
+serde_json = "1"

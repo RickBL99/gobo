@@ -1,0 +1,14 @@
+# secrets
+.env
+
+# reels, references and the live catalogue cache (STUDIO_DIR)
+data/
+
+.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.DS_Store
+
+# Rust builds (the .wasm the page loads is copied to studio/static by tools/build_wasm.sh)
+target/

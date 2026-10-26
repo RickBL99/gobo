@@ -1,0 +1,225 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>About · Gobo</title>
+<meta name="description" content="Gobo is an open-source AI film studio by PictureNet Corp: direct AI video like a cinematographer, on Comfy Router, graded in Rust.">
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root { --bg: #0b0b0d; --panel: #131316; --panel2: #1a1a1f; --line: #2a2a31; --line2: #3a3a44;
+  --text: #ecebe8; --muted: #9a98a0; --dim: #6c6a73; --accent: #f2c14e; --accent-ink: #1b1505; }
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.62 Inter, system-ui, sans-serif; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+
+.top { position: sticky; top: 0; z-index: 20; display: flex; align-items: center; gap: 18px; padding: 12px clamp(16px, 4vw, 48px);
+  background: rgba(11,11,13,.85); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; letter-spacing: -.01em; font-size: 1.02rem; color: var(--text); }
+.logo:hover { text-decoration: none; }
+.logo svg { width: 28px; height: 28px; }
+.take { font: 700 .68rem/1 ui-monospace, Menlo, monospace; letter-spacing: .06em; text-transform: uppercase; color: var(--accent);
+  border: 1px solid #4d4116; background: #2a2410; border-radius: 6px; padding: 4px 7px; margin-left: -6px; white-space: nowrap; }
+.grow { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line2); background: var(--panel);
+  border-radius: 99px; padding: 6px 14px; font-size: .84rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+.pill:hover { border-color: #55555f; background: var(--panel2); text-decoration: none; }
+.pill.go { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.pill svg { width: 15px; height: 15px; fill: currentColor; }
+
+main { max-width: 980px; margin: 0 auto; padding: 0 clamp(16px, 4vw, 32px) 40px; }
+.hero { padding: clamp(32px, 6vw, 64px) 0 10px; }
+.eyebrow { color: var(--accent); font-size: .78rem; font-weight: 700; text-transform: uppercase; letter-spacing: .14em; }
+h1 { font-size: clamp(2.1rem, 5vw, 3.4rem); line-height: 1.05; letter-spacing: -.03em; margin: 12px 0 16px; font-weight: 800; }
+h1 em { font-style: normal; background: linear-gradient(90deg, #f2c14e, #f08a4b 60%, #e05a6a); -webkit-background-clip: text;
+  background-clip: text; color: transparent; }
+.lede { color: #c9c7cf; font-size: 1.12rem; margin: 0 0 26px; max-width: 760px; }
+.tour { width: 100%; aspect-ratio: 16/9; border-radius: 16px; border: 1px solid var(--line); background: #000; display: block; }
+.facts { display: flex; flex-wrap: wrap; gap: 8px; margin: 18px 0 0; }
+.facts .pill { font-weight: 500; color: #d6d4cf; }
+
+section { padding: 34px 0 6px; border-top: 1px solid var(--line); margin-top: 34px; }
+h2 { font-size: 1.45rem; letter-spacing: -.015em; margin: 0 0 14px; }
+h3 { font-size: 1.04rem; margin: 22px 0 6px; }
+p { margin: 0 0 14px; color: #d2d0d6; }
+.muted { color: var(--muted); }
+ul { margin: 0 0 14px; padding-left: 20px; color: #d2d0d6; } li { margin: 5px 0; }
+b, strong { color: var(--text); }
+code { font: .88em ui-monospace, Menlo, monospace; background: var(--panel2); border: 1px solid var(--line); border-radius: 5px; padding: 1px 5px; }
+
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin: 6px 0 10px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
+.card h3 { margin: 0 0 4px; font-size: .98rem; }
+.card p { margin: 0; color: var(--muted); font-size: .9rem; line-height: 1.5; }
+.crate { font: 700 .74rem ui-monospace, Menlo, monospace; color: var(--accent); letter-spacing: .04em; }
+
+/* the grade pipeline, drawn as the order things happen in */
+.pipe { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin: 10px 0 18px; }
+.pipe span { background: var(--panel); border: 1px solid var(--line2); border-radius: 9px; padding: 7px 11px; font-size: .84rem; color: #e2e0e6; }
+.pipe i { color: var(--dim); font-style: normal; }
+.pipe span.lut { border-color: #6b5a1c; background: #221d10; color: var(--accent); font-weight: 600; }
+
+.who { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 22px; }
+footer { max-width: 980px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 32px) 44px; color: var(--dim); font-size: .82rem;
+  border-top: 1px solid var(--line); display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+@media (max-width: 760px) { .who { grid-template-columns: 1fr; } .top .hide-sm { display: none; } }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
+      <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>
+      <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>
+    Gobo
+  </a>
+  <span class="take">{{ release }}</span>
+  <span class="grow"></span>
+  <a class="pill hide-sm" href="{{ source }}" target="_blank" rel="noopener">
+    <svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0z"/></svg>
+    Source on GitHub</a>
+  {% if signed_in %}<a class="pill go" href="/">Open Gobo</a>{% else %}<a class="pill go" href="/login">{{ 'Start directing' if visitor else 'Sign in' }}</a>{% endif %}
+</header>
+
+<main>
+  <div class="hero">
+    <div class="eyebrow">About Gobo</div>
+    <h1>An open-source AI film studio, <em>directed like a shoot.</em></h1>
+    <p class="lede">Gobo lets you direct AI video the way a cinematographer works: camera, lens, light, film stock and move.
+      Shoot on {{ model_count }} image and video models through one Comfy key, or type one line and let Autopilot make the whole film.
+      Then grade it like film, in Rust, and open any of it in ComfyUI.</p>
+    {% if tour %}
+    <video class="tour" src="{{ tour }}" poster="{{ tour_poster }}" controls playsinline preload="metadata"
+      aria-label="A tour of Gobo: Autopilot, direction, the models, the Board, the Lab, grading and ComfyUI"></video>
+    {% endif %}
+    <div class="facts">
+      <a class="pill" href="{{ source }}" target="_blank" rel="noopener">Open source · MIT or Apache 2.0</a>
+      <a class="pill" href="https://www.comfy.org/open-source-higgsfield" target="_blank" rel="noopener">Built for Comfy's Open Source Higgsfield challenge</a>
+      <span class="pill">Inspired by Higgsfield's Cinema Studio</span>
+      <a class="pill" href="https://picturenetcorp.com" target="_blank" rel="noopener">Made by PictureNet Corp</a>
+    </div>
+  </div>
+
+  <section id="origin">
+    <h2>Where it came from</h2>
+    <p>PictureNet built an in-house AI cinema system for <a href="https://www.superstock.com" target="_blank" rel="noopener"><b>SuperStock</b></a> and <a href="https://www.stewartcohen.com" target="_blank" rel="noopener"><b>Stewart Cohen Productions</b></a>. They needed
+      a bespoke system that could handle full commercial production augmentation with real shot content: footage and stills
+      from real commercial shoots, extended, restyled, matched and cut alongside generated shots, not a box that only makes
+      clips from nothing.</p>
+    <p>That is why Gobo works the way it does. Footage you shot comes in and can be restyled, changed or made longer.
+      Steal the Look reads the grade off a real frame, so the generated shots can match it. The script supervisor checks every
+      cut for jumps in light, colour and grain. And every look exports as a <code>.cube</code> file for the editor the rest
+      of the job lives in.</p>
+    <p>For Comfy's Open Source Higgsfield challenge (October 2026) we took that system standalone, moved it onto Comfy Router,
+      and opened the code. Gobo is <b>inspired by Higgsfield's Cinema Studio</b>, which showed how good directing AI video
+      with real camera choices can feel. Gobo is our take on that idea, built in the open.</p>
+  </section>
+
+  <section id="inside">
+    <h2>What's inside</h2>
+    <div class="grid">
+      <div class="card"><h3>Autopilot</h3><p>One line in, a film out: a shot list, a keyframe for each new setup, every shot animated from it, the cuts checked, the film cut and graded.</p></div>
+      <div class="card"><h3>Direction</h3><p>Camera body, lens, focal length, aperture, framing, angle, light, film stock, look, grade and 28 camera moves become the prompt a DP would write.</p></div>
+      <div class="card"><h3>{{ model_count }} models, one key</h3><p>LTX, Wan, Seedance, Veo, Kling, MiniMax, FLUX and more through Comfy Router, each shot mapped onto each model's own inputs.</p></div>
+      <div class="card"><h3>The Board</h3><p>Shot cards for a spot or a short: keyframe, animate, continue one shot into the next, trim, and cut the animatic or the film.</p></div>
+      <div class="card"><h3>The Lab</h3><p>Steal the Look, grade like film, check continuity and draw the camera move, all in Rust, in your browser.</p></div>
+      <div class="card"><h3>Open in ComfyUI</h3><p>Any take, or a whole film, downloads as a ComfyUI workflow that runs on the same nodes.</p></div>
+    </div>
+  </section>
+
+  <section id="built">
+    <h2>How it's built</h2>
+    <h3>The code</h3>
+    <p>A Python 3.12 server (FastAPI) and a plain-JavaScript studio page, with no front-end framework. Every paid run waits
+      its turn in a queue on disk, and a background pump finishes it whether or not the page is still open. ffmpeg cuts,
+      trims and encodes. The model catalogue is read from Comfy Router's published schemas, and each shot is mapped onto
+      each model's own inputs: aspect, resolution, length, sound, first and last frames, references.</p>
+
+    <h3>Rust, compiled to WebAssembly</h3>
+    <p>The parts that have to be fast or exact are four Rust crates, named after grip gear:</p>
+    <div class="grid">
+      <div class="card"><div class="crate">direction</div><h3>The shot compiler</h3><p>Your direction, scene, references and palette become the prompt, in labelled pieces, so you can see which control wrote which words.</p></div>
+      <div class="card"><div class="crate">scrim</div><h3>The look lab</h3><p>Reads a frame, steals its look, and grades pictures. (A scrim is the mesh slid in front of a lamp to shape its light.)</p></div>
+      <div class="card"><div class="crate">flag</div><h3>The script supervisor</h3><p>Exposure, black level, white balance, contrast, colour, grain and framing across every cut, with a strict mode for continuous action.</p></div>
+      <div class="card"><div class="crate">dingle</div><h3>Draw to direct</h3><p>Strokes are simplified, measured and named: a loop is an orbit, a line toward the subject a push-in, a zigzag handheld.</p></div>
+    </div>
+    <p>One build runs in two places. In your browser, the previews and the Lab run on your own machine, and nothing is
+      uploaded to read or grade a frame. On the server, the same <code>.wasm</code> files run through wasmtime to write the
+      prompt that is actually sent and to grade your films. A test grades the same frame in both and requires identical bytes.</p>
+
+    <h3>The grade and the LUTs</h3>
+    <p>A look is a dozen numbers a colourist would recognise: exposure, white balance, contrast around a pivot, where black
+      and white land, saturation, colour pushed into the shadows and highlights, black-and-white filters, and bleach bypass.
+      The film stocks (Portra, Tungsten 500T, slide, expired, VHS and more) and the grades (teal and orange, Kodachrome, noir,
+      neon and more) are presets of it, and a stock and a grade stack. The colour maths runs in linear light and Oklab.</p>
+    <div class="pipe" aria-label="The grade, in order">
+      <span>Your picture</span><i>→</i><span class="lut">33 × 33 × 33 3D LUT</span><i>→</i><span>Halation</span><i>→</i><span>Vignette</span><i>→</i><span>Grain</span>
+    </div>
+    <p>The look is baked into a 33×33×33 3D LUT, and that table is exactly what the <code>.cube</code> export writes, so what
+      you see in Gobo is what Resolve, Premiere or Final Cut get. What a LUT can't hold is done per pixel after it, because it
+      needs the whole picture: halation (red light bleeding around highlights, as it does through film's anti-halation layer),
+      a vignette, and grain that sits in the mid-tones and moves from frame to frame. An Amount control sets how much of the
+      look reaches the picture: it blends the LUT and scales each effect. A live preview takes 10 to 16 ms a frame. To grade a take, the server decodes it to raw frames, puts each one
+      through the same LUT and effects, and copies the sound back untouched.</p>
+    <p>Steal the Look runs the other way. It reads a frame's tone curve in Oklab, a k-means palette, the grain, the letterbox,
+      the sharpness and the light in about 9 ms, turns the reading back into a look, and names the nearest stock and grade.</p>
+
+    <h3>The approach</h3>
+    <ul>
+      <li><b>Measure, don't assume.</b> The first grading pipeline darkened every film by about two levels before any look
+        touched it. Grading a film with the look turned off showed it; the cause was ffmpeg's fast colour-space rounding, and the
+        fix was two flags. The vignette and halation once cost 130 ms each; lookup tables took a frame from 281 ms to 15.6 ms.</li>
+      <li><b>Port without changing a word.</b> The prompt compiler began in Python. The Rust port had to give identical output
+        on thousands of generated shots before it ran anywhere, and only then was the Python retired.</li>
+      <li><b>Prove it live, on a budget.</b> Every model path was tried against the real Router with the smallest run that
+        answered the question. The whole build spent a few dollars of credit.</li>
+      <li><b>Test what ships.</b> The browser tests drive real Chrome, the WebAssembly tests run the shipped <code>.wasm</code>
+        rather than a native build, and every ComfyUI export is checked against ComfyUI's own node definitions.</li>
+    </ul>
+  </section>
+
+  <section id="open">
+    <h2>Open source</h2>
+    <p>The code is yours under the <b>MIT or Apache 2.0</b> license, whichever you prefer. The example films, images and
+      workflows are <b>CC BY 4.0</b>. It runs with Docker in a few minutes: <a href="{{ source }}" target="_blank" rel="noopener">{{ source.replace('https://', '') }}</a>.</p>
+    {% if visitor %}
+    <p>On this demo you bring your own Comfy API key. It is checked with Comfy and held in memory while you work, never
+      written to disk or put in a cookie, and every run is charged to your Comfy account at Comfy's prices. Gobo adds nothing.
+      No key yet? Make one at <a href="https://platform.comfy.org/login" target="_blank" rel="noopener">platform.comfy.org</a>.</p>
+    {% endif %}
+  </section>
+
+  <section id="who">
+    <h2>Who made it</h2>
+    <div class="who">
+      <div>
+        <p><b><a href="https://picturenetcorp.com" target="_blank" rel="noopener">PictureNet Corp</a></b>, in Pasadena, California,
+          run by Rick Leckrone and Maryam Mostafavi. Since 1995 PictureNet has built the technology, infrastructure and content
+          businesses behind commercial media licensing, including <a href="https://www.superstock.com" target="_blank" rel="noopener">SuperStock</a>
+          and <a href="https://vistalab.ai" target="_blank" rel="noopener">VistaLab</a>.</p>
+        <p class="muted">What we do for clients: full-stack engineering and cloud, AI and MCP systems, forward-deployed
+          engineering, media licensing and DAM, and creative production.</p>
+      </div>
+      <div>
+        <p><b>Rick Leckrone</b> is a principal engineer who has spent his career where pictures meet software. He was Director
+          of Tech &amp; Content at Digital Stock and Director of Commercial Photography Worldwide at Corbis, founded Blend Images,
+          is CTO and co-owner of SuperStock, and created vistalab.ai.
+          <a href="https://www.linkedin.com/in/rickleckrone/" target="_blank" rel="noopener">LinkedIn</a></p>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span>Gobo · {{ release }}{% if release_date %} · {{ release_date }}{% endif %}</span>
+  <span>An independent project, inspired by Higgsfield. Not affiliated with Comfy Org or Higgsfield.</span>
+</footer>
+</body>
+</html>

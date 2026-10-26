@@ -1,0 +1,268 @@
+{
+ "made": "2026-10-22",
+ "scenes": {
+  "film": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left.",
+  "light": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street.",
+  "look": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance."
+ },
+ "tiles": {
+  "film": {
+   "auto": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture.",
+    "seed": 4242
+   },
+   "bleach": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Bleach bypass.",
+    "seed": 4242
+   },
+   "bw400": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Black and white 400 film.",
+    "seed": 4242
+   },
+   "clean": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Clean digital image.",
+    "seed": 4242
+   },
+   "d250": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Daylight 250D film.",
+    "seed": 4242
+   },
+   "expired": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Expired film.",
+    "seed": 4242
+   },
+   "instant": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Instant film print.",
+    "seed": 4242
+   },
+   "portra": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Kodak Portra 400 film.",
+    "seed": 4242
+   },
+   "slide": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Reversal slide film.",
+    "seed": 4242
+   },
+   "t500": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. Tungsten 500T film.",
+    "seed": 4242
+   },
+   "vhs": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A young woman in a red wool coat stands at a city tram stop on the right of the frame, parked cars and shop fronts behind her on the left. Cinematic film still, natural texture. VHS tape footage.",
+    "seed": 4242
+   }
+  },
+  "light": {
+   "auto": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture.",
+    "seed": 4242
+   },
+   "blue": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Blue hour twilight.",
+    "seed": 4242
+   },
+   "candle": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Warm candlelight.",
+    "seed": 4242
+   },
+   "fog": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Diffused light through fog.",
+    "seed": 4242
+   },
+   "golden": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Golden hour sunlight.",
+    "seed": 4242
+   },
+   "lowkey": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Low key lighting.",
+    "seed": 4242
+   },
+   "moon": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Cool moonlight.",
+    "seed": 4242
+   },
+   "neon": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Neon light.",
+    "seed": 4242
+   },
+   "night": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Night lit by practical lights.",
+    "seed": 4242
+   },
+   "noon": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Hard midday sun, crisp shadows.",
+    "seed": 4242
+   },
+   "overcast": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Soft overcast daylight.",
+    "seed": 4242
+   },
+   "silhouette": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Backlit silhouette.",
+    "seed": 4242
+   },
+   "window": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A woman sits alone at a small caf\u00e9 table on the left of the frame, a cup in her hands, looking out of a large window on the right at the street. Cinematic film still, natural texture. Soft window light from the side.",
+    "seed": 4242
+   }
+  },
+  "look": {
+   "auto": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture.",
+    "seed": 4242
+   },
+   "commercial": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Polished commercial advertising look, bright, clean and glossy.",
+    "seed": 4242
+   },
+   "doc": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Documentary look.",
+    "seed": 4242
+   },
+   "drama": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Period drama look.",
+    "seed": 4242
+   },
+   "editorial": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Magazine editorial look, styled wardrobe, crisp fashion lighting.",
+    "seed": 4242
+   },
+   "horror": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Horror film look, creeping dread, deep shadows, sickly colour.",
+    "seed": 4242
+   },
+   "musical": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Music video look, bold saturated coloured light and haze.",
+    "seed": 4242
+   },
+   "neonoir": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Neo-noir look.",
+    "seed": 4242
+   },
+   "road": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Road movie look.",
+    "seed": 4242
+   },
+   "scifi": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Science fiction look.",
+    "seed": 4242
+   },
+   "thriller": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Thriller look.",
+    "seed": 4242
+   },
+   "western": {
+    "cost": 0.0405,
+    "endpoint": "flux-2-pro",
+    "model": "flux-2-pro",
+    "prompt": "A man in a long coat walks away from the camera, centred in the frame, toward a lone parked car in the distance. Cinematic film still, natural texture. Western look.",
+    "seed": 4242
+   }
+  }
+ }
+}

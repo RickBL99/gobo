@@ -1,0 +1,187 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sign in · Gobo</title>
+<meta name="description" content="Gobo: an open-source AI film studio. Direct AI video like a cinematographer, on Comfy Router, graded in Rust.">
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+<link rel="manifest" href="/static/icons/site.webmanifest">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root { --bg: #0b0b0d; --panel: rgba(19,19,22,.72); --line: rgba(255,255,255,.10); --text: #ecebe8;
+  --muted: #a3a1a9; --accent: #f2c14e; --accent-ink: #1b1505; --bad: #ff7a6b; }
+* { box-sizing: border-box; }
+html, body { min-height: 100%; margin: 0; }
+body { background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, sans-serif; overflow-x: hidden; }
+/* the wall: every sample tile, drifting, under a dark grade */
+.wall { position: fixed; inset: -10%; display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px;
+  transform: rotate(-8deg) scale(1.15); animation: drift 90s linear infinite alternate; }
+.wall img { width: 100%; aspect-ratio: 4/3; object-fit: cover; border-radius: 10px; opacity: .55;
+  filter: saturate(.9) contrast(1.05); }
+@keyframes drift { from { transform: rotate(-8deg) scale(1.15) translate3d(0, 0, 0); }
+                   to   { transform: rotate(-8deg) scale(1.15) translate3d(-4%, -10%, 0); } }
+.grade { position: fixed; inset: 0; background:
+  radial-gradient(ellipse at center, rgba(11,11,13,.45) 0%, rgba(11,11,13,.88) 55%, #0b0b0d 100%),
+  linear-gradient(180deg, rgba(11,11,13,.25), rgba(11,11,13,.65)); }
+.bars::before, .bars::after { content: ""; position: fixed; left: 0; right: 0; height: 5vh; background: #000; z-index: 1; }
+.bars::before { top: 0; } .bars::after { bottom: 0; }
+main { position: relative; z-index: 2; min-height: 100vh; display: grid; place-items: center; padding: calc(5vh + 20px) 20px; }
+.stage { width: min(1240px, 100%); display: grid; grid-template-columns: minmax(0, 1fr) 390px; gap: clamp(24px, 3.5vw, 48px); align-items: center; }
+
+/* the show: what Gobo is, the tour, and where it comes from */
+.brand { display: flex; align-items: center; gap: 12px; }
+.brand svg { width: 38px; height: 38px; flex: none; }
+.brand h1 { font-size: 1.35rem; font-weight: 800; letter-spacing: -.01em; margin: 0; }
+.show .brand svg { width: 44px; height: 44px; }
+.show .brand h1 { font-size: 1.7rem; }
+.pitch { font-size: clamp(1.5rem, 2.6vw, 2.2rem); line-height: 1.12; letter-spacing: -.025em; font-weight: 800; margin: 14px 0 6px; }
+.pitch em { font-style: normal; background: linear-gradient(90deg, #f2c14e, #f08a4b 60%, #e05a6a); -webkit-background-clip: text;
+  background-clip: text; color: transparent; }
+.sub { color: #c9c7cf; margin: 0 0 16px; font-size: .98rem; max-width: 700px; }
+.screen { position: relative; border-radius: 14px; overflow: hidden; border: 1px solid rgba(255,255,255,.14); background: #000;
+  box-shadow: 0 30px 80px rgba(0,0,0,.6); }
+.screen video { display: block; width: 100%; aspect-ratio: 16/9; background: #000; }
+.chips { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.chips a, .chips span { display: inline-flex; align-items: center; gap: 7px; border: 1px solid rgba(255,255,255,.14); background: rgba(19,19,22,.8);
+  border-radius: 99px; padding: 6px 13px; font-size: .8rem; font-weight: 500; color: #d6d4cf; text-decoration: none; white-space: nowrap; }
+.chips a:hover { border-color: rgba(242,193,78,.6); color: var(--text); }
+.chips svg { width: 14px; height: 14px; fill: currentColor; }
+.chips .about { border-color: rgba(242,193,78,.5); color: var(--accent); font-weight: 600; }
+.made { color: #8d8b94; font-size: .78rem; margin: 12px 0 0; }
+.made a { color: #c9c7cf; }
+
+/* the sign-in card */
+.card { width: 100%; background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
+  padding: 30px 28px 22px; backdrop-filter: blur(18px) saturate(1.2); -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 30px 80px rgba(0,0,0,.55); }
+.card h2 { font-size: 1.15rem; margin: 0 0 4px; letter-spacing: -.01em; }
+.tag { color: var(--muted); margin: 0 0 18px; font-size: .9rem; }
+label { display: block; font-size: .74rem; font-weight: 600; text-transform: uppercase; letter-spacing: .08em;
+  color: var(--muted); margin: 14px 0 6px; }
+input { width: 100%; height: 46px; border-radius: 10px; border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.35); color: var(--text); font: inherit; padding: 0 14px; outline: none; transition: border-color .15s, box-shadow .15s; }
+input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242,193,78,.18); }
+.hint { color: var(--muted); font-size: .76rem; margin-top: 6px; }
+.hint a, .getkey a { color: var(--accent); }
+.getkey { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: rgba(242,193,78,.07); border: 1px solid rgba(242,193,78,.25);
+  font-size: .8rem; color: #d9d2bd; }
+.getkey b { color: var(--text); }
+button { width: 100%; height: 48px; margin-top: 20px; border: 0; border-radius: 10px; background: var(--accent);
+  color: var(--accent-ink); font: 700 1rem Inter, sans-serif; cursor: pointer; letter-spacing: .01em;
+  transition: transform .08s, filter .15s; }
+button:hover { filter: brightness(1.06); } button:active { transform: translateY(1px); }
+.check { display: flex; align-items: center; gap: 8px; margin-top: 12px; text-transform: none; letter-spacing: 0;
+  font-weight: 500; font-size: .84rem; color: #c9c7cf; cursor: pointer; }
+.check input { width: 16px; height: 16px; margin: 0; accent-color: var(--accent); }
+.err { margin-top: 16px; color: var(--bad); font-size: .88rem; }
+.foot { margin-top: 18px; color: #6c6a73; font-size: .74rem; display: flex; justify-content: space-between; gap: 10px; }
+.foot a { color: inherit; }
+.rec { display: inline-flex; align-items: center; gap: 6px; }
+.rec::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #ff4d3d; animation: blink 1.2s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+
+@media (max-width: 940px) {
+  .stage { grid-template-columns: 1fr; max-width: 640px; }
+  .bars::before, .bars::after { display: none; }
+  main { padding: 24px 16px 40px; }
+}
+@media (prefers-reduced-motion: reduce) { .wall, .rec::before { animation: none; } }
+</style>
+</head>
+<body class="bars">
+<div class="wall" aria-hidden="true">
+  {% for _ in range(3) %}{% for s in samples %}<img src="{{ s }}" alt="" loading="lazy" decoding="async">{% endfor %}{% endfor %}
+</div>
+<div class="grade" aria-hidden="true"></div>
+<main>
+  <div class="stage">
+    <section class="show" aria-label="About Gobo">
+      <div class="brand">
+        <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
+          <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>
+          <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>
+        <h1>Gobo</h1>
+      </div>
+      <p class="pitch">Direct AI video like a <em>cinematographer.</em></p>
+      <p class="sub">An open-source film studio on Comfy Router: {{ model_count }} image and video models, camera-true direction,
+        one-line Autopilot films, and a film grade written in Rust.</p>
+      {% if tour %}
+      <div class="screen">
+        <video id="tour" src="{{ tour }}" poster="{{ tour_poster }}" autoplay muted loop playsinline controls preload="auto"
+          aria-label="A tour of Gobo: Autopilot, direction, the models, the Board, the Lab, grading and ComfyUI"></video>
+      </div>
+      {% endif %}
+      <div class="chips">
+        <a class="about" href="/about">About Gobo &rarr;</a>
+        <a href="{{ source }}" target="_blank" rel="noopener"><svg viewBox="0 0 16 16" aria-hidden="true"><path d="M8 0a8 8 0 0 0-2.53 15.59c.4.07.55-.17.55-.38v-1.33c-2.23.48-2.7-1.07-2.7-1.07-.36-.92-.89-1.17-.89-1.17-.73-.5.05-.49.05-.49.8.06 1.23.83 1.23.83.71 1.23 1.87.87 2.33.67.07-.52.28-.87.5-1.07-1.78-.2-3.65-.89-3.65-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82a7.6 7.6 0 0 1 4 0c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.28.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48v2.2c0 .21.15.46.55.38A8 8 0 0 0 8 0z"/></svg>Source on GitHub</a>
+        <a href="{{ source }}#license" target="_blank" rel="noopener">Open source · MIT or Apache 2.0</a>
+        <a href="https://www.comfy.org/open-source-higgsfield" target="_blank" rel="noopener">Comfy's Open Source Higgsfield challenge</a>
+        <span>Inspired by Higgsfield's Cinema Studio</span>
+      </div>
+      <p class="made">Made by <a href="https://picturenetcorp.com" target="_blank" rel="noopener">PictureNet Corp</a>, from the AI cinema system it built in-house for commercial production.</p>
+    </section>
+
+    <form class="card" method="post" action="/login">
+      {% if visitor %}
+      <h2>Start directing</h2>
+      <p class="tag">Sign in with your own Comfy API key.</p>
+      {% else %}
+      <h2>Sign in</h2>
+      <p class="tag">Shoot it on {{ model_count }} AI models.</p>
+      {% endif %}
+      <input type="hidden" name="next" value="{{ next }}">
+      {% if visitor %}
+      <label for="key">Your Comfy API key</label>
+      <input id="key" name="key" type="password" autocomplete="off" spellcheck="false" required maxlength="500">
+      <div class="hint">Gobo checks it with Comfy and holds it in memory while you work. It is never written to disk or put in a cookie.</div>
+      <label class="check"><input type="checkbox" id="remember" checked> Remember it in this browser</label>
+      {% else %}
+      <label for="name">{% if named_users %}Name{% else %}Your name{% endif %}</label>
+      <input id="name" name="name" value="{{ name }}" autocomplete="username" required autofocus maxlength="60">
+      {% if not named_users %}<div class="hint">Your work is filed under it in the Library.</div>{% endif %}
+      <label for="password">Password</label>
+      <input id="password" name="password" type="password" autocomplete="current-password" required>
+      {% endif %}
+      <button type="submit">{{ 'Start directing' if visitor else 'Sign in' }}</button>
+      {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
+      {% if visitor %}
+      <div class="getkey"><b>No key yet?</b> It takes a minute: sign in at
+        <a href="https://platform.comfy.org/login" target="_blank" rel="noopener">platform.comfy.org</a>, add credits, then
+        API Keys, + New. You pay Comfy only for what you run; Gobo itself is free.</div>
+      {% endif %}
+      <div class="foot">{% if visitor %}<a class="rec" href="/about">Public demo</a>{% else %}<span class="rec">Private preview</span>{% endif %}<span>{{ release }}</span></div>
+    </form>
+  </div>
+</main>
+<script>
+// the tour plays muted on a loop, unless the visitor would rather nothing moved
+(function () {
+  const v = document.getElementById("tour");
+  if (v && window.matchMedia("(prefers-reduced-motion: reduce)").matches) { v.removeAttribute("autoplay"); v.pause(); }
+})();
+</script>
+{% if visitor %}
+<script>
+// The key goes to the server only in this form. "Remember" keeps a copy in
+// this browser, so after the demo restarts (which forgets every key) the page
+// signs you straight back in; signing out forgets it here as well.
+(function () {
+  const f = document.querySelector("form"), k = document.getElementById("key"), r = document.getElementById("remember");
+  const NAME = "gobo.comfyKey", bye = new URLSearchParams(location.search).has("bye");
+  const keep = v => { try { v ? localStorage.setItem(NAME, v) : localStorage.removeItem(NAME); } catch (e) {} };
+  let saved = "";
+  try { saved = localStorage.getItem(NAME) || ""; } catch (e) {}
+  f.addEventListener("submit", () => keep(r.checked ? k.value.trim() : ""));
+  if (bye) keep("");
+  {% if error %}keep("");{% else %}else if (saved) { k.value = saved; f.submit(); }{% endif %}
+})();
+</script>
+{% endif %}
+</body>
+</html>

@@ -1,0 +1,13 @@
+[package]
+name = "scrim"
+version = "0.1.0"
+edition = "2021"
+description = "Gobo's look lab: reads a frame's look (tone, colour, palette, grain, letterbox, light, focus) and grades pictures like film, with .cube export. Pure Rust; built into gobo.wasm."
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+serde_json = "1"

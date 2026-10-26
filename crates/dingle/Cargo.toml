@@ -1,0 +1,13 @@
+[package]
+name = "dingle"
+version = "0.1.0"
+edition = "2021"
+description = "Gobo's draw-to-direct: strokes drawn on a frame (a camera pen and a subject pen) read as the camera move and the action a director would call. Pure Rust; built into gobo.wasm."
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["rlib"]
+
+[dependencies]
+serde_json = "1"

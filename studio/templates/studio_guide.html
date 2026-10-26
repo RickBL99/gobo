@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Studio Guide</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #0b0b0d; --panel: #131316; --panel2: #1a1a1f; --line: #2a2a31; --line2: #3a3a44;
+  --text: #ecebe8; --muted: #9a98a0; --dim: #6c6a73; --accent: #f2c14e; --accent-ink: #1b1505;
+  --ok: #6fd08c; --bad: #ff7a6b; --blue: #7eb3ff; --radius: 12px;
+}
+* { box-sizing: border-box; }
+html { scroll-padding-top: 84px; }
+html, body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.6 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+a { color: var(--blue); }
+.hidden { display: none !important; }
+header { position: sticky; top: 0; z-index: 10; display: flex; align-items: center; gap: 14px; padding: 12px 20px; flex-wrap: wrap;
+  background: rgba(11,11,13,.94); backdrop-filter: blur(8px); border-bottom: 1px solid var(--line); }
+header .back { color: var(--muted); text-decoration: none; font-size: .86rem; white-space: nowrap; }
+.homebtn { display: inline-flex; align-items: center; gap: 6px; background: #2d6cdf; color: #fff;
+  border-radius: 8px; padding: 5px 11px; font-size: .82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.homebtn:hover { background: #1e55b5; color: #fff; }
+.homebtn svg { width: 14px; height: 14px; fill: currentColor; }
+header h1 { margin: 0; font-size: 1.05rem; font-weight: 700; white-space: nowrap; }
+header h1 small { color: var(--dim); font-weight: 500; font-size: .74rem; margin-left: 6px; }
+.search { flex: 1; min-width: 220px; max-width: 560px; position: relative; margin-left: auto; }
+.search input { width: 100%; background: var(--panel2); border: 1px solid var(--line2); border-radius: 10px; padding: 9px 36px 9px 12px; color: var(--text); font: inherit; font-size: .92rem; }
+.search input:focus { outline: none; border-color: #6b5a22; box-shadow: 0 0 0 3px rgba(242,193,78,.14); }
+.search kbd { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); }
+#count { color: var(--muted); font-size: .8rem; white-space: nowrap; min-width: 90px; }
+kbd { font: 600 .74rem Inter, sans-serif; background: var(--panel2); border: 1px solid var(--line2); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--text); }
+.wrap { display: grid; grid-template-columns: 250px minmax(0, 1fr); gap: 32px; max-width: 1180px; margin: 0 auto; padding: 22px 20px 80px; }
+nav { position: sticky; top: 76px; align-self: start; max-height: calc(100vh - 96px); overflow-y: auto; padding-right: 6px; font-size: .84rem; }
+nav .ch { color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-size: .68rem; font-weight: 700; margin: 16px 0 4px; }
+nav .ch:first-child { margin-top: 0; }
+nav a { display: block; color: var(--muted); text-decoration: none; padding: 3px 8px; border-radius: 6px; }
+nav a:hover { color: var(--text); background: var(--panel); }
+main { min-width: 0; }
+.chapter { margin-bottom: 34px; }
+.chapter > h2 { font-size: 1.25rem; margin: 0 0 4px; }
+.chapter > .lede { color: var(--muted); margin: 0 0 14px; }
+.topic { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px 18px; margin-bottom: 12px; }
+.topic h3 { margin: 0 0 6px; font-size: 1rem; display: flex; align-items: center; gap: 8px; }
+.topic h3 a.self { color: var(--dim); text-decoration: none; font-weight: 500; opacity: 0; font-size: .85rem; }
+.topic:hover h3 a.self { opacity: 1; }
+.topic p { margin: 6px 0; }
+.topic .what { color: var(--muted); margin-top: 0; }
+.topic ol, .topic ul { margin: 6px 0; padding-left: 22px; }
+.topic li { margin: 3px 0; }
+.ui { font-weight: 600; color: var(--text); background: #222228; border: 1px solid var(--line2); border-radius: 6px; padding: 0 6px; white-space: nowrap; font-size: .88em; }
+.tip, .warn { border-radius: 9px; padding: 8px 12px; margin: 10px 0 2px; font-size: .9rem; }
+.tip { background: rgba(242,193,78,.08); border: 1px solid #4d4116; }
+.tip::before { content: "Tip  "; font-weight: 700; color: var(--accent); }
+.warn { background: rgba(255,122,107,.08); border: 1px solid rgba(255,122,107,.35); }
+.warn::before { content: "Watch out  "; font-weight: 700; color: var(--bad); }
+table { width: 100%; border-collapse: collapse; font-size: .88rem; margin: 6px 0; }
+th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { color: var(--dim); font-weight: 600; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; }
+.paths { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 10px; margin: 10px 0 0; }
+.paths a { display: block; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 12px; text-decoration: none; color: var(--text); }
+.paths a:hover { border-color: var(--accent); }
+.paths b { display: block; margin-bottom: 2px; }
+.paths span { color: var(--muted); font-size: .84rem; }
+mark { background: rgba(242,193,78,.32); color: var(--text); border-radius: 3px; padding: 0 1px; }
+#none { text-align: center; color: var(--muted); padding: 50px 10px; }
+#none b { display: block; color: var(--text); font-size: 1.05rem; margin-bottom: 4px; }
+footer { color: var(--dim); font-size: .8rem; margin-top: 30px; }
+@media (max-width: 860px) {
+  .wrap { grid-template-columns: 1fr; gap: 10px; }
+  nav { position: static; max-height: none; border: 1px solid var(--line); border-radius: var(--radius); padding: 10px; }
+  nav:not(.open) .list { display: none; }
+  nav .toggle { display: block !important; }
+  header .back { order: 1; } header h1 { order: 2; } .search { order: 3; flex-basis: 100%; max-width: none; } #count { order: 4; }
+}
+/* the model directory */
+nav .subs { display: flex; flex-wrap: wrap; gap: 2px 4px; padding: 0 0 4px 8px; }
+nav .subs a { display: inline; padding: 1px 5px; font-size: .76rem; color: var(--dim); }
+nav .subs a.pick { color: var(--muted); }
+.dirbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: center; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 10px 16px; margin: 0 0 12px; font-size: .88rem; }
+.dirbar label { display: flex; align-items: center; gap: 6px; cursor: pointer; color: var(--muted); }
+.dirbar input { accent-color: var(--accent); width: 16px; height: 16px; }
+.dirbar .n { margin-left: auto; color: var(--dim); font-size: .8rem; }
+.dgroup > h4 { margin: 18px 0 8px; font-size: .74rem; text-transform: uppercase; letter-spacing: .08em; color: var(--dim); }
+.dgroup > h4 a { color: inherit; text-decoration: none; }
+.dgroup.pick > h4 { color: var(--accent); }
+.dgroup > .mkintro { color: var(--muted); font-size: .88rem; margin: -4px 0 10px; }
+.model h3 { flex-wrap: wrap; }
+.model h3 .mk { color: var(--muted); font-weight: 500; font-size: .84rem; text-decoration: none; }
+.model h3 a.mk:hover { color: var(--text); }
+.badge { font-size: .66rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; border-radius: 99px; padding: 1px 8px; border: 1px solid; }
+.badge.pick { color: var(--accent); border-color: #4d4116; }
+.badge.old { color: var(--dim); border-color: var(--line2); }
+.badge.draft { color: var(--blue); border-color: #2a3c5c; }
+.model.old { opacity: .82; }
+.facts { display: flex; flex-wrap: wrap; gap: 4px; margin: 8px 0 4px; }
+.facts span { font-size: .74rem; color: var(--muted); border: 1px solid var(--line2); border-radius: 99px; padding: 1px 8px; white-space: nowrap; }
+.facts span:first-child { color: var(--accent); border-color: #4d4116; }
+.gl { display: grid; grid-template-columns: 1fr 1fr; gap: 4px 20px; margin-top: 6px; }
+.gl h4 { margin: 6px 0 0; font-size: .76rem; text-transform: uppercase; letter-spacing: .06em; }
+.gl h4.g { color: var(--ok); } .gl h4.l { color: var(--bad); }
+.gl ul { font-size: .9rem; }
+.best { font-size: .9rem; } .best b { color: var(--text); }
+.newer { font-size: .86rem; color: var(--muted); }
+h4.picks { margin: 14px 0 2px; font-size: .9rem; }
+table.picks td:first-child { width: 42%; }
+.makers dt { font-weight: 700; margin-top: 10px; } .makers dd { margin: 2px 0 0; color: var(--muted); }
+@media (max-width: 860px) { .gl { grid-template-columns: 1fr; } }
+nav .toggle { display: none; width: 100%; background: none; border: 0; color: var(--text); font: inherit; font-weight: 600; text-align: left; cursor: pointer; padding: 2px 4px; }
+</style>
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+</head>
+<body>
+<header>
+  <a class="homebtn" href="/" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
+  <a class="back" href="{{ api }}">&larr; Back to the studio</a>
+  <h1>Studio Guide<small>{{ release }} · build {{ build }}</small></h1>
+  <div class="search"><input id="q" type="search" placeholder="Search the guide: try trim, kit, seed, or a model like kling" aria-label="Search the guide" autocomplete="off"><kbd>/</kbd></div>
+  <span id="count"></span>
+</header>
+
+<div class="wrap">
+  <nav id="toc" aria-label="Contents"><button class="toggle" id="tocToggle">Contents ▾</button><div class="list"></div></nav>
+  <main id="guide">
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="start">
+  <h2>Start here</h2>
+  <p class="lede">Two pages share one engine. The <b>studio</b> makes stills and video clips and plans TV spots; the <b>Content Generator</b> is the same tool limited to stills, with batch tools. Pick what you want to do:</p>
+  <section class="topic" id="paths" data-keys="overview quick start what can i do">
+    <h3>What do you want to make?</h3>
+    <div class="paths">
+      <a href="#autopilot"><b>A whole film from one line</b><span>Autopilot writes the shots, keyframes and animates them, checks the cuts, cuts and grades the film.</span></a>
+      <a href="#first-still"><b>A still image</b><span>One picture, or 20 variations, on any image model.</span></a>
+      <a href="#first-clip"><b>A video clip</b><span>Direct a shot like a cinematographer and run it on any video model.</span></a>
+      <a href="#lab"><b>A look of my own</b><span>The Lab: steal the look of any frame, grade a take like film, check continuity, draw a camera move.</span></a>
+      <a href="#board"><b>A TV spot</b><span>Brief → shot list → keyframes → clips → the cut, on the Board.</span></a>
+      <a href="#footage-in"><b>Something with your own footage</b><span>Restyle it, swap in a product, extend it, lead into it.</span></a>
+      <a href="#cg"><b>A batch of stills from a reference</b><span>The Content Generator writes prompts from a picture or a whole folder.</span></a>
+      <a href="#library"><b>Find something I made</b><span>The Library has everything, across every reel.</span></a>
+      <a href="#choose"><b>Pick the right model</b><span>The Model directory: what each of {{ dir.count }} models is good at, and where it falls down.</span></a>
+    </div>
+  </section>
+  <section class="topic" id="words" data-keys="glossary terms definition take shot reel keyframe clip kit card">
+    <h3>Five words that explain the whole tool</h3>
+    <ul>
+      <li><b>Take</b>: one result: a still or a clip. Every Generate makes one or more takes.</li>
+      <li><b>Shot</b>: a group of takes of the same idea (shot 3, takes A, B, C).</li>
+      <li><b>Reel</b>: a project, holding all its shots and takes. (On the Content Generator it's called a <b>session</b>.)</li>
+      <li><b>Board</b>: a reel planned as a spot: one <b>card</b> per shot, in order, with a running time.</li>
+      <li><b>Kit</b>: the cast, products and places that must look the same in every shot of a spot.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="gobo">
+  <h2>Autopilot, the Lab and ComfyUI</h2>
+  <p class="lede">The parts that make Gobo more than a prompt box. The Lab runs in Rust in your browser, and the same Rust grades films on the server.</p>
+  <section class="topic" id="autopilot" data-keys="autopilot one line film automatic shot list keyframes clips cut grade roll camera">
+    <h3>Autopilot: one line, a finished film</h3>
+    <p>Click <span class="ui">▶ Autopilot</span> in the header, write one line (who, where, what happens, and a look if you have one in mind), and click <span class="ui">Roll camera</span>. It does what you would do on the <a href="#board">Board</a>, in order, and you can watch each step land:</p>
+    <ul>
+      <li><b>The shot list.</b> Autopilot writes the shots, a title and their lengths.</li>
+      <li><b>Keyframes.</b> Every new setup gets a still on the keyframe model, all at once.</li>
+      <li><b>Clips.</b> Every shot is animated from its keyframe. A shot marked ↪ starts on the last frame of the one before, so the action carries across the cut.</li>
+      <li><b>The script supervisor.</b> Every cut is checked in Rust: a straight cut must keep the grade, and a continuing shot must match the picture.</li>
+      <li><b>The cut</b>, and then <b>the grade</b>: every frame goes through the shot's film stock and grade at the strength you picked (Off, Light, Medium or Full). Medium is the default, because the prompt already asked the model for the stock. Grading costs nothing.</li>
+    </ul>
+    <p>The dialog shows what the run should cost before you start. A shot that fails is tried once more, then left out of the cut rather than stopping the film. A clip model that can't start from a frame runs every shot from its words, as straight cuts.</p>
+  </section>
+  <section class="topic" id="lab" data-keys="lab rust webassembly steal look grade film stock lut cube continuity draw move">
+    <h3>The Lab</h3>
+    <p>Click <span class="ui">Lab</span> in the header. Everything in it runs in your browser, in Rust compiled to WebAssembly, so nothing is uploaded and nothing is charged.</p>
+    <ul>
+      <li><span class="ui">Steal the look</span>: drop in any frame. It reads the tone, colour, palette, grain, letterbox, focus and light, names the nearest film stock and grade, and sets them on the shot.</li>
+      <li><span class="ui">Grade</span>: the selected take through a film stock and a grade, live, with the grain moving on video. <span class="ui">Amount</span> sets the strength; the other sliders adjust grain, halation, vignette, fade, contrast, colour and warmth. Drag the bar under the picture to compare with the original. <span class="ui">Grade the take</span> grades every frame on the server, keeps the sound, and adds the result beside the original. <span class="ui">Download .cube</span> gives the same colour to Resolve, Premiere or Final Cut.</li>
+      <li><span class="ui">Continuity</span>: how each take ends against how the next begins, with the take whose look sits furthest from the rest called out.</li>
+      <li><span class="ui">Draw the move</span>: draw on the frame with the camera pen and the subject pen. A loop reads as an orbit and a line toward the subject as a push-in; the subject's path becomes the action.</li>
+    </ul>
+  </section>
+  <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes">
+    <h3>Open in ComfyUI</h3>
+    <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>
+  </section>
+  <section class="topic" id="byok" data-keys="key api key comfy demo bring your own visitor privacy sign out">
+    <h3>Your Comfy key on the public demo</h3>
+    <p>On the public demo you sign in with your own Comfy API key, and everything you make is charged to your Comfy account. Comfy checks the key, and Gobo holds it in memory while you work: never on disk, never in a cookie. Only you see your reels. <span class="ui">Sign out</span> forgets the key, in this browser too.</p>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="basics">
+  <h2>The basics</h2>
+  <p class="lede">The page has three columns: settings on the left, the picture in the middle, the prompt on the right.</p>
+  <section class="topic" id="layout" data-keys="screen layout panel stage inspector header buttons">
+    <h3>Finding your way around</h3>
+    <ul>
+      <li><b>Header</b>: the reel's name (click it to rename), <span class="ui">Library</span>, <span class="ui">Reels</span>, <span class="ui">New reel</span>, this <span class="ui">Guide</span>, your balance (Comfy, or Segmind), and <span class="ui">Prompt</span> to show or hide the right column.</li>
+      <li><b>Left panel</b>: what to make (<span class="ui">Still image</span> or <span class="ui">Video clip</span>), the model, the scene, the camera and look, the format, and the <span class="ui">Generate</span> button at the bottom.</li>
+      <li><b>Middle</b>: the <span class="ui">Shot</span> and <span class="ui">Board</span> switch, the stage where the current take plays, its actions, and the <b>Sequence</b> bar with every take in the reel.</li>
+      <li><b>Right</b>: the prompt that will actually be sent, coloured by which control wrote each part, and details of the selected take.</li>
+    </ul>
+  </section>
+  <section class="topic" id="first-still" data-keys="image picture photo generate how to begin">
+    <h3>Your first still</h3>
+    <ol>
+      <li>At the top of the left panel, choose <span class="ui">Still image</span>.</li>
+      <li>Click the model button and pick a model. Each one shows its price per image.</li>
+      <li>In <b>Scene</b>, describe the moment: who, where, what is happening.</li>
+      <li>Optionally set the camera, light and look under <b>Shot</b>, or leave them on Auto.</li>
+      <li>Set how many takes you want (1–4) under <b>Format</b>, then click <span class="ui">Generate image</span> (or press <kbd>⌘</kbd><kbd>↵</kbd>).</li>
+    </ol>
+    <p>Takes land in the Sequence bar, grouped by shot. Click one to see it on the stage.</p>
+  </section>
+  <section class="topic" id="first-clip" data-keys="video movie motion generate clip how to begin">
+    <h3>Your first clip</h3>
+    <ol>
+      <li>Choose <span class="ui">Video clip</span> at the top of the left panel (it's the default).</li>
+      <li>Pick a video model. The button shows its length range, resolution, whether it makes sound, and its price.</li>
+      <li>In <b>Scene</b>, describe the action <em>and</em> how the camera moves.</li>
+      <li>Set <b>Movement</b> under Shot (push in, dolly, crane, orbit…), and the length under Format.</li>
+      <li>Click <span class="ui">Generate clip</span>. Most clips take one to five minutes. Keep working; it lands when it's done.</li>
+    </ol>
+    <div class="tip">To control the opening frame exactly, make a still first, then click <span class="ui">Animate</span> on it. The clip starts from that picture.</div>
+  </section>
+  <section class="topic" id="costs" data-keys="price money billing spend credits balance how much">
+    <h3>What things cost</h3>
+    <p>Every model button and picker row shows its price (≈ $ per image or per clip; <b>/s</b> means per second). The cost line under Generate adds it up before you click. Your balance is in the header.</p>
+    <p>The bill is often lower than the listed price: some models charge by length or resolution. See <a href="#price-table">Costs and timing</a> for real examples.</p>
+    <div class="warn"><span class="ui">Stop waiting</span> stops the page watching a take; it does not stop the provider, so a stopped take may still be billed. Use <span class="ui">Check again</span> to collect it.</div>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="directing">
+  <h2>Directing a shot</h2>
+  <p class="lede">Everything in the left panel, top to bottom.</p>
+  <section class="topic" id="models" data-keys="model picker choose filter search price comfy router segmind refresh lora shootout catalogue directory verdict">
+    <h3>Choosing a model</h3>
+    <p>Click the model button to open the picker: every model of the current kind with its price and what it can do. Comfy Router's come first (the picks under <span class="ui">Comfy · Cinema</span>, <span class="ui">Fast drafts</span> and so on, then the rest by maker); Segmind's follow when that catalogue is switched on.</p>
+    <ul>
+      <li><b>Search</b> by name or maker, or filter: for stills <span class="ui">References</span>, <span class="ui">Text &amp; type</span>, <span class="ui">Fast</span>, <span class="ui">Under $0.05</span>; for video <span class="ui">Start frame</span>, <span class="ui">End frame</span>, <span class="ui">Audio</span>, <span class="ui">10s+</span>, <span class="ui">Change video</span>, <span class="ui">Extend video</span>.</li>
+      <li>With the Segmind catalogue on, <span class="ui">Refresh from Segmind</span> pulls its current models without waiting for an update. Comfy Router's catalogue comes with each release.</li>
+      <li><b>Your LoRAs</b> (style models trained on your Segmind account) appear in their own group.</li>
+      <li>Under each name is a one-line verdict. Click the <span class="ui">?</span> at the end of a row, or <span class="ui">Model directory</span> at the top, for what that model is good at and where it falls down: see the <a href="#directory">Model directory</a>.</li>
+    </ul>
+  </section>
+  <section class="topic" id="shootout" data-keys="compare models side by side several at once">
+    <h3>Shootout: one shot on several models</h3>
+    <p>Click <span class="ui">Shootout</span> above the model button and tick up to three more models. Generate then runs the same shot on all of them, one take each, so you can compare.</p>
+  </section>
+  <section class="topic" id="scene" data-keys="scene prompt description words plain cinematic director claude rewrite">
+    <h3>Scene and prompt modes</h3>
+    <p>The <b>Scene</b> is your words. Under it, three modes decide what else is added:</p>
+    <ul>
+      <li><span class="ui">Plain</span>: just your words and the direction you set.</li>
+      <li><span class="ui">Cinematic</span>: adds "cinematic film still" (or motion, for video).</li>
+      <li><span class="ui">Director</span>: the Director rewrites the whole brief for the model you picked. Click <span class="ui">Direct it</span>, read its version on the right, and edit it if you like.</li>
+    </ul>
+    <p>To write the prompt yourself, turn on <span class="ui">Edit</span> in the Prompt column on the right.</p>
+  </section>
+  <section class="topic" id="direction" data-keys="camera lens focal aperture framing angle movement light film look grade composition palette colour color starter shuffle auto reset">
+    <h3>Camera and look</h3>
+    <p>The <b>Shot</b> list sets the cinematography. Click a row to see pictures of each option.</p>
+    <ul>
+      <li><b>Camera</b>: body, lens, focal length, aperture.</li>
+      <li><b>Framing</b> and <b>Angle</b>: wide, medium, close-up…; eye level, low, overhead…</li>
+      <li><b>Movement</b> (video only): push in, dolly, crane, orbit, handheld, drone…</li>
+      <li><b>Light</b>, <b>Film</b> stock, <b>Look</b> and <b>Grade</b>. Grade can also be your own palette, picked by hand or taken from an image.</li>
+      <li><b>Composition</b>: rule of thirds, centred, copy space…</li>
+    </ul>
+    <p><span class="ui">Starter shots</span> loads a ready-made shot, <span class="ui">Shuffle</span> tries a random direction and keeps your scene, <span class="ui">All auto</span> clears every control, and <span class="ui">Reset</span> goes back to the default look.</p>
+  </section>
+  <section class="topic" id="format" data-keys="aspect ratio resolution size takes number length duration seconds audio sound">
+    <h3>Format</h3>
+    <ul>
+      <li><b>Aspect</b> (frame shape) and <b>Resolution</b>: only what the chosen model supports.</li>
+      <li><b>Takes</b> (stills): 1–4 in the studio, up to 20 in the Content Generator. Each take is a different variation.</li>
+      <li><b>Duration</b> and <b>Audio</b> (video): the lengths the model can make; sound only on models that make it.</li>
+    </ul>
+  </section>
+  <section class="topic" id="seed" data-keys="seed negative prompt advanced repeat same result random">
+    <h3>Negative prompt and seed</h3>
+    <p>Open <b>Advanced</b> under Format.</p>
+    <ul>
+      <li><b>Negative prompt</b>: what to keep out (text, watermark, extra fingers…). Only on models that take one.</li>
+      <li><b>Seed</b>: leave it blank for a random result each time. Set a number (🎲 picks one) to repeat a result; several takes of one shot still differ.</li>
+    </ul>
+  </section>
+  <section class="topic" id="refs" data-keys="reference character product image starting frame ending frame end video to edit upload drag slot">
+    <h3>References and frames</h3>
+    <p>The slots under the Scene take pictures (or a clip) that the model uses. They change with the model:</p>
+    <ul>
+      <li><b>Character / product</b>: keeps a person or product looking the same. Models list how many references they take.</li>
+      <li><b>Starting frame</b> (video): the clip starts on this picture.</li>
+      <li><b>Ending frame</b> (video): the clip ends on this picture. It needs a starting frame too.</li>
+      <li><b>Video to edit</b>: for models that change or extend a clip.</li>
+    </ul>
+    <p>Click a slot to upload, or drag a take from the Sequence bar onto it.</p>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="takes">
+  <h2>Working with takes</h2>
+  <p class="lede">What happens after you click Generate.</p>
+  <section class="topic" id="stage" data-keys="rendering waiting stop check again failed failure error panel dismiss blocked policy try another model timer queue line in line credits balance top up segmind">
+    <h3>While it renders, and when it fails</h3>
+    <ul>
+      <li>A rendering take shows a timer. You can keep directing, switch reels, even close the tab: it keeps going and lands in the Sequence bar.</li>
+      <li><span class="ui">Stop waiting</span> stops watching it. <span class="ui">Check again</span> on a stopped take asks the provider once more and collects it if it finished.</li>
+      <li>A failed take says why, with <span class="ui">Try again</span>, <span class="ui">Try on …</span> (another model) and <span class="ui">Edit scene</span>.</li>
+      <li>A failure stays on screen until you dismiss it: in a red panel (bottom right; top on a phone) and on its Board card, saying in plain English what went wrong and what to try. <span class="ui">What the model said</span> shows the model's own words; <span class="ui">Show me</span> goes to the card or take; <span class="ui">Got it</span> clears it. Click a red letter on a card to read it again.</li>
+      <li>A run the Studio refuses before sending (a stretch too long for the tool, say) goes in the same panel, so nothing is spent and the reason stays put.</li>
+      <li><b>In line:</b> each maker runs only so many clips at once (Luma, four), so when you animate a whole Board the rest wait their turn and start by themselves. A waiting card says <i>In line · 2 ahead</i>; <span class="ui">Don't run it</span> takes it out of the line and nothing is spent. A maker that says it's busy gets the take back in line, not a failure.</li>
+      <li><b>The balance</b> in the header (your Comfy credits, or Segmind's) is live: it updates as takes land, every minute, and when you click it. <i>≈$10.00 in progress</i> is what's rendering or waiting in line. It turns amber with a <span class="ui">top up</span> link when what's left after that is under $50, and a run the account can't pay for is refused before it's sent.</li>
+    </ul>
+  </section>
+  <section class="topic" id="compare" data-keys="compare slider zoom star favourite favorite letters">
+    <h3>Comparing, zooming, starring</h3>
+    <ul>
+      <li>The letters on the stage (A, B, C) switch between takes of the same shot.</li>
+      <li><span class="ui">Compare with…</span> puts another take beside this one with a slider.</li>
+      <li><span class="ui">Zoom</span> (stills): click the picture where you want to look closer.</li>
+      <li>★ stars a take (or press <kbd>S</kbd>). Starred takes can be downloaded on their own and filtered in the Library.</li>
+    </ul>
+  </section>
+  <section class="topic" id="still-actions" data-keys="still image actions use as reference animate end frame upscale remove background cutout transparent">
+    <h3>What you can do with a still</h3>
+    <ul>
+      <li><span class="ui">Generate again</span>: same settings, new take. <span class="ui">Reuse settings</span>: load them into the panel to change something.</li>
+      <li><span class="ui">Use as reference</span>: make it a character or product reference.</li>
+      <li><span class="ui">Animate</span>: make it the starting frame of a clip. <span class="ui">Use as end frame</span>: the ending frame.</li>
+      <li><span class="ui">Upscale</span>: twice the size. <span class="ui">Remove background</span>: the subject on transparency.</li>
+      <li><span class="ui">Copy prompt</span>, <span class="ui">Delete</span>.</li>
+    </ul>
+  </section>
+  <section class="topic" id="clip-actions" data-keys="clip video actions continue grab frame change extend lead into upscale">
+    <h3>What you can do with a clip</h3>
+    <ul>
+      <li><span class="ui">Continue shot</span>: the next clip starts on this clip's last frame. Describe what happens next.</li>
+      <li><span class="ui">Grab frame</span>: pause the clip where you want, then pull that frame out as a still.</li>
+      <li><span class="ui">Change clip</span>, <span class="ui">Extend clip</span>, <span class="ui">Lead into it</span>: see <a href="#footage-shot">your own footage</a>; they work on any clip.</li>
+      <li><span class="ui">Upscale</span>: a sharper, larger clip.</li>
+    </ul>
+  </section>
+  <section class="topic" id="sequence" data-keys="sequence bin strip select stitch join combine film delete several hold stills order">
+    <h3>The Sequence bar: select, stitch, delete</h3>
+    <ul>
+      <li><span class="ui">Select</span> (or <kbd>⌘</kbd>/<kbd>Shift</kbd>-click a take) starts a selection. Click takes to pick them; <span class="ui">Select all</span> picks everything.</li>
+      <li><span class="ui">Stitch</span> picks one take per shot (the starred one, else a clip, else the newest) and joins them in order into one video. Stills are held for 2, 3, 5 or 8 seconds (<b>Stills hold</b>).</li>
+      <li>With a selection: <span class="ui">Download</span> it as a zip, or <span class="ui">Delete</span> it (or press <kbd>Delete</kbd>). A take still rendering can't be deleted; stop it first.</li>
+      <li><span class="ui">Done</span> or <kbd>Esc</kbd> leaves selecting.</li>
+    </ul>
+  </section>
+  <section class="topic" id="downloads" data-keys="download zip save export file stitched all starred size 4k 300 dpi">
+    <h3>Downloads</h3>
+    <ul>
+      <li><span class="ui">All takes (.zip)</span> or <span class="ui">Starred (.zip)</span>: separate files in one zip, with a list of what each is.</li>
+      <li><span class="ui">Download stitched</span>: the last stitched film. Any take also has <span class="ui">Download</span> on the stage.</li>
+      <li>Content Generator: pick <b>Original</b>, <b>2K</b>, <b>4K</b> or <b>8K at 300 dpi</b> before downloading; stills are resized and sharpened for filing.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="organising">
+  <h2>Reels and the Library</h2>
+  <p class="lede">Nothing you make is lost until you delete it.</p>
+  <section class="topic" id="reels" data-keys="reel session project new rename switch open kept saved storage expire 60 days">
+    <h3>Reels</h3>
+    <ul>
+      <li><span class="ui">New reel</span> starts a fresh one; your first Generate creates it. Click the name in the header to rename it.</li>
+      <li><span class="ui">Reels</span> lists them all, newest first, with a cover picture. Click one to open it.</li>
+      <li>Takes stay until you delete them. Only reels with nothing made in them are cleared, after 60 days.</li>
+    </ul>
+  </section>
+  <section class="topic" id="library" data-keys="library find everything mine everyone search filter clips stills starred all reels">
+    <h3>The Library</h3>
+    <p><span class="ui">Library</span> shows every finished take from every reel (or every session, on the Content Generator), grouped by day.</p>
+    <ul>
+      <li><span class="ui">Mine</span> is what you made; <span class="ui">Everyone</span> is the whole team's.</li>
+      <li>Filter by <span class="ui">Clips</span> or <span class="ui">Stills</span>, <span class="ui">★ Starred</span>, or search prompts, models and reel names.</li>
+      <li>Hover over a clip to play it. Click any take to open the viewer; <kbd>←</kbd> <kbd>→</kbd> move through the library, <kbd>S</kbd> stars, <kbd>Esc</kbd> goes back.</li>
+    </ul>
+  </section>
+  <section class="topic" id="library-actions" data-keys="viewer open in reel download star copy prompt delete use as reference add to kit select several zip mark as mine claim">
+    <h3>What the Library can do</h3>
+    <ul>
+      <li><b>In the viewer</b>: <span class="ui">Open in its reel</span>, <span class="ui">Download</span>, <span class="ui">Star</span>, <span class="ui">Copy prompt</span>, <span class="ui">Delete</span>, and for stills <span class="ui">Use as reference</span> (or <span class="ui">Add to kit</span> when the Board is open), which brings the picture into the reel you're working in.</li>
+      <li><b>Several at once</b>: tick takes (or <kbd>⌘</kbd>-click). <span class="ui">Download</span> makes one zip with a folder per reel; <span class="ui">Delete</span> removes them.</li>
+      <li>You can delete your own takes and ones with no name on them, not someone else's.</li>
+    </ul>
+  </section>
+  <section class="topic" id="mine" data-keys="mine empty no name mark as mine claim sign in who made ownership">
+    <h3>Why is "Mine" empty?</h3>
+    <p>Takes are kept under the name you signed in with. Takes made before 23 October 2026 carry no name, so they show only under Everyone.</p>
+    <ol>
+      <li>Switch to <span class="ui">Everyone</span>.</li>
+      <li>Tick your takes (<span class="ui">Select all</span> helps).</li>
+      <li>Click <span class="ui">Mark … as mine</span>. A take with someone's name on it keeps it.</li>
+    </ol>
+    <p>If the Library says it doesn't know who you are, sign in again from the home page.</p>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="board">
+  <h2>The Board: plan a TV spot</h2>
+  <p class="lede">Click <span class="ui">Board</span> above the stage. A spot is a fixed pipeline: brief → shot list → keyframes → clips → the cut. Each shot is a card.</p>
+  <section class="topic" id="board-flow" data-keys="overview steps workflow spot commercial tv how">
+    <h3>A spot in seven steps</h3>
+    <ol>
+      <li>Put the cast and product in the <a href="#kit">Kit</a>.</li>
+      <li>Set the look in the left panel (camera, light, film, grade) and pick a <b>Keyframes</b> model and a <b>Clips</b> model.</li>
+      <li>Write the brief, pick <span class="ui">:15</span>, <span class="ui">:30</span> or <span class="ui">:60</span>, and click <span class="ui">Write the shot list</span>.</li>
+      <li>Read the cards and fix what you'd change.</li>
+      <li><span class="ui">Keyframe</span> every card (cents each) and click <span class="ui">Animatic</span> to check the timing.</li>
+      <li><span class="ui">Animate</span> the cards you're happy with.</li>
+      <li>Trim, then <span class="ui">Cut the spot</span>.</li>
+    </ol>
+  </section>
+  <section class="topic" id="brief" data-keys="brief shot list claude write plan length target 15 30 60 seconds rewrite">
+    <h3>From a brief to a shot list</h3>
+    <p>Write the brief at the top of the Board: the product, who it's for, the idea, the one thing to remember. Pick the length and click <span class="ui">Write the shot list</span>.</p>
+    <p>Gobo drafts the cards in about 15 seconds: what the camera sees, framing, camera move, length, who's in each shot, a voice-over line and on-screen text. The lengths are ones the Clips model can actually make, and they add up to the length you picked.</p>
+    <p><span class="ui">Rewrite the shot list</span> replaces the AI cards. Your footage cards stay, and Gobo plans around them.</p>
+  </section>
+  <section class="topic" id="kit" data-keys="kit cast product place element reference consistent same face character name upload library drag">
+    <h3>The Kit: the same face, the same product, every shot</h3>
+    <p>The Kit (left panel, on the Board) holds the people, products and places that must look the same throughout. Each is one good picture with a name.</p>
+    <ul>
+      <li><span class="ui">Upload</span> a picture, <span class="ui">From library</span> (open a still, then <span class="ui">Add to kit</span>), or drag a keyframe from a card onto the Kit.</li>
+      <li>Name it ("Maya", "the Icebox bottle") and set it to Cast, Product or Place.</li>
+      <li>On each card, tick who and what is in that shot. Their pictures go to the keyframe, and the prompt names them ("image 1 is Maya").</li>
+    </ul>
+    <div class="tip">Pick a Keyframes model that takes several references: Nano Banana Pro, GPT Image or Seedream. The keyframe carries the kit into the clip.</div>
+  </section>
+  <section class="topic" id="spot-seed" data-keys="seed spot repeat retake look panel same">
+    <h3>Spot seed and the look</h3>
+    <ul>
+      <li>The <b>Spot seed</b> (in the Kit) gives every shot its own fixed seed, so a retake of a shot repeats it. Faces and products come from the kit, not the seed.</li>
+      <li>On the Board, the left panel is the spot's look: camera, light, film, look and grade apply to every card. Framing, movement and length are set on each card.</li>
+    </ul>
+  </section>
+  <section class="topic" id="board-models" data-keys="keyframes model clips model choose which image video">
+    <h3>Keyframes and Clips models</h3>
+    <p>On the Board the model card has two rows: <b>Keyframes</b> (a still model) and <b>Clips</b> (a video model). Click either to choose.</p>
+    <div class="warn">For <b>Clips</b>, pick a model that makes video from a keyframe (Seedance, Veo, Kling…). Models that change or extend a clip belong on <a href="#footage-board">footage cards</a>; as the Clips model, AI shots fail on them.</div>
+  </section>
+  <section class="topic" id="cards" data-keys="card fields scene framing move length voice over on-screen text super cut continue move duplicate delete">
+    <h3>A card, field by field</h3>
+    <ul>
+      <li><b>Number and length</b> at the top, with <span class="ui">Cut</span> / <span class="ui">Continue</span>, and ← → to move it, ⧉ to duplicate, ✕ to take it off the board (its takes stay in the reel).</li>
+      <li><b>The picture</b>: the chosen clip, else the keyframe. Hover over it to play. <span class="ui">Open ↗</span> opens that take in the Shot view, for upscaling, grabbing frames and the rest.</li>
+      <li><b>Key</b> and <b>Clip</b> letters: every keyframe and clip made for this card. Click one to choose it.</li>
+      <li><b>What the camera sees</b>, then <b>Framing</b>, <b>Move</b> and <b>Length</b>.</li>
+      <li><b>Kit chips</b>: tick who and what is in the shot.</li>
+      <li><b>Voice-over</b> and <b>On-screen text</b>: saved with the spot for the edit.</li>
+    </ul>
+  </section>
+  <section class="topic" id="keyframes" data-keys="keyframe still variants options how many new keyframe pick choose">
+    <h3>Keyframes</h3>
+    <p><span class="ui">Keyframe</span> makes the opening picture of the shot with the Keyframes model and the kit. <b>Keyframes per shot</b> (top of the Board) makes 1–4 options at once; click a letter to choose one. <span class="ui">New keyframe</span> makes more; the newest is shown until you pick another.</p>
+  </section>
+  <section class="topic" id="animate" data-keys="animate clip from keyframe ends on next seamless hand off transition re-animate">
+    <h3>Animate, and ending on the next shot</h3>
+    <ul>
+      <li><span class="ui">Animate</span> makes the clip from the chosen keyframe with the Clips model, at the card's length and move.</li>
+      <li>Tick <span class="ui">ends on N</span> (on models that can end on a frame) and the clip finishes exactly on the next card's keyframe: a seamless hand-off.</li>
+      <li><span class="ui">Re-animate</span> makes another version; choose between them with the Clip letters.</li>
+    </ul>
+  </section>
+  <section class="topic" id="continue" data-keys="continue last frame picks up same moment carry on next shot">
+    <h3>Continue: picking up where the last shot ends</h3>
+    <p>Set a card to <span class="ui">Continue</span> and its keyframe is the last frame of the previous card's clip. Animate the previous card first, then click <span class="ui">Last frame of N</span>, then <span class="ui">Animate</span>.</p>
+  </section>
+  <section class="topic" id="trim" data-keys="trim in out cut length running time timeline target over fill seconds">
+    <h3>Trims and running time</h3>
+    <ul>
+      <li>Every card with a clip has <b>In</b> and <b>Out</b> (bottom right). Type the seconds to use only that stretch.</li>
+      <li>The timeline under the brief shows each card's length: grey for a keyframe, amber for a clip, blue for footage. The red line is your target, and it says how far over or short you are.</li>
+      <li>Click a block in the timeline to jump to its card.</li>
+    </ul>
+  </section>
+  <section class="topic" id="bulk" data-keys="keyframe all animate all batch several at once cost confirm">
+    <h3>Keyframe all, Animate all</h3>
+    <p>The buttons under the timeline do every card that's ready, and show the total cost first: <span class="ui">Keyframe N shots</span> for cards with no keyframe, <span class="ui">Animate N shots</span> for cards with a keyframe and no clip. Animate asks before it spends.</p>
+    <p>Continue cards wait for the clip before them; read their last frame once it lands.</p>
+  </section>
+  <section class="topic" id="cut" data-keys="cut the spot animatic stitch final film watch download preview timing">
+    <h3>Animatic and Cut the spot</h3>
+    <ul>
+      <li><span class="ui">Animatic</span>: the keyframes held for each card's length, with footage as it is. Check the timing before paying for video.</li>
+      <li><span class="ui">Cut the spot</span>: the chosen clips, trimmed, in board order. A keyframe stands in where a card has no clip yet.</li>
+      <li>The <span class="ui">▶</span> button beside them (for example <span class="ui">▶ Spot cut · 0:12.5</span>) plays the last cut in the Shot view, with <span class="ui">Download</span> on the stage.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="footage">
+  <h2>Your own footage</h2>
+  <p class="lede">Bring in a clip you shot and work it with AI: restyle it, swap in a product, extend it, lead into it, cut it with AI shots.</p>
+  <section class="topic" id="footage-in" data-keys="import upload footage clip own video shot camera file mp4 mov 100 mb size export prores hevc">
+    <h3>Getting footage in</h3>
+    <ul>
+      <li><b>On the Board</b>: click <span class="ui">＋ Footage</span> at the end of the cards. <b>In the Shot view</b>: <span class="ui">＋ Footage</span> in the Sequence bar.</li>
+      <li>MP4, MOV or WebM, <b>up to 100 MB</b>. Export a 1080p H.264 clip; 30 seconds is about 40–60 MB. (QuickTime: File → Export As → 1080p.)</li>
+      <li>The original is kept. The page plays (and the models get) a 1080p copy; 50 and 60 fps clips come in at 25 and 30.</li>
+    </ul>
+    <div class="warn">Use the clean master, not a watermarked comp: the AI copies the watermark into what it makes.</div>
+  </section>
+  <section class="topic" id="footage-board" data-keys="footage card board tool picker describe trim in out">
+    <h3>A footage card</h3>
+    <p>A footage card has a blue border and a <b>Footage</b> tag. It shows the clip and its first frame (the <b>Key</b>), then:</p>
+    <ul>
+      <li><b>What's in this footage</b>: one line; Gobo plans the AI shots around it.</li>
+      <li><b>The tool</b>: a <b>Change it</b> or <b>Extend it</b> model, with its price.</li>
+      <li><b>The instruction</b>: the change, or what happens next.</li>
+      <li><b>In</b> and <b>Out</b>: the stretch to work on. Changes and extensions run on just that part; most models work best on 3–8 seconds.</li>
+    </ul>
+  </section>
+  <section class="topic" id="footage-change" data-keys="change restyle season winter night weather time of day place swap product wardrobe shirt clothes outfit blouse replace reference kit">
+    <h3>Change it: restyle, or swap in a product</h3>
+    <ul>
+      <li><b>Restyle the same take</b>: keep <b>FLUX 3 Video Edit</b> (or Luma Modify, Runway Aleph, Kling O3 Edit), type the change ("make it a snowy winter evening"), click <span class="ui">Change</span>. The motion and the people stay.</li>
+      <li><b>Swap in a product or a shirt</b>:
+        <ol>
+          <li>Put a clean picture of it in the Kit and name it the way you'll write it ("the olive blouse").</li>
+          <li>Tick it on the footage card. (Name it in the instruction and it's sent anyway.)</li>
+          <li>Choose a tool that shows <b>refs</b>: <b>Pruna P Video Edit</b> (≈ $0.41) first, then <b>Kling O1 Video 2 Video Edit</b> (≈ $0.93) or <b>Kling O3 Video Edit</b> (≈ $2.09).</li>
+          <li>Say what changes and what stays: "Replace her western shirt with the olive blouse. Keep her face, hair, hat, earrings, movement and the background exactly the same."</li>
+          <li>Set In and Out to 3–5 seconds and click <span class="ui">Change</span>.</li>
+        </ol>
+      </li>
+    </ul>
+    <p><b>Pruna P Video Replace</b> swaps a whole <em>person</em> for the one in the kit picture, and takes no instruction. Tools without "refs" (FLUX 3 Video Edit, Wan 2.7) can't see the kit; they go by your words alone.</p>
+    <p>Some tools take a set length: Kling O3 takes 3–15 seconds and is told the stretch's length. The card stops you if the stretch is longer than a tool takes.</p>
+    <p>Each result is a new version on the same card (B, C…). Click the letters to compare with the original.</p>
+  </section>
+  <section class="topic" id="footage-extend" data-keys="extend longer continue past the end more seconds extension flux pixverse">
+    <h3>Extend it</h3>
+    <p>Choose an <b>Extend it</b> tool (FLUX 3 Extend, PixVerse V6 Extend), set how much longer (+5s…), say what happens next, and click <span class="ui">Extend</span>. The extension becomes the next card and carries on from the Out point, camera move and all. Only the new seconds play; the original isn't repeated.</p>
+  </section>
+  <section class="topic" id="footage-leadin" data-keys="lead in lead-in opening establishing shot before lands on first frame transition into">
+    <h3>Lead into it with an AI shot</h3>
+    <ol>
+      <li>Click <span class="ui">＋ AI shot</span> and move it before the footage with ←.</li>
+      <li>Describe the opening ("aerial of the street at golden hour, coming down toward her") and click <span class="ui">Keyframe</span>.</li>
+      <li>Tick <span class="ui">ends on N</span> and click <span class="ui">Animate</span>. The AI shot lands exactly on the footage's first frame (on the version the footage card shows, if you've changed it).</li>
+    </ol>
+    <p>To follow the footage with an AI shot instead, add a card after it set to <span class="ui">Continue</span>.</p>
+  </section>
+  <section class="topic" id="footage-plan" data-keys="plan around footage shot list claude mix real ai match">
+    <h3>Let Gobo plan around it</h3>
+    <p>With footage cards on the Board, <span class="ui">Write the shot list</span> keeps each piece at its real length and writes AI shots around it that match its people, place and light.</p>
+    <div class="tip">To keep the talent in the AI shots, click <b>Key</b> on the footage card to show its first frame, drag it onto the Kit and name the person. Tick them on the AI cards.</div>
+  </section>
+  <section class="topic" id="footage-shot" data-keys="shot view change clip extend clip lead into it footage single">
+    <h3>Footage in the Shot view</h3>
+    <p>Every clip on the stage, yours or AI, has <span class="ui">Change clip</span>, <span class="ui">Extend clip</span> and <span class="ui">Lead into it</span>. They load the right kind of model and the clip, then you describe the change and click Generate. The Shot view has no In/Out: it sends the whole clip. Use a footage card on the Board to work on part of one.</p>
+  </section>
+  <section class="topic" id="footage-rules" data-keys="google seedance bytedance real people refuse policy likeness releases rights model release client ai label">
+    <h3>Which tools to use, and the rules</h3>
+    <ul>
+      <li><b>Google's video models refuse real people.</b> They sort last in the tool list and say "no real people". Use the others for footage with people in it.</li>
+      <li><b>Seedance refuses a starting frame of a realistic person.</b> ByteDance blocks any keyframe or reference that looks like a real face, so a shot of people that starts from a keyframe comes back refused. Animate those on MiniMax, Wan or Kling.</li>
+      <li><b>Releases</b>: before AI-changed footage of real talent goes to a client, make sure the model releases cover AI changes to their likeness.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="cg">
+  <h2>The Content Generator</h2>
+  <p class="lede">At <a href="{{ api }}/stills">{{ api }}/stills</a>: the same engine, stills only, with batch tools. Your prompt is sent exactly as written unless you direct it.</p>
+  <section class="topic" id="cg-batch" data-keys="content generator batch 20 images stills plain variations sessions">
+    <h3>Batches of stills</h3>
+    <p>Every still model (178, your LoRAs included) is in the picker with its price. Set up to 20 <b>Images</b> under Format and click Generate. The camera and look controls are there whenever you want to direct a shot.</p>
+  </section>
+  <section class="topic" id="cg-reference" data-keys="from a reference image prompts gpt variation photo illustration notes art direction write">
+    <h3>Prompts from a reference picture</h3>
+    <ol>
+      <li>In <b>From a reference</b>, drop an image or click <span class="ui">Image</span>.</li>
+      <li>Choose <span class="ui">Photo</span> or <span class="ui">Illustration</span>, how many <b>Prompts</b>, and the <b>Variation</b> (1 = close to the picture, 10 = loose).</li>
+      <li>Add art direction for every prompt if you like ("diverse cast, winter light, no text").</li>
+      <li>Click <span class="ui">Write N prompts</span>. GPT-4o writes them in a few seconds.</li>
+      <li>Edit or drop any (✕), <span class="ui">Use</span> one as the Scene, or generate them all at once.</li>
+    </ol>
+  </section>
+  <section class="topic" id="cg-folder" data-keys="folder batch many images directory run all">
+    <h3>A whole folder</h3>
+    <p>Click <span class="ui">Folder</span> and pick a folder of pictures. <span class="ui">Run N images × M</span> writes prompts for each picture and generates them, at most 8 at a time. <span class="ui">Stop</span> finishes the current picture and stops.</p>
+  </section>
+  <section class="topic" id="cg-more" data-keys="sessions classic old page loras train style download size">
+    <h3>Sessions, sizes, Classic and LoRAs</h3>
+    <ul>
+      <li><b>Sessions</b> are the Content Generator's reels; they're kept apart from the studio's.</li>
+      <li>Download at <b>Original</b>, <b>2K</b>, <b>4K</b> or <b>8K</b> (300 dpi) with the size menu.</li>
+      <li><span class="ui">Classic</span> opens the previous generator and its old sessions. <span class="ui">LoRAs</span> trains and manages style models.</li>
+    </ul>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="reference">
+  <h2>Reference</h2>
+  <p class="lede">Costs, keys, and what the messages mean.</p>
+  <section class="topic" id="price-table" data-keys="cost price timing how long examples table cheap expensive">
+    <h3>Costs and timing (real runs, October 2026)</h3>
+    <table>
+      <tr><th>What</th><th>Model</th><th>Cost</th><th>Time</th></tr>
+      <tr><td>A still</td><td>P Image · Qwen Image 2.1 Turbo</td><td>$0.005 · $0.016</td><td>seconds</td></tr>
+      <tr><td>A still with references</td><td>GPT Image 2.5 · Nano Banana Pro</td><td>≈ $0.09 · ≈ $0.17</td><td>under a minute</td></tr>
+      <tr><td>A clip (5 s)</td><td>Seedance 1.5 Pro</td><td>≈ $0.13</td><td>about a minute</td></tr>
+      <tr><td>A clip (high end)</td><td>Veo 3.1 · Seedance 2.5</td><td>≈ $2.09 · ≈ $2.36</td><td>3–8 minutes</td></tr>
+      <tr><td>Change footage (3 s)</td><td>FLUX 3 Video Edit</td><td>$0.13</td><td>about 75 s</td></tr>
+      <tr><td>Extend footage (+5 s)</td><td>FLUX 3 Extend</td><td>$1.50</td><td>about 3 minutes</td></tr>
+      <tr><td>A :15 shot list</td><td>Claude, via Comfy Router</td><td>pennies</td><td>about 15 s</td></tr>
+    </table>
+    <p>A finished :30 is 6–8 shots: under $1 of keyframes, $10–30 of clips depending on the model and retakes.</p>
+  </section>
+  <section class="topic" id="keys" data-keys="keyboard shortcuts keys hotkeys cmd enter arrows escape delete">
+    <h3>Keyboard shortcuts</h3>
+    <table>
+      <tr><td><kbd>⌘</kbd> <kbd>↵</kbd></td><td>Generate</td></tr>
+      <tr><td><kbd>←</kbd> <kbd>→</kbd></td><td>Previous / next take (Shot view and Library viewer)</td></tr>
+      <tr><td><kbd>S</kbd></td><td>Star the take on the stage, or in the Library viewer</td></tr>
+      <tr><td><kbd>⌘</kbd>/<kbd>Shift</kbd>-click</td><td>Start selecting takes (Sequence bar, Library)</td></tr>
+      <tr><td><kbd>Delete</kbd></td><td>Delete the selected takes (Sequence bar)</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Close a sheet, leave the viewer, stop selecting</td></tr>
+      <tr><td><kbd>/</kbd></td><td>Search this guide (<kbd>Esc</kbd> clears it)</td></tr>
+    </table>
+  </section>
+  <section class="topic" id="trouble" data-keys="error message problem fix help troubleshooting not working failed blocked unavailable credits missing">
+    <h3>When something goes wrong</h3>
+    <table>
+      <tr><th>The message</th><th>What to do</th></tr>
+      <tr><td>Blocked by the model's content policy</td><td>Reword the scene, or click <span class="ui">Try on …</span> for another model.</td></tr>
+      <tr><td>Can't create videos with real people's likenesses</td><td>That's a Google model. Pick one not marked "no real people".</td></tr>
+      <tr><td>The model is temporarily unavailable… you have not been charged</td><td>Try again in a few minutes, or another model.</td></tr>
+      <tr><td>Not enough Comfy credits for this shot</td><td>Add credits in ComfyUI: Settings → Workspace → Plan &amp; Credits. Nothing was sent.</td></tr>
+      <tr><td>Comfy rejected your API key</td><td>The key was deleted or mistyped. Make a new one at platform.comfy.org (API Keys) and sign in with it.</td></tr>
+      <tr><td>Not enough Segmind credits / Segmind has $… and this needs about $…</td><td>Top up at segmind.com (the balance in the header is live; click it to check again). Nothing was sent.</td></tr>
+      <tr><td>In line · N ahead</td><td>Nothing's wrong: the maker is already running as many as it allows. It starts by itself.</td></tr>
+      <tr><td>… can't start from an image</td><td>Pick a video model with <b>Start frame</b> (filter in the picker).</td></tr>
+      <tr><td>… doesn't take reference images / takes up to N</td><td>Remove some references, or filter the picker by <b>References</b>.</td></tr>
+      <tr><td>… edits an image: add a reference first</td><td>That model needs a picture to edit. Add one, or pick another model.</td></tr>
+      <tr><td>A reference file is missing</td><td>Add the picture again.</td></tr>
+      <tr><td>The model did not produce an output</td><td>Usually the stretch: Kling's edit tools take 3–10 seconds of footage. Set In and Out closer together. Check the kit item is ticked (amber). Then try again, or another tool.</td></tr>
+      <tr><td>… works on up to N s of footage</td><td>Stopped before it was sent, so nothing was spent. Set In and Out N seconds or less apart.</td></tr>
+      <tr><td>Footage is limited to 100 MB</td><td>Export a 1080p H.264 copy (about 40–60 MB for 30 s).</td></tr>
+      <tr><td>A take sits on "Rendering"</td><td>Keep working; it lands when done. If you stopped it, <span class="ui">Check again</span> collects it.</td></tr>
+      <tr><td>A take won't delete</td><td>It's still rendering. Stop it first.</td></tr>
+      <tr><td>This reel's board couldn't be read</td><td>Reload the page before editing the board.</td></tr>
+      <tr><td>AI shots fail on the Board</td><td>Check the <b>Clips</b> model makes video from a keyframe, not one that changes or extends a clip.</td></tr>
+      <tr><td>A watermark appears in results</td><td>You brought in a comp. Use the clean master.</td></tr>
+    </table>
+  </section>
+  <section class="topic" id="glossary" data-keys="glossary words meaning terms definitions">
+    <h3>Glossary</h3>
+    <table>
+      <tr><td><b>Animatic</b></td><td>The spot's keyframes held for their lengths: timing before video.</td></tr>
+      <tr><td><b>Card</b></td><td>One shot on the Board.</td></tr>
+      <tr><td><b>Clip</b></td><td>A video take.</td></tr>
+      <tr><td><b>Footage</b></td><td>A clip someone shot with a camera, brought in.</td></tr>
+      <tr><td><b>Keyframe</b></td><td>The still a clip starts from.</td></tr>
+      <tr><td><b>Kit</b></td><td>The named cast, products and places a spot keeps the same.</td></tr>
+      <tr><td><b>LoRA</b></td><td>A style model trained on your own pictures.</td></tr>
+      <tr><td><b>Reel / session</b></td><td>A project: all its shots and takes.</td></tr>
+      <tr><td><b>Seed</b></td><td>The number behind a result's randomness; the same seed repeats it.</td></tr>
+      <tr><td><b>Shot</b></td><td>A group of takes of one idea.</td></tr>
+      <tr><td><b>Take</b></td><td>One result: a still or a clip.</td></tr>
+      <tr><td><b>Trim</b></td><td>The In and Out points of the stretch you use.</td></tr>
+    </table>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="directory">
+  <h2>Model directory</h2>
+  <p class="lede">Every model in the picker ({{ dir.count }} of them): what it is, what it's good at, and where it falls down. Search the guide for a model's name, a maker, or a job like "text", "product" or "lip".</p>
+  <div class="dirbar" id="dirbar">
+    <label><input type="checkbox" id="fPicks"> Our picks only</label>
+    <label><input type="checkbox" id="fCurrent"> Hide older versions</label>
+    <span class="n" id="dirN"></span>
+  </div>
+  <section class="topic" id="choose" data-keys="which model choose best recommend pick quick picks start">
+    <h3>Which model should I use?</h3>
+    <p>Where we would start for each job. The first name is the safest bet; the others are the next to try. Then read the entry's <b>Watch out for</b> before you spend on it.</p>
+    <h4 class="picks">Pictures</h4>
+    <table class="picks">
+      <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
+      <tr><td>A believable photo, or a keyframe for the Board</td><td><a href="#m-nano-banana-2-1">Nano Banana 2.1</a></td><td><a href="#m-kling-3-image">Kling 3.0</a> (cheap), <a href="#m-seedream-4-5">Seedream 4.5</a></td></tr>
+      <tr><td>Words in the picture that must be spelled right: posters, labels, signs</td><td><a href="#m-ideogram-4-5">Ideogram 4.5</a></td><td><a href="#m-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a>, <a href="#m-flux-3">FLUX 3</a></td></tr>
+      <tr><td>A hard brief: many parts, a dense layout, lots of reference pictures</td><td><a href="#m-nano-banana-pro">Nano Banana Pro</a></td><td><a href="#m-flux-3">FLUX 3</a></td></tr>
+      <tr><td>Your product or person, kept from reference pictures</td><td><a href="#m-nano-banana-2-1">Nano Banana 2.1</a></td><td><a href="#m-flux-3">FLUX 3</a>, <a href="#m-seedream-4-5">Seedream 4.5</a></td></tr>
+      <tr><td>One thing changed in a photo, said in a sentence: remove, recolour, swap</td><td><a href="#m-gpt-image-2-5-sunburst">GPT Image 2.5 Sunburst</a></td><td><a href="#m-flux-3">FLUX 3</a> (attach the photo), <a href="#m-p-image-edit">P Image Edit</a> (cheap)</td></tr>
+      <tr><td>A logo, sticker or cut-out on a transparent background</td><td><a href="#m-qwen-image-2-1-pro">Qwen Image 2.1 Pro</a></td><td><a href="#m-bria-remove-background">Bria Remove Background</a> on any finished picture</td></tr>
+      <tr><td>A vector file (SVG) a designer can edit</td><td><a href="#m-recraft-v4-svg">Recraft V4 SVG</a></td><td><a href="#m-recraft-v4-pro-svg">Recraft V4 Pro SVG</a></td></tr>
+      <tr><td>Lots of cheap drafts to find the idea</td><td><a href="#m-flux-3-klein">FLUX 3 Klein</a></td><td><a href="#m-p-image">P Image</a>, <a href="#m-qwen-image-2-1-turbo">Qwen Image 2.1 Turbo</a></td></tr>
+      <tr><td>A different shape without cropping: wider or taller</td><td><a href="#m-bria-expand-image">Bria Expand (outpaint)</a></td><td></td></tr>
+      <tr><td>A bigger file for print</td><td><a href="#m-clarityai-crystal-upscaler">Crystal Upscaler</a> (AI pictures)</td><td><a href="#m-topaz-image-upscale">Topaz Image Upscale</a> (real photographs)</td></tr>
+    </table>
+    <h4 class="picks">Clips</h4>
+    <table class="picks">
+      <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
+      <tr><td>A finished hero shot with sound</td><td><a href="#m-veo-3-1">Veo 3.1</a></td><td><a href="#m-kling-3-pro">Kling 3.0 Pro</a>, <a href="#m-seedance-2-5">Seedance 2.5</a></td></tr>
+      <tr><td>Board shots that start on one keyframe and land on the next</td><td><a href="#m-veo-3-1">Veo 3.1</a></td><td><a href="#m-wan3-0-video">Wan 3.0</a>, <a href="#m-luma-ray-3-2">Luma Ray 3.2</a> (silent)</td></tr>
+      <tr><td>Someone talking, with mouths that match the words</td><td><a href="#m-happyhorse-1-1">HappyHorse 1.1</a></td><td><a href="#m-veo-3-1">Veo 3.1</a>, <a href="#m-kling-3-pro">Kling 3.0 Pro</a></td></tr>
+      <tr><td>A long single take, up to half a minute</td><td><a href="#m-seedance-2-5">Seedance 2.5</a></td><td><a href="#m-wan3-0-video">Wan 3.0</a></td></tr>
+      <tr><td>The kit's person or product kept the same across shots</td><td><a href="#m-minimax-h3-reference-to-video">MiniMax Hailuo H3 Reference to Video</a></td><td><a href="#m-seedance-2-5">Seedance 2.5</a>, <a href="#m-grok-imagine-video-1-5-reference-to-video">Grok Imagine Video 1.5 Reference to Video</a>, <a href="#m-pixverse-v6-reference-to-video">Pixverse V6 Reference to Video</a></td></tr>
+      <tr><td>Lots of cheap drafts before the real render</td><td><a href="#m-grok-imagine-video-1-5">Grok Imagine Video 1.5</a></td><td><a href="#m-minimax-h3-max-turbo">MiniMax H3 Max Turbo</a>, <a href="#m-pixverse-v6">PixVerse V6</a>, <a href="#m-seedance-2-0-mini">Seedance 2.0 Mini</a></td></tr>
+      <tr><td>A 4K master</td><td><a href="#m-seedance-2-5-upscaled">Seedance 2.5 Upscaled</a></td><td><a href="#m-topaz-video-upscale">Topaz Video Upscale</a> on any finished clip</td></tr>
+    </table>
+    <h4 class="picks">Your own footage</h4>
+    <table class="picks">
+      <tr><th>You want</th><th>Start with</th><th>Also try</th></tr>
+      <tr><td>Restyle it: season, time of day, weather, look</td><td><a href="#m-flux-3-video-edit">FLUX 3 Video Edit</a> (cheap and quick)</td><td><a href="#m-modify-video">Luma Modify</a> (keeps the performance)</td></tr>
+      <tr><td>Swap a product, an outfit or the background</td><td><a href="#m-kling-o3-video2video-edit">Kling O3 Video Edit</a> (with the item in the kit)</td><td><a href="#m-p-video-edit">Pruna P Video Edit</a></td></tr>
+      <tr><td>Recast the person in it</td><td><a href="#m-p-video-replace">Pruna P Video Replace</a></td><td></td></tr>
+      <tr><td>Make it longer</td><td><a href="#m-flux-3-extend-video">FLUX 3 Extend</a></td><td><a href="#m-pixverse-v6-extend">PixVerse V6 Extend</a></td></tr>
+      <tr><td>Fix one moment without redoing the clip</td><td><a href="#m-ltx-retake-video">LTX Retake Video</a></td><td></td></tr>
+      <tr><td>Cut a presenter out of the background</td><td><a href="#m-veed-video-background-removal">VEED Video Background Removal</a></td><td></td></tr>
+      <tr><td>A bigger, cleaner file to deliver</td><td><a href="#m-topaz-video-upscale">Topaz Video Upscale</a></td><td></td></tr>
+    </table>
+    <p class="warn">Real people: Google's video models (Veo, Gemini Omni) refuse them, Seedance and Sora reject a real face as a start frame. On footage or photos of real people, check the entry first.</p>
+    <p class="warn">Sora 2 and Sora 2 Pro: OpenAI retired them on 24 September 2026. Segmind still lists them, but expect them to fail. Use <a href="#m-veo-3-1">Veo 3.1</a>.</p>
+  </section>
+  <section class="topic" id="reading-entry" data-keys="badge facts older legacy pick seed reference start frame end frame real people sound price">
+    <h3>Reading an entry</h3>
+    <ul>
+      <li><b>The facts line</b> comes straight from the model's live settings: the average price of one run (the provider's figure, so the real charge can differ with length or size), how long it usually takes, sizes and lengths, and what you can attach.</li>
+      <li><b>Our pick</b>: one of the models at the top of the picker, chosen as the best of its kind.</li>
+      <li><b>Older version</b>: a newer model from the same family is in the list; the entry links to it. <b>Legacy</b>: an earlier generation, still useful for a particular look or price.</li>
+      <li><b>Reference pictures</b> keep a person, product or style. <b>Start frame</b> and <b>end frame</b> mean a clip can begin or finish on a still you choose (that's how the Board animates keyframes).</li>
+      <li><b>No real people</b>: Google's video models refuse a real person's likeness, so they're no use on real footage of people.</li>
+      <li><b>Repeatable with a seed</b>: the same seed and settings give the same result again.</li>
+    </ul>
+    <p>These notes come from the makers' own documentation, Segmind's write-ups, independent reviews and our own runs. Models change: if a note turns out wrong, correct it in model_notes.json.</p>
+  </section>
+  {% if dir.makers %}
+  <section class="topic" id="makers" data-keys="maker company who made provider family china google openai">
+    <h3>Who makes them</h3>
+    <dl class="makers">
+      {% for mk in dir.makers %}<dt id="{{ mk.anchor }}">{{ mk.name }}</dt><dd>{{ mk.text }}</dd>
+      {% endfor %}
+    </dl>
+  </section>
+  {% endif %}
+</div>
+
+{% for sec in dir.sections %}
+<div class="chapter dir" id="{{ sec.id }}">
+  <h2>{{ sec.title }}</h2>
+  <p class="lede">{{ sec.lede }} {{ sec.count }} models.</p>
+  {% for g in sec.groups %}
+  <div class="dgroup{% if g.pick %} pick{% endif %}" id="{{ g.anchor }}">
+    <h4><a href="#{{ g.anchor }}">{{ g.title }}</a></h4>
+    {% for m in g.models %}
+    <section class="topic model{% if m.status != 'current' %} old{% endif %}" id="{{ m.anchor }}" data-keys="{{ m.keys }}" data-pick="{{ 1 if m.pick else 0 }}" data-status="{{ m.status }}">
+      <h3>{{ m.label }}
+        {% if m.maker_anchor %}<a class="mk" href="#{{ m.maker_anchor }}">{{ m.maker }}</a>{% else %}<span class="mk">{{ m.maker }}</span>{% endif %}
+        {% if m.pick %}<span class="badge pick">Our pick</span>{% endif %}
+        {% if m.status == 'older' %}<span class="badge old">Older version</span>{% elif m.status == 'legacy' %}<span class="badge old">Legacy</span>{% endif %}
+        {% if not m.written %}<span class="badge draft">Not reviewed yet</span>{% endif %}
+      </h3>
+      {% if m.summary %}<p class="what">{{ m.summary }}</p>{% endif %}
+      <div class="facts">{% for f in m.facts %}<span>{{ f }}</span>{% endfor %}</div>
+      {% if m.good or m.limits %}
+      <div class="gl">
+        {% if m.good %}<div><h4 class="g">Good at</h4><ul>{% for x in m.good %}<li>{{ x }}</li>{% endfor %}</ul></div>{% endif %}
+        {% if m.limits %}<div><h4 class="l">Watch out for</h4><ul>{% for x in m.limits %}<li>{{ x }}</li>{% endfor %}</ul></div>{% endif %}
+      </div>
+      {% endif %}
+      {% if m.best_for %}<p class="best"><b>Reach for it for:</b> {{ m.best_for }}</p>{% endif %}
+      {% if m.newer %}<p class="newer">Newer in the same family: <a href="#{{ m.newer_anchor }}">{{ m.newer_label }}</a></p>{% endif %}
+      {% if m.tip %}<div class="tip">{{ m.tip }}</div>{% endif %}
+    </section>
+    {% endfor %}
+  </div>
+  {% endfor %}
+</div>
+{% endfor %}
+
+<div id="none" class="hidden"><b>Nothing matches.</b>Try fewer or different words, like "trim", "kit" or "cost".</div>
+<footer>Gobo {{ release }}</footer>
+  </main>
+</div>
+
+<script>
+"use strict";
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const topics = $$(".topic"), chapters = $$(".chapter");
+
+const groups = $$(".dgroup");
+
+// contents, built from the page so it never goes stale; the directory lists its groups, not 300 models
+$("#toc .list").innerHTML = chapters.map(ch => `<div class="ch">${ch.querySelector("h2").textContent}</div>` +
+  $$(".topic:not(.model)", ch).map(t => `<a href="#${t.id}" data-t="${t.id}">${t.querySelector("h3").textContent}</a>`).join("") +
+  ($$(".dgroup", ch).length ? `<div class="subs">${$$(".dgroup", ch).map(g =>
+    `<a href="#${g.id}" data-g="${g.id}" class="${g.classList.contains("pick") ? "pick" : ""}">${g.querySelector("h4").textContent.replace("Our picks · ", "★ ")}</a>`).join("")}</div>` : "")).join("");
+topics.forEach(t => { const h = t.querySelector("h3"); h.insertAdjacentHTML("beforeend", `<a class="self" href="#${t.id}" title="Link to this">#</a>`); });
+$("#tocToggle").onclick = () => $("#toc").classList.toggle("open");
+
+// search: every word must appear in the topic: its text, its extra keywords, or its chapter's title
+// ("extend footage" finds "Extend it" in "Your own footage")
+const hay = new Map(topics.map(t => [t, (t.textContent + " " + (t.dataset.keys || "") + " " +
+  t.closest(".chapter").querySelector("h2").textContent).toLowerCase()]));
+const reEsc = s => s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+function unmark() { $$("mark", $("#guide")).forEach(m => m.replaceWith(document.createTextNode(m.textContent))); $("#guide").normalize(); }
+function markIn(el, words) {
+  const re = new RegExp(words.map(reEsc).join("|"), "gi");
+  const walk = document.createTreeWalker(el, NodeFilter.SHOW_TEXT);
+  const nodes = [];
+  while (walk.nextNode()) nodes.push(walk.currentNode);
+  nodes.forEach(n => {
+    const s = n.nodeValue; re.lastIndex = 0;
+    if (!re.test(s)) return;
+    const frag = document.createDocumentFragment(); let last = 0; re.lastIndex = 0;
+    s.replace(re, (m, i) => { frag.append(s.slice(last, i)); const k = document.createElement("mark"); k.textContent = m; frag.append(k); last = i + m.length; });
+    frag.append(s.slice(last)); n.replaceWith(frag);
+  });
+}
+// the directory's two filters narrow its model entries; search still applies on top
+const F = { picks: false, current: false };
+const passes = t => !t.classList.contains("model") ||
+  (!(F.picks && t.dataset.pick !== "1") && !(F.current && t.dataset.status !== "current"));
+function search(q) {
+  unmark();
+  const words = q.toLowerCase().split(/\s+/).filter(w => w.length > 1);
+  let shown = 0;
+  topics.forEach(t => {
+    const on = passes(t) && (!words.length || words.every(w => hay.get(t).includes(w)));
+    t.classList.toggle("hidden", !on);
+    const link = $(`#toc a[data-t="${t.id}"]`); if (link) link.classList.toggle("hidden", !on);
+    if (on) { shown++; if (words.length) markIn(t, words); }
+  });
+  chapters.forEach(ch => {
+    const any = $$(".topic", ch).some(t => !t.classList.contains("hidden"));
+    ch.classList.toggle("hidden", !any);
+    const head = $$("#toc .ch").find(h => h.textContent === ch.querySelector("h2").textContent);
+    if (head) head.classList.toggle("hidden", !any);
+    // a chapter's intro is only noise while searching
+    const lede = $(".lede", ch); if (lede) lede.classList.toggle("hidden", !!words.length);
+  });
+  groups.forEach(g => {
+    const any = $$(".model", g).some(t => !t.classList.contains("hidden"));
+    g.classList.toggle("hidden", !any);
+    const link = $(`#toc a[data-g="${g.id}"]`); if (link) link.classList.toggle("hidden", !any);
+  });
+  const models = $$(".model").filter(t => !t.classList.contains("hidden")).length;
+  if ($("#dirN")) $("#dirN").textContent = `${models} model${models === 1 ? "" : "s"} shown`;
+  $("#none").classList.toggle("hidden", shown > 0);
+  $("#count").textContent = words.length ? `${shown} topic${shown === 1 ? "" : "s"}` : "";
+  try { history.replaceState(null, "", words.length ? `?q=${encodeURIComponent(q)}` : location.pathname + location.hash); } catch (e) {}
+}
+const q = $("#q");
+let t0 = null;
+q.oninput = () => { clearTimeout(t0); t0 = setTimeout(() => search(q.value), 120); };
+q.onkeydown = e => {
+  if (e.key === "Escape") { q.value = ""; search(""); q.blur(); }
+  if (e.key === "Enter") { const first = topics.find(t => !t.classList.contains("hidden")); if (first) first.scrollIntoView({ behavior: "smooth", block: "start" }); }
+};
+document.addEventListener("keydown", e => {
+  if (e.key === "/" && document.activeElement !== q) { e.preventDefault(); q.focus(); q.select(); }
+});
+[["fPicks", "picks"], ["fCurrent", "current"]].forEach(([id, k]) => {
+  const box = $("#" + id); if (!box) return;
+  box.onchange = () => { F[k] = box.checked; search(q.value); };
+});
+const start = new URLSearchParams(location.search).get("q");
+if (start) { q.value = start; search(start); } else search("");
+// arriving on a model's link (from the picker) lands on it even if a filter would hide it
+if (location.hash.startsWith("#m-")) { const t = document.getElementById(location.hash.slice(1)); if (t) t.scrollIntoView(); }
+</script>
+</body>
+</html>

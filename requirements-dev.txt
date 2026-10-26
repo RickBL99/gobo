@@ -1,0 +1,4 @@
+-r requirements.txt
+httpx==0.28.1            # FastAPI's TestClient
+pytest==9.0.3
+websocket-client==1.9.0  # tests/browser_studio.py drives headless Chrome over DevTools

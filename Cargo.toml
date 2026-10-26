@@ -1,0 +1,21 @@
+[workspace]
+resolver = "2"
+members = ["crates/direction", "crates/scrim", "crates/flag", "crates/dingle", "crates/gobo-wasm"]
+
+# The WebAssembly ships inside the page, so it is built for size.
+[profile.release]
+opt-level = "z"
+lto = true
+codegen-units = 1
+panic = "abort"
+strip = true
+
+# The look lab touches every pixel: it is built for speed, not size.
+[profile.release.package.scrim]
+opt-level = 3
+
+[profile.release.package.flag]
+opt-level = 3
+
+[profile.release.package.gobo-wasm]
+opt-level = 3

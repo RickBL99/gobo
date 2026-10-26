@@ -1,0 +1,63 @@
+{
+  "1": {
+    "class_type": "Flux3ImageNode",
+    "inputs": {
+      "prompt": "Wide shot taking in the whole scene. A lighthouse keeper climbs the iron spiral stair with a lantern as the storm hammers the windows. Cinematic film still, natural texture. Shot on a large-format cinema camera, anamorphic lenses with oval bokeh, 24mm, f/2.8. Night lit only by practical lamps and signs, tungsten-balanced 500T film stock, period-drama mood, a cold blue-grey palette.",
+      "aspect_ratio": "16:9",
+      "resolution": "2K",
+      "grounding": true,
+      "safety_tolerance": 4,
+      "seed": 20261030
+    },
+    "_meta": {
+      "title": "001A · FLUX 3"
+    }
+  },
+  "2": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ],
+      "filename_prefix": "gobo/001A"
+    },
+    "_meta": {
+      "title": "001A · save"
+    }
+  },
+  "3": {
+    "class_type": "LtxApi25ImageToVideo",
+    "inputs": {
+      "model": "LTX-2.5 (Pro)",
+      "model.duration": "8",
+      "model.resolution": "1920x1080",
+      "model.fps": "25",
+      "model.generate_audio": true,
+      "prompt": "Wide shot taking in the whole scene. The keeper climbs toward the lamp room, lantern swinging, rain streaming down the windows. Cinematic film shot, continuous motion, natural texture. Camera movement: slow push-in toward the subject. Night lit only by practical lamps and signs, tungsten-balanced 500T film stock, period-drama mood.",
+      "seed": 20261030,
+      "image": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "001B · LTX 2.5"
+    }
+  },
+  "4": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "3",
+        0
+      ],
+      "filename_prefix": "video/gobo/001B",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "001B · save"
+    }
+  }
+}

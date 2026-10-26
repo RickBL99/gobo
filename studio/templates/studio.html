@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% if stills %}Content Generator · Gobo{% else %}Gobo{% endif %}</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --bg: #0b0b0d; --panel: #131316; --panel2: #1a1a1f; --line: #2a2a31; --line2: #3a3a44;
+  --text: #ecebe8; --muted: #9a98a0; --dim: #6c6a73; --accent: #f2c14e; --accent-ink: #1b1505;
+  --ok: #6fd08c; --bad: #ff7a6b; --warn: #f2c14e; --blue: #7eb3ff;
+  --s-direction: #f2c14e; --s-scene: #ecebe8; --s-enhance: #9ad1ff; --s-reference: #c6a6ff;
+  --radius: 12px;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; background: var(--bg); color: var(--text);
+  font: 14px/1.45 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; }
+button, input, select, textarea { font: inherit; color: inherit; }
+a { color: var(--blue); }
+.hidden { display: none !important; }
+
+/* ── header ─────────────────────────────────────────────────────────── */
+header { display: flex; align-items: center; gap: 12px; padding: 10px 18px;
+  border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30;
+  background: rgba(11,11,13,.92); backdrop-filter: blur(8px); flex-wrap: wrap; }
+header .back { color: var(--muted); text-decoration: none; font-size: .85rem; }
+/* Home: the studio's home page */
+.homebtn { display: inline-flex; align-items: center; gap: 6px; background: #2d6cdf; color: #fff;
+  border-radius: 8px; padding: 5px 11px; font-size: .82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
+.homebtn:hover { background: #1e55b5; color: #fff; }
+.homebtn svg { width: 14px; height: 14px; fill: currentColor; }
+header h1 { font-size: 1.05rem; margin: 0; letter-spacing: .01em; font-weight: 700; }
+header h1 .pill { font-size: .66rem; font-weight: 600; padding: 2px 7px; border-radius: 99px;
+  background: #2a2410; color: var(--accent); border: 1px solid #4d4116; margin-left: 6px; vertical-align: 2px; }
+.reelname { background: transparent; border: 1px solid transparent; border-radius: 8px; padding: 4px 8px;
+  color: var(--text); min-width: 160px; max-width: 320px; }
+.reelname:hover, .reelname:focus { border-color: var(--line2); outline: none; background: var(--panel); }
+header .grow { flex: 1; }
+.chipbtn { background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 5px 12px;
+  cursor: pointer; font-size: .82rem; color: var(--text); white-space: nowrap; }
+.chipbtn:hover { border-color: var(--line2); background: var(--panel2); }
+#credits { color: var(--muted); font-size: .8rem; cursor: pointer; white-space: nowrap; }
+#credits .pend { color: var(--dim); }
+#credits.low { color: var(--warn); }
+#credits a { color: var(--warn); font-weight: 600; }
+.seg { display: inline-flex; background: var(--panel); border: 1px solid var(--line); border-radius: 99px; padding: 3px; }
+.seg button { background: none; border: 0; padding: 5px 14px; border-radius: 99px; cursor: pointer; color: var(--muted); font-weight: 600; font-size: .82rem; }
+.seg button.on { background: var(--text); color: #111; }
+.seg button:disabled { opacity: .5; cursor: default; }
+.seg.big { display: flex; width: 100%; padding: 4px; margin-bottom: 12px; }
+.seg.big button { flex: 1; padding: 10px 0; font-size: .92rem; font-weight: 700; }
+.seg.big button.on { background: var(--accent); color: var(--accent-ink); }
+#modelSheet h3 .seg { margin-left: 10px; vertical-align: middle; font-size: .8rem; }
+
+/* ── layout ─────────────────────────────────────────────────────────── */
+main { display: grid; grid-template-columns: 380px minmax(0, 1fr) 340px; gap: 0; min-height: calc(100vh - 54px); }
+main.noinspector { grid-template-columns: 380px minmax(0, 1fr); }
+main.noinspector #inspector { display: none; }
+aside#panel { border-right: 1px solid var(--line); padding: 14px 14px 110px; overflow-y: auto;
+  max-height: calc(100vh - 54px); position: sticky; top: 54px; }
+section.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; margin-bottom: 12px; }
+.sectitle { font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--dim); font-weight: 700; margin: 0 0 8px; display: flex; align-items: center; gap: 8px; }
+.sectitle .r { margin-left: auto; text-transform: none; letter-spacing: 0; font-weight: 500; }
+
+/* model */
+#modelBtn { width: 100%; display: flex; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 9px 11px; cursor: pointer; text-align: left; }
+#modelBtn:hover { border-color: var(--line2); }
+.mlogo { width: 30px; height: 30px; border-radius: 8px; display: grid; place-items: center; font-weight: 800; font-size: .78rem; flex: none; color: #111; }
+#modelBtn .mname { font-weight: 600; }
+#modelBtn .mmeta { color: var(--muted); font-size: .76rem; }
+#modelBtn .chev { margin-left: auto; color: var(--muted); }
+.shootout { display: flex; flex-wrap: wrap; gap: 5px; margin-top: 7px; }
+.shootout .chip { font-size: .72rem; padding: 2px 8px; border-radius: 99px; background: #2a2410; color: var(--accent); border: 1px solid #4d4116; }
+
+/* scene */
+textarea#scene { width: 100%; min-height: 96px; resize: vertical; background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 10px; color: var(--text); }
+textarea#scene:focus, .field:focus { outline: none; border-color: #6b5a22; box-shadow: 0 0 0 3px rgba(242,193,78,.12); }
+.refrow { display: flex; flex-wrap: wrap; gap: 7px; margin-top: 8px; align-items: center; }
+.slot { position: relative; width: 58px; height: 58px; border-radius: 9px; border: 1.5px dashed var(--line2);
+  display: grid; place-items: center; cursor: pointer; color: var(--muted); font-size: .62rem; text-align: center; line-height: 1.15;
+  background: var(--panel2); overflow: hidden; padding: 3px; }
+.slot:hover, .slot.drop { border-color: var(--accent); color: var(--accent); }
+.slot.filled { border-style: solid; border-color: var(--line2); padding: 0; }
+.slot img, .slot video { width: 100%; height: 100%; object-fit: cover; display: block; }
+.slot .x { position: absolute; top: 2px; right: 2px; width: 17px; height: 17px; border-radius: 50%; background: rgba(0,0,0,.75);
+  color: #fff; border: 0; font-size: .7rem; line-height: 17px; cursor: pointer; display: none; padding: 0; }
+.slot.filled:hover .x { display: block; }
+.slot .tag { position: absolute; left: 0; right: 0; bottom: 0; font-size: .56rem; background: rgba(0,0,0,.65); color: #fff; padding: 1px 2px; }
+.pmode { display: flex; align-items: center; gap: 8px; margin-top: 10px; flex-wrap: wrap; }
+.pmode .seg button { padding: 4px 10px; font-size: .76rem; }
+.hint { color: var(--dim); font-size: .74rem; }
+
+/* shot list */
+.row { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 0; border-radius: 9px; padding: 6px; cursor: pointer; text-align: left; }
+.row:hover, .row.open { background: var(--panel2); }
+.row .th { width: 46px; height: 30px; border-radius: 6px; overflow: hidden; flex: none; background: #222; display: grid; place-items: center; }
+.row .th svg, .row .th img { width: 100%; height: 100%; display: block; object-fit: cover; }
+.row .rt { font-size: .7rem; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; }
+.row .rv { font-weight: 600; font-size: .86rem; }
+.row .rv.auto { color: var(--muted); font-weight: 500; }
+.row .chips { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; max-width: 150px; }
+.row .chips span { font-size: .68rem; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--line2); color: var(--muted); }
+.shotbar { display: flex; gap: 6px; margin-top: 6px; }
+.shotbar button { flex: 1; }
+.btn { background: var(--panel2); border: 1px solid var(--line); border-radius: 9px; padding: 7px 10px; cursor: pointer; font-size: .8rem; color: var(--text); }
+.btn:hover { border-color: var(--line2); }
+.btn:disabled { opacity: .45; cursor: default; }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); font-weight: 700; }
+.btn.primary:hover { filter: brightness(1.06); }
+.btn.ghost { background: none; }
+.btn.small { padding: 4px 8px; font-size: .74rem; }
+
+/* format */
+.fmt { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.fmt label { display: block; font-size: .68rem; color: var(--dim); text-transform: uppercase; letter-spacing: .06em; font-weight: 700; margin-bottom: 3px; }
+.field { width: 100%; background: var(--panel2); border: 1px solid var(--line); border-radius: 8px; padding: 6px 8px; color: var(--text); }
+select.field { appearance: none; background-image: linear-gradient(45deg, transparent 50%, var(--muted) 50%), linear-gradient(135deg, var(--muted) 50%, transparent 50%);
+  background-position: calc(100% - 13px) 55%, calc(100% - 9px) 55%; background-size: 4px 4px; background-repeat: no-repeat; padding-right: 22px; }
+.stepper { display: flex; align-items: center; border: 1px solid var(--line); border-radius: 8px; background: var(--panel2); }
+.stepper button { background: none; border: 0; width: 28px; height: 30px; cursor: pointer; color: var(--text); font-size: 1rem; }
+.stepper span { flex: 1; text-align: center; font-weight: 700; }
+.switch { display: inline-flex; align-items: center; gap: 7px; cursor: pointer; font-size: .8rem; color: var(--muted); user-select: none; }
+.switch input { display: none; }
+.switch i { width: 30px; height: 17px; border-radius: 99px; background: var(--line2); position: relative; transition: .15s; }
+.switch i::after { content: ""; position: absolute; top: 2px; left: 2px; width: 13px; height: 13px; border-radius: 50%; background: #fff; transition: .15s; }
+.switch input:checked + i { background: var(--accent); }
+.switch input:checked + i::after { left: 15px; background: #111; }
+details.adv summary { cursor: pointer; color: var(--muted); font-size: .8rem; }
+details.adv[open] summary { margin-bottom: 8px; }
+.advgrid { display: grid; gap: 8px; }
+.seedrow { display: flex; gap: 6px; }
+
+/* generate dock */
+#dock { position: fixed; left: 0; bottom: 0; width: 380px; padding: 12px 14px; background: linear-gradient(transparent, var(--bg) 30%);
+  z-index: 20; }
+#genBtn { width: 100%; padding: 12px; font-size: .95rem; border-radius: 11px; }
+#genBtn kbd { font: 600 .7rem Inter, sans-serif; opacity: .65; margin-left: 6px; }
+#costline { text-align: center; color: var(--muted); font-size: .74rem; margin-top: 6px; min-height: 1em; }
+#blocknote { color: var(--warn); font-size: .76rem; margin-bottom: 6px; text-align: center; }
+
+/* ── stage ──────────────────────────────────────────────────────────── */
+#stagewrap { padding: 18px 22px 10px; min-width: 0; display: flex; flex-direction: column; gap: 12px; }
+#stage { position: relative; border-radius: 14px; background: #08080a; border: 1px solid var(--line);
+  display: grid; place-items: center; overflow: hidden; min-height: 300px; height: min(62vh, 760px); }
+#frame { position: relative; max-width: 100%; max-height: 100%; aspect-ratio: 16 / 9; width: 100%;
+  display: grid; place-items: center; background: #050506; overflow: hidden; }
+#frame.letter { width: auto; height: 100%; }
+#frame img.main, #frame video.main { width: 100%; height: 100%; object-fit: contain; display: block; }
+#frame .empty { text-align: center; color: var(--dim); padding: 20px; }
+#frame .empty .ar { font-size: 2.2rem; font-weight: 700; color: #2b2b33; letter-spacing: .04em; }
+#frame .empty b { display: block; color: var(--muted); margin: 6px 0 2px; font-weight: 600; }
+.render { text-align: center; color: var(--muted); }
+.spinner { width: 34px; height: 34px; border-radius: 50%; border: 3px solid #2a2a31; border-top-color: var(--accent); animation: spin 1s linear infinite; margin: 0 auto 12px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.notice { text-align: center; padding: 24px; max-width: 520px; }
+.notice h3 { margin: 0 0 6px; font-size: 1rem; }
+.notice p { color: var(--muted); margin: 0 0 12px; font-size: .86rem; }
+.notice .rid { font-size: .7rem; color: var(--dim); margin-top: 8px; }
+#takebar { position: absolute; left: 0; right: 0; bottom: 0; display: flex; align-items: center; gap: 8px; padding: 10px 12px;
+  background: linear-gradient(transparent, rgba(0,0,0,.82)); opacity: 0; transition: .15s; flex-wrap: wrap; }
+#stage:hover #takebar, #takebar.pin { opacity: 1; }
+#takebar .shotno { font-weight: 700; }
+#takebar .letters { display: inline-flex; gap: 3px; }
+#takebar .letters button { width: 24px; height: 24px; border-radius: 6px; border: 1px solid #555; background: rgba(0,0,0,.4); color: #fff; cursor: pointer; font-weight: 700; font-size: .72rem; padding: 0; }
+#takebar .letters button.on { background: var(--accent); color: #111; border-color: var(--accent); }
+#takebar .letters button.bad { border-color: var(--bad); color: var(--bad); }
+#takebar .meta { color: #ccc; font-size: .78rem; }
+#takebar .sp { flex: 1; }
+.iconbtn { background: rgba(0,0,0,.5); border: 1px solid #555; color: #fff; border-radius: 8px; padding: 5px 9px; cursor: pointer; font-size: .76rem; text-decoration: none; white-space: nowrap; }
+.iconbtn:hover { border-color: #aaa; }
+.iconbtn.on { background: var(--accent); color: #111; border-color: var(--accent); }
+
+#actions { display: flex; flex-wrap: wrap; gap: 6px; }
+#actions .btn { font-size: .78rem; }
+#actions .sep { width: 1px; background: var(--line); margin: 0 4px; }
+
+/* compare + zoom */
+.cmp { position: absolute; inset: 0; }
+.cmp img, .cmp video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: contain; }
+.cmp .b { clip-path: inset(0 0 0 var(--cut, 50%)); }
+.cmp .handle { position: absolute; top: 0; bottom: 0; left: var(--cut, 50%); width: 2px; background: var(--accent); cursor: ew-resize; }
+.cmp .handle::after { content: "⇆"; position: absolute; top: 50%; left: -13px; width: 28px; height: 28px; margin-top: -14px; border-radius: 50%;
+  background: var(--accent); color: #111; display: grid; place-items: center; font-weight: 800; }
+.cmp .lab { position: absolute; top: 10px; font-size: .72rem; background: rgba(0,0,0,.7); padding: 2px 8px; border-radius: 99px; }
+.cmp .lab.a { left: 10px; } .cmp .lab.b2 { right: 10px; }
+#frame.zoom { cursor: zoom-out; }
+#frame.zoom img.main { object-fit: none; transform-origin: var(--zx, 50%) var(--zy, 50%); transform: scale(var(--z, 2)); }
+
+/* sequence strip */
+#seq { border-top: 1px solid var(--line); padding-top: 10px; }
+#seq .head { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; flex-wrap: wrap; }
+#seq .head .sectitle { margin: 0; }
+#strip { display: flex; gap: 14px; overflow-x: auto; padding-bottom: 8px; }
+.shotgrp { display: flex; flex-direction: column; gap: 4px; flex: none; }
+.shotgrp .gl { font-size: .66rem; color: var(--dim); font-weight: 700; letter-spacing: .06em; text-transform: uppercase; }
+.shotgrp .items { display: flex; gap: 5px; }
+.tk { position: relative; width: 112px; height: 70px; border-radius: 8px; overflow: hidden; border: 2px solid transparent; cursor: pointer;
+  background: #16161a; flex: none; }
+.tk.on { border-color: var(--accent); }
+.tk img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.tk .st { position: absolute; inset: 0; display: grid; place-items: center; font-size: .7rem; color: var(--muted); text-align: center; padding: 4px; }
+.tk .st.bad { color: var(--bad); }
+.tk .lt { position: absolute; left: 4px; top: 3px; font-size: .64rem; font-weight: 800; background: rgba(0,0,0,.65); border-radius: 4px; padding: 0 4px; }
+.tk .kind { position: absolute; right: 4px; top: 3px; font-size: .62rem; background: rgba(0,0,0,.65); border-radius: 4px; padding: 0 4px; }
+.tk .star { position: absolute; right: 4px; bottom: 3px; font-size: .8rem; color: var(--accent); text-shadow: 0 0 3px #000; }
+.tk .pick { position: absolute; left: 4px; bottom: 3px; width: 18px; height: 18px; accent-color: var(--accent); display: none; }
+#seq.picking .tk.can .pick { display: block; }
+.btn.danger { color: var(--bad); border-color: rgba(255,122,107,.45); }
+.btn.off { opacity: .45; }
+#holdWrap { display: inline-flex; align-items: center; gap: 5px; }
+#holdSel { width: auto; padding: 3px 22px 3px 7px; font-size: .74rem; }
+#seq.picking .tk:not(.can) { opacity: .3; cursor: default; }
+#seq.picking .tk.picked { border-color: var(--accent); }
+.tk .ord { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); min-width: 26px; height: 26px; padding: 0 6px; border-radius: 13px;
+  background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .8rem; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
+#stitchHint { color: var(--accent); }
+a.btn, a.chipbtn { text-decoration: none; }
+#dlSize { width: auto; padding: 4px 26px 4px 8px; font-size: .74rem; }
+/* ── Content Generator: from a reference ─────────────────────────────── */
+.refdrop { display: flex; align-items: center; gap: 10px; border: 1.5px dashed var(--line2); border-radius: 12px; padding: 10px; transition: border-color .15s, background .15s; }
+.refdrop.over { border-color: var(--accent); background: rgba(242,193,78,.06); }
+.refthumb { width: 52px; height: 52px; border-radius: 8px; background: var(--panel2) center/cover no-repeat; flex: none; display: grid; place-items: center; color: var(--dim); font-size: 1.2rem; }
+.refthumb:not(.has)::after { content: "＋"; }
+.refwhat { flex: 1; min-width: 0; }
+.refwhat b { display: block; font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.refwhat small { color: var(--dim); font-size: .72rem; }
+.refbtns { display: flex; gap: 6px; }
+.refopts { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; flex-wrap: wrap; }
+.refn { display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); margin-left: auto; }
+.refvar { display: flex; flex-direction: column; gap: 4px; font-size: .76rem; color: var(--muted); margin-bottom: 8px; }
+.refvar input { width: 100%; accent-color: var(--accent); }
+.refgo { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
+.refgo .hint { flex: 1; min-width: 120px; }
+#refList { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
+.rp { display: flex; gap: 6px; align-items: flex-start; }
+.rp .n { font-size: .7rem; font-weight: 800; color: var(--dim); width: 16px; padding-top: 7px; text-align: right; flex: none; }
+.rp textarea { flex: 1; min-height: 58px; font-size: .78rem; line-height: 1.35; resize: vertical; }
+.rp .x { flex: none; }
+.rpfoot { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
+.refn .stepper { width: 96px; }
+.tk .mini { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.08); }
+.tk .mini i { display: block; height: 100%; background: var(--accent); width: 30%; animation: indet 1.4s ease-in-out infinite; }
+@keyframes indet { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
+
+/* ── inspector ──────────────────────────────────────────────────────── */
+#inspector { border-left: 1px solid var(--line); padding: 14px; overflow-y: auto; max-height: calc(100vh - 54px); position: sticky; top: 54px; }
+.segs { font-size: .84rem; line-height: 1.6; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; }
+.segs span { border-radius: 4px; padding: 0 1px; }
+.segs .s-direction { color: var(--s-direction); }
+.segs .s-scene { color: var(--s-scene); }
+.segs .s-enhance { color: var(--s-enhance); }
+.segs .s-reference { color: var(--s-reference); }
+.legend { display: flex; gap: 10px; flex-wrap: wrap; font-size: .68rem; color: var(--dim); margin: 6px 0 0; }
+.legend i { display: inline-block; width: 8px; height: 8px; border-radius: 2px; margin-right: 4px; }
+#override { width: 100%; min-height: 150px; background: var(--panel2); border: 1px solid #6b5a22; border-radius: 10px; padding: 10px; color: var(--text); resize: vertical; font-size: .84rem; }
+.kv { display: grid; grid-template-columns: 92px 1fr; gap: 4px 8px; font-size: .78rem; }
+.kv dt { color: var(--dim); } .kv dd { margin: 0; word-break: break-word; }
+pre.payload { background: #08080a; border: 1px solid var(--line); border-radius: 8px; padding: 8px; font-size: .7rem; max-height: 260px; overflow: auto; color: #bbb; white-space: pre-wrap; word-break: break-all; }
+
+/* ── popovers / sheets ──────────────────────────────────────────────── */
+#scrim { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 40; }
+.pop { position: fixed; z-index: 50; background: #17171b; border: 1px solid var(--line2); border-radius: 14px; box-shadow: 0 20px 60px rgba(0,0,0,.6);
+  padding: 14px; max-height: min(78vh, 720px); overflow-y: auto; }
+.pop h3 { margin: 0 0 10px; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
+.pop h3 .r { margin-left: auto; }
+.tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.tiles.three { grid-template-columns: repeat(3, 1fr); }
+.tile { background: var(--panel2); border: 1.5px solid var(--line); border-radius: 10px; padding: 0; overflow: hidden; cursor: pointer; text-align: left; }
+.tile:hover { border-color: var(--line2); }
+.tile.on { border-color: var(--accent); }
+.tile .tv { aspect-ratio: 16 / 9; background: #222; }
+.tile .tv svg, .tile .tv img { width: 100%; height: 100%; display: block; }
+.tile .tv img { object-fit: cover; }
+.tile .tl { padding: 6px 8px 7px; }
+.tile .tl b { display: block; font-size: .8rem; }
+.tile .tl small { color: var(--dim); font-size: .68rem; display: block; line-height: 1.25; }
+.camcols { display: grid; grid-template-columns: repeat(4, minmax(130px, 1fr)); gap: 12px; }
+.camcols h4 { margin: 0 0 6px; font-size: .7rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; }
+.camopt { display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: 1.5px solid transparent; border-radius: 8px; padding: 5px 7px; cursor: pointer; text-align: left; font-size: .82rem; }
+.camopt:hover { background: var(--panel2); }
+.camopt.on { border-color: var(--accent); background: #211c0b; }
+.camopt svg { width: 34px; height: 24px; flex: none; }
+
+/* model sheet */
+#modelSheet { width: min(760px, calc(100vw - 24px)); left: 50%; top: 70px; transform: translateX(-50%); }
+.mfilters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 10px; align-items: center; }
+.mfilters input { flex: 1; min-width: 160px; }
+.mfilters .chipbtn.on { background: var(--text); color: #111; border-color: var(--text); }
+.mgroup { margin-bottom: 12px; }
+.mgroup h4 { margin: 0 0 6px; font-size: .68rem; color: var(--dim); text-transform: uppercase; letter-spacing: .09em; }
+.mitem { display: flex; align-items: center; gap: 10px; width: 100%; background: none; border: 1.5px solid transparent; border-radius: 10px; padding: 7px 8px; cursor: pointer; text-align: left; }
+.mitem:hover { background: var(--panel2); }
+.mitem.on { border-color: var(--accent); background: #1d1a0e; }
+.mitem .mn { font-weight: 600; font-size: .86rem; }
+.mitem .mm { color: var(--muted); font-size: .72rem; }
+.mitem .caps { margin-left: auto; display: flex; gap: 4px; flex-wrap: wrap; justify-content: flex-end; max-width: 300px; }
+.mitem .caps span { font-size: .64rem; padding: 1px 6px; border-radius: 99px; border: 1px solid var(--line2); color: var(--muted); white-space: nowrap; }
+.mitem .caps span.price { color: var(--accent); border-color: #4d4116; }
+.mitem .caps span.new { color: var(--ok); border-color: #22492f; }
+.mitem input[type=checkbox] { accent-color: var(--accent); width: 16px; height: 16px; }
+.mitem .about { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 1px solid var(--line2); color: var(--muted); font-size: .7rem; font-weight: 700; display: grid; place-items: center; }
+.mitem .about:hover { color: var(--accent); border-color: var(--accent); }
+#modelSheet .foot { display: flex; align-items: center; gap: 8px; position: sticky; bottom: -14px; background: #17171b; padding: 10px 0 2px; border-top: 1px solid var(--line); }
+
+/* palette editor */
+.palette { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; margin-top: 8px; }
+.sw { width: 30px; height: 30px; border-radius: 8px; border: 2px solid transparent; cursor: pointer; position: relative; }
+.sw.on { border-color: #fff; }
+.sw.main::after { content: "★"; position: absolute; right: -6px; top: -8px; font-size: .7rem; color: var(--accent); }
+.palette input[type=color] { width: 34px; height: 32px; border: 0; background: none; padding: 0; cursor: pointer; }
+
+/* reels sheet */
+#reelSheet { width: min(860px, calc(100vw - 24px)); left: 50%; top: 70px; transform: translateX(-50%); }
+.reels { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+.reelcard { background: var(--panel2); border: 1.5px solid var(--line); border-radius: 10px; overflow: hidden; cursor: pointer; text-align: left; padding: 0; }
+.reelcard:hover { border-color: var(--line2); }
+.reelcard.on { border-color: var(--accent); }
+.reelcard .rc { aspect-ratio: 16 / 9; background: #0c0c0e center / cover no-repeat; }
+.reelcard .rl { padding: 7px 9px; }
+.reelcard .rl b { display: block; font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.reelcard .rl small { color: var(--dim); font-size: .7rem; }
+
+/* ── board: a spot, shot by shot ──────────────────────────────────────── */
+.viewbar { display: flex; align-items: center; gap: 10px; }
+.viewbar .seg button { padding: 5px 18px; }
+#board, #kitCard, #bModels { display: none; }
+main.boardview #bModels { display: flex; }
+main.boardview #modelBtn { display: none; }
+main.boardview #board { display: flex; flex-direction: column; gap: 14px; }
+main.boardview #kitCard { display: block; }
+main.boardview #stage, main.boardview #actions, main.boardview #seq, main.boardview #sceneCard,
+main.boardview .seg.big, main.boardview #dock, main.boardview #seedWrap, main.boardview #shootBtn { display: none !important; }
+main.boardview aside#panel { padding-bottom: 20px; }
+body.boardview #dock, body.boardview #inspBtn { display: none !important; }      /* outside <main> */
+main.boardview, main.boardview.noinspector { grid-template-columns: 380px minmax(0, 1fr); }
+main.boardview #inspector { display: none !important; }
+@media (max-width: 860px) { main.boardview, main.boardview.noinspector { grid-template-columns: 1fr; } }
+.bmodels { display: flex; flex-direction: column; gap: 6px; }
+.bmodels .mrow { width: 100%; display: flex; align-items: center; gap: 10px; background: var(--panel2); border: 1px solid var(--line);
+  border-radius: 10px; padding: 8px 10px; cursor: pointer; text-align: left; }
+.bmodels .mrow:hover { border-color: var(--line2); }
+.bmodels .mrow .rt { font-size: .64rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+.bmodels .mrow .mname { font-weight: 600; font-size: .86rem; }
+.bmodels .mrow .mmeta { color: var(--muted); font-size: .72rem; }
+.bmodels .mrow .chev { margin-left: auto; color: var(--muted); }
+.kitlist { display: flex; flex-direction: column; gap: 6px; min-height: 8px; border-radius: 10px; }
+.kitlist.drop { outline: 1.5px dashed var(--accent); outline-offset: 3px; }
+.kit { display: flex; align-items: center; gap: 8px; }
+.kit .kt { width: 44px; height: 44px; border-radius: 8px; background: #222 center / cover no-repeat; flex: none; }
+.kit input { flex: 1; min-width: 0; }
+.kit select { width: auto; padding: 5px 22px 5px 7px; font-size: .74rem; }
+.kitadd { display: flex; gap: 6px; margin-top: 8px; }
+.kitseed { margin-top: 10px; display: flex; flex-direction: column; gap: 4px; }
+.bhead { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 10px; }
+#bBrief { width: 100%; min-height: 64px; resize: vertical; }
+.bline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.bline .grow { flex: 1; }
+.bline .seg button { padding: 4px 11px; font-size: .78rem; }
+#bNotes { color: var(--muted); font-size: .78rem; }
+#bNotes b { color: var(--text); }
+.tl { position: relative; display: flex; gap: 2px; height: 30px; border-radius: 8px; background: #0c0c0e; border: 1px solid var(--line); padding: 2px; }
+.tl .seg2 { position: relative; height: 100%; border-radius: 5px; background: #23232a; color: var(--muted); font-size: .66rem; font-weight: 700;
+  display: flex; align-items: center; justify-content: center; overflow: hidden; min-width: 14px; cursor: pointer; border: 0; padding: 0; }
+.tl .seg2.key { background: #3a3d46; color: var(--text); }
+.tl .seg2.clip { background: var(--accent); color: var(--accent-ink); }
+.tl .seg2.busy { background-image: repeating-linear-gradient(45deg, rgba(255,255,255,.07) 0 6px, transparent 6px 12px); }
+.tl .mark { position: absolute; top: -4px; bottom: -4px; width: 2px; background: var(--bad); border-radius: 1px; pointer-events: none; }
+.tlmeta { display: flex; justify-content: space-between; font-size: .74rem; color: var(--muted); }
+.tlmeta b { color: var(--text); }
+.tlmeta .over { color: var(--bad); } .tlmeta .on { color: var(--ok); }
+.bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding-bottom: 30px; }
+.bcard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
+.bcard.cont { border-left: 3px solid var(--blue); }
+.bct { display: flex; align-items: center; gap: 6px; padding: 7px 8px 6px 10px; }
+.bct .no { font-weight: 800; font-size: .9rem; }
+.bct .dur { font-size: .72rem; color: var(--muted); }
+.bct .grow { flex: 1; }
+.bct .seg button { padding: 2px 8px; font-size: .68rem; }
+.bct .ib { background: none; border: 0; color: var(--muted); cursor: pointer; padding: 2px 5px; border-radius: 6px; font-size: .8rem; }
+.bct .ib:hover { color: var(--text); background: var(--panel2); }
+.bframe { position: relative; aspect-ratio: 16 / 9; background: #08080a; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); }
+.bframe img, .bframe video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.bframe .empty { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-size: .76rem; text-align: center; padding: 10px; }
+.bframe .st { position: absolute; inset: 0; display: grid; place-items: center; background: rgba(0,0,0,.55); color: var(--text); font-size: .76rem; text-align: center; padding: 10px; }
+.bframe .st.bad { color: #ffb3a8; }
+.bframe .st .spinner { width: 22px; height: 22px; margin-bottom: 6px; border-width: 2px; }
+.bframe .open { position: absolute; right: 6px; top: 6px; opacity: 0; transition: opacity .12s; }
+.bframe:hover .open { opacity: 1; }
+.bframe .what { position: absolute; left: 6px; top: 6px; font-size: .62rem; font-weight: 700; background: rgba(0,0,0,.7); border-radius: 5px; padding: 1px 6px; }
+.bvars { display: flex; align-items: center; gap: 4px; padding: 6px 8px 0; flex-wrap: wrap; min-height: 28px; }
+.bvars .lab { font-size: .62rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; margin-right: 2px; }
+.bvars .sep { width: 8px; }
+.bvars button { width: 22px; height: 22px; border-radius: 6px; border: 1px solid var(--line2); background: var(--panel2); color: var(--muted); font-size: .68rem; font-weight: 700; cursor: pointer; padding: 0; }
+.bvars button.on { background: var(--text); color: #111; border-color: var(--text); }
+.bvars button.bad { border-color: var(--bad); color: var(--bad); }
+.bvars button.run { border-style: dashed; }
+.bbody { padding: 8px; display: flex; flex-direction: column; gap: 6px; }
+.bbody textarea { width: 100%; min-height: 62px; resize: vertical; font-size: .8rem; line-height: 1.4; }
+.bsel { display: grid; grid-template-columns: 1fr 1fr 74px; gap: 5px; }
+.bsel select { font-size: .74rem; padding: 4px 20px 4px 7px; }
+.bels { display: flex; flex-wrap: wrap; gap: 4px; }
+.bels button { font-size: .7rem; padding: 2px 8px; border-radius: 99px; border: 1px solid var(--line2); background: none; color: var(--muted); cursor: pointer; }
+.bels button.on { background: #2a2410; color: var(--accent); border-color: #4d4116; }
+.bwords { display: grid; grid-template-columns: 1fr 1fr; gap: 5px; }
+.bwords input { font-size: .74rem; padding: 4px 7px; }
+.bacts { display: flex; gap: 5px; align-items: center; flex-wrap: wrap; padding: 0 8px 9px; }
+.bacts .btn { font-size: .74rem; padding: 5px 8px; }
+.bacts .grow { flex: 1; }
+.btrim { display: inline-flex; align-items: center; gap: 4px; font-size: .68rem; color: var(--dim); }
+.btrim input { width: 50px; padding: 3px 5px; font-size: .72rem; }
+.bland { font-size: .7rem; color: var(--muted); display: inline-flex; align-items: center; gap: 4px; cursor: pointer; }
+.bland input { accent-color: var(--accent); }
+.bcard.real { border-color: rgba(126,179,255,.45); }
+.bct .tag { font-size: .62rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 1px 7px; border-radius: 99px;
+  background: rgba(126,179,255,.14); color: var(--blue); border: 1px solid rgba(126,179,255,.4); }
+.tl .seg2.real { background: var(--blue); color: #0b1a2e; }
+.btool { display: grid; grid-template-columns: 1fr 74px; gap: 5px; }
+.btool.nodur { grid-template-columns: 1fr; }
+.btool select { font-size: .74rem; padding: 4px 20px 4px 7px; }
+.badds { display: flex; flex-direction: column; gap: 8px; }
+.badds .badd { min-height: 96px; flex: 1; }
+.badd.real:hover { border-color: var(--blue); color: var(--blue); }
+.badd { border: 1.5px dashed var(--line2); border-radius: var(--radius); background: none; color: var(--muted); cursor: pointer; min-height: 200px; font-size: .9rem; }
+.badd:hover { border-color: var(--accent); color: var(--accent); }
+.bempty { text-align: center; color: var(--muted); padding: 30px 16px; }
+.bempty b { display: block; color: var(--text); margin-bottom: 4px; }
+@media (max-width: 860px) { .bgrid { grid-template-columns: 1fr; } .bsel { grid-template-columns: 1fr 1fr; } }
+
+/* library: everything you've made, across reels */
+#libSheet { width: min(1240px, calc(100vw - 24px)); left: 50%; top: 62px; transform: translateX(-50%);
+  height: calc(100vh - 80px); max-height: none; padding: 0; display: flex; flex-direction: column; overflow: hidden; }
+.libhead { padding: 14px 16px 12px; border-bottom: 1px solid var(--line); display: flex; flex-direction: column; gap: 10px; }
+.libhead h3 { margin: 0; }
+.libhead h3 small { color: var(--dim); font-weight: 500; font-size: .8rem; }
+.libbar { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.libbar .seg button { padding: 4px 12px; font-size: .78rem; }
+.libbar .seg button i, .libbar .chipbtn i { font-style: normal; opacity: .6; margin-left: 4px; font-weight: 500; }
+.libbar .chipbtn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.libbar input { flex: 1; min-width: 180px; max-width: 360px; }
+.libbody { flex: 1; overflow-y: auto; padding: 4px 16px 16px; }
+.libday { font-size: .7rem; text-transform: uppercase; letter-spacing: .09em; color: var(--dim); font-weight: 700; margin: 14px 0 8px; }
+.libgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(208px, 1fr)); gap: 12px; }
+.lc { position: relative; background: var(--panel2); border: 1.5px solid var(--line); border-radius: 12px; overflow: hidden;
+  cursor: pointer; text-align: left; padding: 0; transition: border-color .12s, transform .12s; }
+.lc:hover { border-color: var(--line2); transform: translateY(-1px); }
+.lc.picked { border-color: var(--accent); }
+.lc .lm { position: relative; aspect-ratio: 16 / 9; background: #0c0c0e; }
+.lc .lm img, .lc .lm video { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; }
+.lc .lm .ph { position: absolute; inset: 0; display: grid; place-items: center; color: var(--dim); font-size: 1.4rem; }
+.lc .badge { position: absolute; right: 7px; top: 7px; font-size: .66rem; font-weight: 700; background: rgba(0,0,0,.7); border-radius: 5px; padding: 1px 6px; }
+.lc .star { position: absolute; right: 8px; bottom: 6px; color: var(--accent); text-shadow: 0 0 3px #000; }
+.lc .pick { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; accent-color: var(--accent); opacity: 0; transition: opacity .12s; cursor: pointer; }
+.lc:hover .pick, .lc.picked .pick, #libSheet.picking .lc .pick { opacity: 1; }
+.lc .ll { padding: 8px 10px 9px; }
+.lc .ll b { display: block; font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.lc .ll small { display: block; color: var(--dim); font-size: .7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.libempty { text-align: center; color: var(--muted); padding: 70px 20px; }
+.libempty b { display: block; color: var(--text); font-size: 1rem; margin-bottom: 6px; }
+.libmore { display: flex; justify-content: center; padding: 16px 0 4px; }
+.libfoot { border-top: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 8px; align-items: center; background: #17171b; flex-wrap: wrap; }
+.libfoot .grow { flex: 1; }
+#libSize { width: auto; padding: 4px 26px 4px 8px; font-size: .74rem; }
+/* the viewer: one take, big, with what made it */
+.libview { position: absolute; inset: 0; background: rgba(8,8,10,.97); display: grid; grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: minmax(0, 1fr); z-index: 2; }
+.libview .vm { position: relative; padding: 18px; min-height: 0; }
+.libview .vm img, .libview .vm video { width: 100%; height: 100%; object-fit: contain; display: block; }
+.libview .nav { position: absolute; top: 50%; transform: translateY(-50%); width: 38px; height: 38px; border-radius: 50%; border: 1px solid var(--line2);
+  background: rgba(0,0,0,.55); color: #fff; cursor: pointer; font-size: 1.1rem; }
+.libview .nav:disabled { opacity: .25; cursor: default; }
+.libview .nav.prev { left: 14px; } .libview .nav.next { right: 14px; }
+.libview .vi { border-left: 1px solid var(--line); padding: 16px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+.libview .vi h4 { margin: 0; font-size: .98rem; display: flex; gap: 8px; align-items: flex-start; }
+.libview .vi h4 .r { margin-left: auto; flex: none; }
+.libview .vi .prompt { font-size: .8rem; line-height: 1.45; background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 9px 10px;
+  max-height: 240px; overflow-y: auto; white-space: pre-wrap; }
+.libview .vacts { display: flex; flex-wrap: wrap; gap: 6px; }
+@media (max-width: 860px) { .libview { grid-template-columns: 1fr; grid-template-rows: minmax(0, 1fr) auto; } .libview .vi { border-left: 0; border-top: 1px solid var(--line); max-height: 45vh; } }
+
+#toast { position: fixed; bottom: 18px; left: 50%; transform: translateX(-50%); background: #222; border: 1px solid var(--line2); padding: 9px 16px;
+  border-radius: 10px; z-index: 80; font-size: .84rem; box-shadow: 0 10px 30px rgba(0,0,0,.5); max-width: 80vw; }
+#toast.bad { border-color: #6b2a22; color: #ffb3a8; }
+
+/* failures stay until dismissed: what failed, why in plain English, what to try */
+#fails { position: fixed; right: 16px; bottom: 16px; z-index: 79; width: min(380px, calc(100vw - 32px)); max-height: 70vh; overflow-y: auto;
+  display: flex; flex-direction: column; gap: 8px; }
+#fails .fail { position: relative; background: #2a1715; border: 1px solid #8a3328; border-left: 4px solid var(--bad); border-radius: 10px;
+  padding: 10px 34px 10px 12px; font-size: .82rem; box-shadow: 0 10px 30px rgba(0,0,0,.5); }
+#fails .fail b { display: block; color: #ffcdc5; font-size: .86rem; }
+#fails .fail .where { display: block; color: var(--muted); font-size: .72rem; margin-top: 1px; }
+#fails .fail p { margin: 6px 0 0; color: var(--text); line-height: 1.4; }
+#fails .fail details { margin-top: 6px; color: var(--muted); font-size: .74rem; }
+#fails .fail details p { color: var(--muted); }
+#fails .fail summary { cursor: pointer; }
+#fails .fail .acts { display: flex; gap: 6px; margin-top: 8px; }
+#fails .fail .x { position: absolute; top: 6px; right: 6px; background: none; border: 0; color: var(--muted); cursor: pointer; font-size: .9rem; padding: 4px; }
+#fails .fail .x:hover { color: var(--text); }
+#fails .fail.flash, .bcard.flash { animation: failflash 1.6s ease-out; }
+@keyframes failflash { 0%, 40% { box-shadow: 0 0 0 3px var(--bad); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.bframe .st.fail { background: rgba(42,23,21,.9); place-items: center; }
+.bframe .st.fail b { color: #ffcdc5; }
+.bframe .st.fail p { margin: 4px 0 8px; color: var(--text); font-size: .74rem; line-height: 1.35; }
+.notice p.raw { font-size: .74rem; color: var(--dim); }
+@media (max-width: 700px) { #fails { right: 16px; left: 16px; width: auto; top: 8px; bottom: auto; max-height: 50vh; } }
+
+/* ── responsive ─────────────────────────────────────────────────────── */
+@media (max-width: 1280px) { main { grid-template-columns: 360px minmax(0, 1fr); } #inspector { display: none; } #dock { width: 360px; } }
+@media (max-width: 860px) {
+  main, main.noinspector { grid-template-columns: 1fr; }
+  aside#panel { position: static; max-height: none; border-right: 0; padding-bottom: 20px; order: 2; }
+  #stagewrap { order: 1; padding: 12px 16px; }
+  #stage { height: 46vh; }
+  #dock { position: sticky; width: auto; order: 3; }
+  .camcols { grid-template-columns: repeat(2, 1fr); }
+  .pop { left: 8px !important; right: 8px !important; top: auto !important; bottom: 8px !important; width: auto !important; transform: none !important; max-height: 85vh; }
+  .tiles.three { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+</head>
+<body>
+<header>
+  <a class="homebtn" href="/" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
+{% if stills %}
+  <h1>Content Generator<span class="pill">Stills</span></h1>
+  <input class="reelname" id="reelName" value="Untitled session" aria-label="Session name" maxlength="80">
+{% else %}
+  <a class="back" href="{{ api }}/stills">&larr; Content Generator</a>
+  <h1>Gobo<span class="pill">Beta</span></h1>
+  <input class="reelname" id="reelName" value="Untitled reel" aria-label="Reel name" maxlength="80">
+{% endif %}
+  <button class="chipbtn" id="libBtn" title="Everything you've made, across every {% if stills %}session{% else %}reel{% endif %}">Library</button>
+  <button class="chipbtn" id="reelsBtn">{% if stills %}Sessions{% else %}Reels{% endif %}</button>
+  <button class="chipbtn" id="newReelBtn">{% if stills %}New session{% else %}New reel{% endif %}</button>
+  <span class="grow"></span>
+{% if stills %}
+  <a class="chipbtn" href="{{ api }}" title="Video, camera moves and the full cinematic toolset">🎬 Studio</a>
+{% endif %}
+  <a class="chipbtn" href="{{ api }}/guide" target="_blank" rel="noopener" title="How everything works: searchable" id="guideBtn">Guide</a>
+  <a class="chipbtn" href="/about" target="_blank" rel="noopener" title="Who made Gobo, why, and how it's built">About</a>
+  <span id="credits"></span>
+  <button class="chipbtn" id="inspBtn" title="Show or hide the prompt inspector">Prompt</button>
+</header>
+
+<main id="main">
+  <!-- ── settings ──────────────────────────────────────────────────── -->
+  <aside id="panel" aria-label="Shot settings">
+    <!-- the first choice, so nobody shoots stills while expecting a movie -->
+    <div class="seg big {% if stills %}hidden{% endif %}" role="tablist" aria-label="What to make">
+      <button id="modeImage" role="tab">🖼&nbsp; Still image</button>
+      <button id="modeVideo" class="on" role="tab">🎬&nbsp; Video clip</button>
+    </div>
+    <section class="card">
+      <p class="sectitle">Model <span class="r"><button class="btn small ghost" id="shootBtn" title="Run the same shot on up to four models at once">Shootout</button></span></p>
+      <button id="modelBtn" type="button"></button>
+      <div class="bmodels" id="bModels"></div>
+      <div class="shootout hidden" id="shootChips"></div>
+    </section>
+{% if not stills %}
+    <!-- a spot's kit: what stays the same in every shot -->
+    <section class="card" id="kitCard">
+      <p class="sectitle">Kit <span class="r hint">the same in every shot</span></p>
+      <div id="kitList" class="kitlist"></div>
+      <div class="kitadd"><button class="btn small" id="kitUpload">Upload</button><button class="btn small" id="kitLib">From library</button></div>
+      <div class="kitseed">
+        <label class="hint" for="kitSeed">Spot seed</label>
+        <div class="seedrow"><input id="kitSeed" class="field" inputmode="numeric" placeholder="random"><button class="btn small" id="kitDice" title="A new seed for the spot">🎲</button></div>
+        <span class="hint">Each shot runs on this plus its number, so a retake repeats it. The faces and products come from the kit, not the seed.</span>
+      </div>
+    </section>
+{% endif %}
+
+    <section class="card" id="sceneCard">
+      <p class="sectitle">Scene <span class="r hint" id="sceneHint"></span></p>
+      <textarea id="scene" class="field" placeholder="Describe the moment. Who, where, what is happening."></textarea>
+      <div class="refrow" id="refrow"></div>
+      <div class="pmode">
+        <div class="seg" id="pmode" aria-label="Prompt mode">
+          <button data-p="plain" title="Only your scene and the direction you set">Plain</button>
+          <button data-p="cinematic" class="on" title="Adds “cinematic film still” (or motion, for video) to the prompt">Cinematic</button>
+          <button data-p="director" title="The Director rewrites the whole brief for the model you picked">Director</button>
+        </div>
+        <button class="btn small hidden" id="directBtn">Direct it</button>
+        <span class="hint" id="pmodeHint"></span>
+      </div>
+    </section>
+
+{% if stills %}
+    <!-- Content Generator: prompts written from a reference image, or a whole folder of them -->
+    <section class="card" id="refCard">
+      <p class="sectitle">From a reference <span class="r hint">GPT-4o writes the prompts</span></p>
+      <div class="refdrop" id="refDrop">
+        <input type="file" id="refImg" accept="image/jpeg,image/png,image/webp" hidden>
+        <input type="file" id="refFolder" webkitdirectory multiple hidden>
+        <div class="refthumb" id="refThumb"></div>
+        <div class="refwhat"><b id="refName">Drop an image here</b><small id="refSub">or pick one, or a whole folder to batch</small></div>
+        <div class="refbtns"><button class="btn small" id="refPickImg">Image</button><button class="btn small" id="refPickFolder">Folder</button></div>
+      </div>
+      <div class="refopts">
+        <div class="seg" id="refStyle" aria-label="Reference style"><button data-s="photography" class="on">Photo</button><button data-s="illustration">Illustration</button></div>
+        <label class="refn">Prompts <span class="stepper"><button id="rnMinus" aria-label="Fewer">−</button><span id="rnN">4</span><button id="rnPlus" aria-label="More">+</button></span></label>
+      </div>
+      <label class="refvar"><span>Variation <b id="refVarV">5</b>/10</span><input type="range" id="refVar" min="1" max="10" value="5"></label>
+      <textarea id="refNotes" class="field" rows="2" placeholder="Art direction for every prompt (optional) — e.g. diverse cast, winter light, no text"></textarea>
+      <div class="refgo"><button class="btn primary" id="refWrite" disabled>Write prompts</button><button class="btn hidden" id="refStop">Stop</button><span class="hint" id="refStatus"></span></div>
+      <div id="refList"></div>
+    </section>
+{% endif %}
+    <section class="card">
+      <p class="sectitle">Shot <span class="r"><button class="btn small ghost" id="resetDir" title="Back to the default look">Reset</button></span></p>
+      <div id="shotlist"></div>
+      <div class="shotbar">
+        <button class="btn small" id="starterBtn">Starter shots</button>
+        <button class="btn small" id="surpriseBtn" title="Shuffle the direction, keep your scene">Shuffle</button>
+        <button class="btn small" id="autoBtn" title="Set every control to Auto">All auto</button>
+      </div>
+    </section>
+
+    <section class="card">
+      <p class="sectitle">Format</p>
+      <div class="fmt" id="fmt"></div>
+      <details class="adv" id="adv">
+        <summary>Advanced</summary>
+        <div class="advgrid">
+          <div id="negWrap">
+            <label class="hint" for="neg">Negative prompt</label>
+            <textarea id="neg" class="field" rows="2" placeholder="What to keep out: text, watermark, extra fingers…"></textarea>
+          </div>
+          <div id="seedWrap">
+            <label class="hint" for="seed">Seed (blank = random each take)</label>
+            <div class="seedrow">
+              <input id="seed" class="field" inputmode="numeric" placeholder="random">
+              <button class="btn small" id="seedDice" title="Pick a seed">🎲</button>
+              <button class="btn small" id="seedClear" title="Random again">✕</button>
+            </div>
+          </div>
+        </div>
+      </details>
+    </section>
+  </aside>
+
+  <!-- ── stage ─────────────────────────────────────────────────────── -->
+  <div id="stagewrap">
+{% if not stills %}
+    <div class="viewbar">
+      <div class="seg" id="viewSeg" role="tablist" aria-label="View"><button data-v="shot" role="tab">Shot</button><button data-v="board" role="tab">Board</button></div>
+      <span class="hint" id="viewHint"></span>
+    </div>
+    <div id="board" aria-label="Board"></div>
+{% endif %}
+    <div id="stage">
+      <div id="frame"></div>
+      <div id="takebar" class="hidden"></div>
+    </div>
+    <div id="actions"></div>
+    <div id="seq">
+      <div class="head">
+        <p class="sectitle">Sequence</p>
+        <span class="hint" id="seqCount"></span>
+        <span style="flex:1"></span>
+        <span class="hint hidden" id="stitchHint">Click takes to select · they stitch in the order shown</span>
+{% if not stills %}
+        <button class="btn small" id="footBtn" title="Bring in a clip you shot: change it, extend it, lead into it, cut it with AI shots">＋ Footage</button>
+{% endif %}
+        <button class="btn small" id="selBtn" title="Select takes to stitch, download or delete (or ⌘/Shift-click a take)">Select</button>
+        <button class="btn small {% if stills %}hidden{% endif %}" id="stitchBtn" title="Join takes into one video: clips play, stills hold">Stitch</button>
+        <button class="btn small hidden" id="stitchAll">Select all</button>
+        <label class="hint hidden" id="holdWrap">Stills hold <select class="field" id="holdSel"><option value="2">2s</option><option value="3" selected>3s</option><option value="5">5s</option><option value="8">8s</option></select></label>
+        <button class="btn small primary hidden" id="stitchGo">Stitch</button>
+        <a class="btn small hidden" id="selDl" href="#">Download</a>
+        <button class="btn small danger hidden" id="selDel">Delete</button>
+        <button class="btn small hidden" id="stitchCancel">Done</button>
+        <a class="btn small primary hidden" id="dlFilm" href="#" title="The video you stitched last">Download stitched</a>
+{% if stills %}
+        <select class="field" id="dlSize" title="Stills at this long side, sharpened, 300 dpi">
+          <option value="0">Original size</option><option value="2000">2K · 300 dpi</option>
+          <option value="4000">4K · 300 dpi</option><option value="8000">8K · 300 dpi</option>
+        </select>
+{% endif %}
+        <a class="btn small" id="dlAll" href="#" title="Every finished take, as separate files in a zip">All takes (.zip)</a>
+        <a class="btn small" id="dlStar" href="#" title="Only the takes you starred, as separate files in a zip">Starred (.zip)</a>
+      </div>
+      <div id="strip"></div>
+    </div>
+  </div>
+
+  <!-- ── inspector ─────────────────────────────────────────────────── -->
+  <aside id="inspector" aria-label="Prompt inspector">
+    <section class="card">
+      <p class="sectitle">Prompt <span class="r"><label class="switch" title="Write the prompt yourself"><input type="checkbox" id="ovToggle"><i></i> Edit</label></span></p>
+      <div class="segs" id="segs"></div>
+      <textarea id="override" class="hidden" spellcheck="true"></textarea>
+      <div class="legend">
+        <span><i style="background:var(--s-direction)"></i>Direction</span>
+        <span><i style="background:var(--s-scene)"></i>Scene</span>
+        <span><i style="background:var(--s-enhance)"></i>Cinematic</span>
+        <span><i style="background:var(--s-reference)"></i>Reference</span>
+      </div>
+      <div class="hint" id="directNotes" style="margin-top:8px"></div>
+    </section>
+    <section class="card" id="takeInfo">
+      <p class="sectitle">This take</p>
+      <div id="takeMeta" class="hint">Nothing selected yet.</div>
+    </section>
+  </aside>
+</main>
+
+<div id="dock">
+  <div id="blocknote" class="hidden"></div>
+  <button class="btn primary" id="genBtn">Generate <kbd>⌘↵</kbd></button>
+  <div id="costline"></div>
+</div>
+
+<div id="scrim" class="hidden"></div>
+<div id="pop" class="pop hidden" role="dialog"></div>
+<div id="modelSheet" class="pop hidden" role="dialog" aria-label="Choose a model"></div>
+<div id="reelSheet" class="pop hidden" role="dialog" aria-label="Reels"></div>
+<div id="libSheet" class="pop hidden" role="dialog" aria-label="Library"></div>
+<div id="fails" class="hidden" aria-live="polite"></div>
+<div id="toast" class="hidden"></div>
+<input type="file" id="filePick" class="hidden">
+
+<script>
+const CAT = {{ catalogue|safe }};
+const MODELS = {{ models|safe }};
+const API = "{{ api }}";
+// the Content Generator: this page and engine, stills only, with the batch tools
+const STILLS = {{ 'true' if stills else 'false' }};
+const $ = (s, el) => (el || document).querySelector(s);
+const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const LS = {
+  // the two pages keep their own working shot and current reel
+  p: STILLS ? "cg." : "studio.",
+  get(k, d) { try { const v = localStorage.getItem(this.p + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
+  set(k, v) { try { localStorage.setItem(this.p + k, JSON.stringify(v)); } catch (e) {} },
+};
+
+// ── state ──────────────────────────────────────────────────────────────
+const S = {
+  mode: STILLS ? "image" : "video",
+  model: { image: null, video: null },
+  shootout: { image: [], video: [] },      // extra models run on the same shot
+  scene: "",
+  pmode: STILLS ? "plain" : "cinematic",    // plain | cinematic | director
+  // the Content Generator sends your prompt as written until you direct it
+  direction: STILLS ? Object.fromEntries(Object.keys(CAT.defaults).map(k => [k, "auto"])) : Object.assign({}, CAT.defaults),
+  colors: [], mainColor: null,
+  aspect: "16:9", resolution: "", ntakes: 1, duration: null, audio: false,
+  refs: [],                                 // [{name,url,kind}]
+  firstFrame: null, lastFrame: null, sourceVideo: null,
+  negative: "", seed: "",
+  override: null,                           // string when the user edits the prompt
+  directed: null,                           // the director's rewrite, if any
+  reel: null, takes: [], current: null,
+  compareWith: null, zoom: false, picking: false, picked: new Set(),
+};
+
+const byKind = k => MODELS.filter(m => m.kind === k);
+function model() { return MODELS.find(m => m.id === S.model[S.mode]) || byKind(S.mode)[0]; }
+function modelById(id) { return MODELS.find(m => m.id === id); }
+
+// ── thumbnails (procedural SVG; no borrowed stills) ────────────────────
+const SVG = (inner, bg) => `<svg viewBox="0 0 160 90" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">${bg ? `<rect width="160" height="90" fill="${bg}"/>` : ""}${inner}</svg>`;
+const grad = (id, a, b, vertical) => `<defs><linearGradient id="${id}" x1="0" y1="0" x2="${vertical ? 0 : 1}" y2="${vertical ? 1 : 0}"><stop offset="0" stop-color="${a}"/><stop offset="1" stop-color="${b}"/></linearGradient></defs><rect width="160" height="90" fill="url(#${id})"/>`;
+function person(cx, base, h, fill) {        // a simple figure: head + shoulders
+  const r = h * 0.16, sw = h * 0.42;
+  return `<g fill="${fill || "#d9d4c7"}"><circle cx="${cx}" cy="${base - h + r}" r="${r}"/><path d="M${cx - sw / 2} ${base} Q${cx - sw / 2} ${base - h * 0.62} ${cx} ${base - h * 0.64} Q${cx + sw / 2} ${base - h * 0.62} ${cx + sw / 2} ${base} Z"/></g>`;
+}
+const THUMB = {
+  shot(id) {
+    const bg = grad("g", "#3b4a5c", "#1a2029", true);
+    const ground = `<rect y="62" width="160" height="28" fill="#141820"/>`;
+    switch (id) {
+      case "xwide": return SVG(bg + ground + person(80, 64, 9));
+      case "wide": return SVG(bg + ground + person(80, 72, 30));
+      case "medium": return SVG(bg + person(80, 100, 78));
+      case "close": return SVG(bg + `<g fill="#d9d4c7"><circle cx="80" cy="46" r="26"/><path d="M38 90 Q40 70 80 70 Q120 70 122 90Z"/></g>`);
+      case "xclose": return SVG(`<rect width="160" height="90" fill="#c9b8a4"/><ellipse cx="80" cy="45" rx="46" ry="18" fill="#f4efe6"/><circle cx="80" cy="45" r="15" fill="#4b6a7d"/><circle cx="80" cy="45" r="6" fill="#111"/>`);
+      case "ots": return SVG(bg + person(108, 100, 70) + `<path d="M-10 90 Q0 40 40 38 Q70 40 74 90Z" fill="#0c0e12"/>`);
+      case "low": return SVG(grad("g", "#5b7ea3", "#22344a", true) + `<path d="M50 90 L70 18 L90 18 L110 90Z" fill="#d9d4c7"/><circle cx="80" cy="14" r="9" fill="#d9d4c7"/>`);
+      case "cowboy": return SVG(bg + person(80, 120, 108));
+      case "two": return SVG(bg + person(56, 100, 70) + person(104, 100, 70, "#bfb7a6"));
+      case "insert": return SVG(`<rect width="160" height="90" fill="#2a2622"/><rect x="52" y="24" width="56" height="42" rx="4" fill="#c49a5a"/><rect x="60" y="32" width="40" height="5" fill="#7d5c2c"/>`);
+    }
+  },
+  angle(id) {
+    const sky = grad("g", "#2c3a4a", "#12161c", true);
+    const cam = (x, y, rot) => `<g transform="translate(${x} ${y}) rotate(${rot})"><rect x="-11" y="-7" width="18" height="14" rx="2" fill="#f2c14e"/><path d="M7 -5 L15 -9 L15 9 L7 5Z" fill="#f2c14e"/></g>`;
+    const subj = person(112, 78, 46);
+    const ray = (x1, y1) => `<line x1="${x1}" y1="${y1}" x2="112" y2="52" stroke="#f2c14e" stroke-dasharray="3 3" stroke-width="1.2"/>`;
+    switch (id) {
+      case "eye": return SVG(sky + subj + ray(40, 52) + cam(32, 52, 0));
+      case "high": return SVG(sky + subj + ray(44, 14) + cam(36, 12, 30));
+      case "overhead": return SVG(`<rect width="160" height="90" fill="#1d2228"/><circle cx="80" cy="50" r="14" fill="#d9d4c7"/><ellipse cx="80" cy="50" rx="26" ry="12" fill="none" stroke="#d9d4c7" stroke-width="5"/>` + cam(80, 10, 90));
+      case "dutch": return SVG(`<g transform="rotate(-14 80 45)">${sky}${subj}</g>`);
+      case "worm": return SVG(sky + `<rect y="80" width="160" height="10" fill="#0c0f13"/>` + subj + ray(40, 84) + cam(32, 84, -25));
+      case "pov": return SVG(sky + `<path d="M40 90 Q50 62 66 64 L70 90Z M120 90 Q110 62 94 64 L90 90Z" fill="#c8b39a"/>` + person(80, 60, 26));
+      case "aerial": return SVG(`<rect width="160" height="90" fill="#3d5a3a"/><path d="M0 60 Q40 50 80 62 T160 58 V90 H0Z" fill="#2d6b8a"/><rect x="70" y="30" width="20" height="12" fill="#c7b48c"/>`);
+    }
+  },
+  move(id) {
+    const bg = `<rect width="160" height="90" fill="#16181d"/>` + person(80, 74, 40, "#3a3d46");
+    const arrow = d => `<path d="${d}" fill="none" stroke="#f2c14e" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" marker-end="url(#ah)"/>`;
+    const defs = `<defs><marker id="ah" viewBox="0 0 10 10" refX="6" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0 L10 5 L0 10z" fill="#f2c14e"/></marker></defs>`;
+    const paths = {
+      static: `<rect x="62" y="30" width="36" height="26" rx="3" fill="none" stroke="#f2c14e" stroke-width="3"/>`,
+      push: arrow("M30 45 L66 45"), pull: arrow("M70 45 L28 45"), track: arrow("M20 80 L140 80"),
+      dolly: arrow("M30 20 L130 20"), crane: arrow("M30 80 Q30 20 90 16"), orbit: arrow("M40 62 A42 18 0 1 0 120 62"),
+      handheld: arrow("M24 40 L40 34 L54 46 L70 36 L86 48 L100 38"), pan: arrow("M40 20 Q80 6 120 20"),
+      tilt: arrow("M24 80 Q14 45 28 14"), whip: arrow("M20 30 L140 30") + arrow("M20 40 L140 40"),
+      drone: arrow("M20 16 L140 16") + `<rect x="14" y="10" width="10" height="5" fill="#f2c14e"/>`,
+      zoom: `<rect x="30" y="18" width="100" height="56" fill="none" stroke="#f2c14e" stroke-width="2" stroke-dasharray="4 3"/><rect x="60" y="34" width="40" height="24" fill="none" stroke="#f2c14e" stroke-width="3.2"/>`,
+      vertigo: arrow("M24 45 L56 45") + `<path d="M104 25 L136 10 M104 65 L136 80" stroke="#f2c14e" stroke-width="3"/>`,
+    };
+    return SVG(defs + bg + (paths[id] || ""));
+  },
+  light(id) {
+    const m = {
+      golden: grad("g", "#ffb14e", "#7a3418", true) + `<circle cx="120" cy="58" r="14" fill="#ffe0a0"/>` + person(56, 90, 46, "#2a160c"),
+      overcast: grad("g", "#d1d6db", "#8c939a", true) + person(80, 90, 50, "#59606a"),
+      blue: grad("g", "#30508a", "#0f1c33", true) + `<rect y="66" width="160" height="24" fill="#0a1222"/><g fill="#ffd27a">${[18, 40, 63, 98, 130].map(x => `<rect x="${x}" y="70" width="4" height="4"/>`).join("")}</g>`,
+      night: `<rect width="160" height="90" fill="#0b0c15"/><circle cx="36" cy="30" r="22" fill="#e0a15e" opacity=".35"/><circle cx="36" cy="30" r="5" fill="#ffd28a"/><circle cx="124" cy="22" r="16" fill="#e0a15e" opacity=".28"/><circle cx="124" cy="22" r="4" fill="#ffd28a"/>` + person(80, 90, 48, "#3b2a1e"),
+      neon: `<rect width="160" height="90" fill="#12001f"/><rect x="18" y="16" width="52" height="6" rx="3" fill="#ff3d8b"/><rect x="96" y="28" width="46" height="6" rx="3" fill="#27d3f2"/>` + person(80, 90, 50, "#3b1b6e"),
+      lowkey: `<rect width="160" height="90" fill="#050505"/><circle cx="58" cy="44" r="30" fill="#6e5a46" opacity=".55"/>` + person(70, 92, 54, "#2a221a"),
+      silhouette: grad("g", "#ffb35a", "#c5462e", true) + person(80, 92, 62, "#0a0605"),
+      noon: grad("g", "#7ec3ff", "#bfe3ff", true) + `<rect y="66" width="160" height="24" fill="#d9c79c"/><ellipse cx="96" cy="88" rx="30" ry="4" fill="#5a4a2a"/>` + person(80, 88, 44, "#3a2f22"),
+      window: `<rect width="160" height="90" fill="#1d1a17"/><rect x="14" y="10" width="42" height="56" fill="#efe6d2"/><path d="M56 10 L120 90 L56 90Z" fill="#efe6d2" opacity=".18"/>` + person(100, 90, 50, "#7a6650"),
+      candle: `<rect width="160" height="90" fill="#0b0704"/><circle cx="80" cy="56" r="34" fill="#ff9d3b" opacity=".3"/><rect x="77" y="58" width="6" height="18" fill="#f5e6c8"/><ellipse cx="80" cy="54" rx="3" ry="6" fill="#ffd27a"/>`,
+      moon: grad("g", "#1b2a44", "#070b14", true) + `<circle cx="118" cy="24" r="12" fill="#e6eef6"/>` + person(56, 90, 46, "#0d1422"),
+      fog: grad("g", "#aab0b5", "#6d7378", true) + person(80, 90, 46, "#80868b") + `<rect width="160" height="90" fill="#cdd2d5" opacity=".4"/>`,
+    };
+    return SVG(m[id] || "");
+  },
+  film(id) {
+    const tints = { clean: ["#9fb5c4", "#3b4a55", 0], t500: ["#5f86b5", "#14253d", .25], d250: ["#e6b47a", "#5a3b22", .2], bw400: ["#cfcfcf", "#262626", .35],
+      slide: ["#2a7fd4", "#e8472b", .1], expired: ["#e6a7c4", "#7c8a3e", .3], bleach: ["#b8b7aa", "#1f2421", .3],
+      portra: ["#f0c9a8", "#6e8a8f", .15], instant: ["#e9d8b6", "#7a8a96", .1], vhs: ["#6fa0a8", "#402850", .3] };
+    const t = tints[id] || ["#555", "#222", 0];
+    let inner = grad("g", t[0], t[1]) + person(80, 92, 56, "rgba(0,0,0,.35)");
+    if (t[2]) inner += `<filter id="n"><feTurbulence baseFrequency=".9" numOctaves="2"/><feColorMatrix values="0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 ${t[2]} 0"/></filter><rect width="160" height="90" filter="url(#n)"/>`;
+    if (id === "instant") inner = `<rect width="160" height="90" fill="#f4f1ea"/><g transform="translate(26 8) scale(.68 .68)">${inner}</g>`;
+    if (id === "vhs") inner += Array.from({ length: 18 }, (_, i) => `<rect y="${i * 5}" width="160" height="1.2" fill="#000" opacity=".25"/>`).join("");
+    if (id !== "instant") inner += `<g fill="#0a0a0a">${[0, 1, 2, 3, 4, 5, 6, 7].map(i => `<rect x="${6 + i * 20}" y="1" width="8" height="5" rx="1"/><rect x="${6 + i * 20}" y="84" width="8" height="5" rx="1"/>`).join("")}</g>`;
+    return SVG(inner);
+  },
+  look(id) {
+    const m = { neonoir: ["#1b0f2e", "#d4316b"], western: ["#e3a15a", "#6b3a1c"], scifi: ["#0d2a3a", "#5fe0ff"], drama: ["#3d2b1f", "#bfa57a"],
+      thriller: ["#0f1a14", "#6f8a6a"], doc: ["#8d8a80", "#3a3934"], road: ["#ffcf7a", "#2c5f7a"], editorial: ["#f3efe9", "#b9a89a"],
+      commercial: ["#ffffff", "#9fd3ff"], horror: ["#050505", "#6b0d0d"], musical: ["#ff5fa2", "#4b2cff"] };
+    const c = m[id] || ["#444", "#222"];
+    return SVG(grad("g", c[0], c[1]) + person(80, 92, 58, "rgba(0,0,0,.4)"));
+  },
+  grade(id) {
+    const sw = (CAT.swatches[id] || CAT.swatches.auto);
+    return SVG(sw.map((c, i) => `<rect x="${i * 32}" width="33" height="90" fill="${c}"/>`).join(""));
+  },
+  compose(id) {
+    const bg = `<rect width="160" height="90" fill="#1b1d22"/>`;
+    const grid = `<g stroke="#3a3d46" stroke-width="1"><line x1="53" y1="0" x2="53" y2="90"/><line x1="107" y1="0" x2="107" y2="90"/><line x1="0" y1="30" x2="160" y2="30"/><line x1="0" y1="60" x2="160" y2="60"/></g>`;
+    const m = {
+      thirds: grid + `<circle cx="107" cy="30" r="9" fill="#f2c14e"/>`,
+      center: `<line x1="80" y1="0" x2="80" y2="90" stroke="#3a3d46"/><circle cx="80" cy="45" r="12" fill="#f2c14e"/>`,
+      lines: `<path d="M0 90 L80 40 L160 90" fill="none" stroke="#3a3d46" stroke-width="3"/><circle cx="80" cy="38" r="7" fill="#f2c14e"/>`,
+      space: `<rect x="8" y="10" width="86" height="70" rx="4" fill="none" stroke="#3a3d46" stroke-dasharray="4 3"/><text x="51" y="49" fill="#6c6a73" font-size="11" text-anchor="middle" font-family="Inter">COPY</text><circle cx="128" cy="48" r="13" fill="#f2c14e"/>`,
+      frame: `<rect x="44" y="8" width="72" height="74" fill="none" stroke="#5a5d66" stroke-width="7"/><circle cx="80" cy="46" r="10" fill="#f2c14e"/>`,
+      depth: `<rect x="0" y="62" width="160" height="28" fill="#2a2d34"/><circle cx="26" cy="70" r="16" fill="#3a3d46"/><circle cx="84" cy="48" r="9" fill="#f2c14e"/><rect x="120" y="22" width="22" height="30" fill="#2a2d34"/>`,
+    };
+    return SVG(bg + (m[id] || ""));
+  },
+  auto() { return SVG(`<rect width="160" height="90" fill="#1a1a1f"/><circle cx="80" cy="45" r="22" fill="none" stroke="#4a4a55" stroke-width="2.5" stroke-dasharray="5 4"/><text x="80" y="50" text-anchor="middle" fill="#6c6a73" font-size="13" font-family="Inter" font-weight="700">AUTO</text>`); },
+};
+// a rendered sample when there is one (tools/build_samples.py); drawn
+// ones otherwise, and always for the starters, whose scenes are their own
+function thumb(group, id, drawn) {
+  const src = !drawn && CAT.samples && CAT.samples[group] && CAT.samples[group][id];
+  if (src) return `<img src="${src}" alt="" loading="lazy" decoding="async">`;
+  if (id === "auto" || !THUMB[group]) return THUMB.auto();
+  if (group === "grade" && id === "custom") return SVG(S.colors.map((c, i, a) => `<rect x="${i * 160 / a.length}" width="${160 / a.length + 1}" height="90" fill="${c}"/>`).join(""));
+  return THUMB[group](id) || THUMB.auto();
+}
+// camera glyphs (small, drawn)
+const CAMGLYPH = {
+  body(id) { const w = { large: 30, imax: 32, digital: 26, super35: 24, film35: 24, film16: 20, handheld: 18, phone: 12, medium: 22 }[id] || 22;
+    return `<svg viewBox="0 0 34 24"><rect x="${17 - w / 2}" y="6" width="${w}" height="13" rx="2" fill="#d9d4c7"/><circle cx="17" cy="12.5" r="4" fill="#111"/>${/film/.test(id) ? `<circle cx="${17 - w / 2 + 4}" cy="4" r="3.4" fill="#d9d4c7"/><circle cx="${17 - w / 2 + 11}" cy="4" r="3.4" fill="#d9d4c7"/>` : ""}</svg>`; },
+  lens(id) { const c = id === "vintage" ? "#c9a25a" : "#d9d4c7";
+    return `<svg viewBox="0 0 34 24"><rect x="4" y="${id === "anamorphic" ? 7 : 5}" width="22" height="${id === "anamorphic" ? 10 : 14}" rx="${id === "anamorphic" ? 2 : 3}" fill="${c}" ${id === "tilt" ? 'transform="rotate(-12 15 12)"' : ""}/><ellipse cx="28" cy="12" rx="${id === "fisheye" ? 5 : 3}" ry="${id === "anamorphic" ? 5 : 7}" fill="#5fa3d9"/></svg>`; },
+  focal(id) { const fov = { 14: 104, 24: 84, 35: 63, 50: 47, 85: 28, 135: 18, 200: 12 }[id] || 40, a = fov / 2 * Math.PI / 180;
+    return `<svg viewBox="0 0 34 24"><path d="M4 12 L${4 + 28 * Math.cos(a)} ${12 - 28 * Math.sin(a) * .42} L${4 + 28 * Math.cos(a)} ${12 + 28 * Math.sin(a) * .42}Z" fill="#f2c14e" opacity=".85"/></svg>`; },
+  aperture(id) { const f = parseFloat(id) || 2.8, r = Math.max(1.5, 8 - Math.log2(f) * 1.9);
+    return `<svg viewBox="0 0 34 24"><circle cx="17" cy="12" r="10" fill="#3a3d46"/><circle cx="17" cy="12" r="${r}" fill="#f2c14e"/></svg>`; },
+};
+const camGlyph = (part, id) => id === "auto" ? `<svg viewBox="0 0 34 24"><circle cx="17" cy="12" r="8" fill="none" stroke="#4a4a55" stroke-dasharray="3 2"/></svg>` : CAMGLYPH[part](id);
+
+const optOf = (g, id) => (CAT.groups[g].options.find(o => o.id === id) || CAT.groups[g].options[0]);
+</script>
+<script src="{{ api }}/app.js"></script>
+<script src="/static/direction.js"></script>
+<script src="/static/gobo.js"></script>
+<script src="/static/gobo_lab.js"></script>
+<script src="/static/autopilot.js"></script>
+<script src="/static/standalone.js"></script>
+</body>
+</html>

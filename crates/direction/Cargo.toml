@@ -1,0 +1,13 @@
+[package]
+name = "cinematic-direction"
+version = "0.1.0"
+edition = "2021"
+description = "Gobo's shot compiler: direction choices to the prompt a cinematographer would write. Built to WebAssembly; runs in the page and on the server."
+license = "MIT OR Apache-2.0"
+publish = false
+
+[lib]
+crate-type = ["cdylib", "rlib"]
+
+[dependencies]
+serde_json = "1"

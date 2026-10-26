@@ -1,0 +1,254 @@
+{
+  "1": {
+    "class_type": "Flux3ImageNode",
+    "inputs": {
+      "prompt": "Extreme wide shot. A lone stone lighthouse stands on a black rock as storm waves explode against its base in heavy rain. A small lit window glows halfway up the tower as the camera pushes in toward it. Cinematic film still, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "aspect_ratio": "16:9",
+      "resolution": "1K",
+      "grounding": true,
+      "safety_tolerance": 4,
+      "seed": 42
+    },
+    "_meta": {
+      "title": "001A · FLUX 3"
+    }
+  },
+  "2": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "1",
+        0
+      ],
+      "filename_prefix": "gobo/001A"
+    },
+    "_meta": {
+      "title": "001A · save"
+    }
+  },
+  "3": {
+    "class_type": "Flux3ImageNode",
+    "inputs": {
+      "prompt": "Low angle shot. An old lighthouse keeper in a wet oilskin coat climbs a narrow iron spiral staircase, one hand on the rail, an oil lantern swinging in the other. Rain streaks the small windows behind him; the shot ends as he reaches the top step. Cinematic film still, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "aspect_ratio": "16:9",
+      "resolution": "1K",
+      "grounding": true,
+      "safety_tolerance": 4,
+      "seed": 42
+    },
+    "_meta": {
+      "title": "002A · FLUX 3"
+    }
+  },
+  "4": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "3",
+        0
+      ],
+      "filename_prefix": "gobo/002A"
+    },
+    "_meta": {
+      "title": "002A · save"
+    }
+  },
+  "5": {
+    "class_type": "Flux3ImageNode",
+    "inputs": {
+      "prompt": "Close-up. Close on the weathered hands of the old keeper striking a match and lifting it to the lighthouse lamp inside the great glass lens. The flame catches and the lens flares into brilliant light, filling the frame. Cinematic film still, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "aspect_ratio": "16:9",
+      "resolution": "1K",
+      "grounding": true,
+      "safety_tolerance": 4,
+      "seed": 42
+    },
+    "_meta": {
+      "title": "003A · FLUX 3"
+    }
+  },
+  "6": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "5",
+        0
+      ],
+      "filename_prefix": "gobo/003A"
+    },
+    "_meta": {
+      "title": "003A · save"
+    }
+  },
+  "7": {
+    "class_type": "Flux3ImageNode",
+    "inputs": {
+      "prompt": "Wide shot. From behind the old keeper standing on the gallery outside the lantern room, a powerful white beam sweeps out across a dark, storm-tossed sea. He stands still in the wind and rain as the beam passes overhead and the camera slowly pulls away into the night. Cinematic film still, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "aspect_ratio": "16:9",
+      "resolution": "1K",
+      "grounding": true,
+      "safety_tolerance": 4,
+      "seed": 42
+    },
+    "_meta": {
+      "title": "004A · FLUX 3"
+    }
+  },
+  "8": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "images": [
+        "7",
+        0
+      ],
+      "filename_prefix": "gobo/004A"
+    },
+    "_meta": {
+      "title": "004A · save"
+    }
+  },
+  "9": {
+    "class_type": "Wan3ImageToVideoApi",
+    "inputs": {
+      "model": "wan3.0-video",
+      "model.prompt": "Extreme wide shot. A lone stone lighthouse stands on a black rock as storm waves explode against its base in heavy rain. A small lit window glows halfway up the tower as the camera pushes in toward it. Cinematic film shot, continuous motion, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Camera movement: aerial drone flyover. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "model.resolution": "480P",
+      "model.ratio": "adaptive",
+      "model.duration": "2",
+      "model.audio": false,
+      "model.prompt_extend": false,
+      "seed": 833095246,
+      "watermark": false,
+      "first_frame": [
+        "1",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "001B · Wan 3.0"
+    }
+  },
+  "10": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "9",
+        0
+      ],
+      "filename_prefix": "video/gobo/001B",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "001B · save"
+    }
+  },
+  "11": {
+    "class_type": "Wan3ImageToVideoApi",
+    "inputs": {
+      "model": "wan3.0-video",
+      "model.prompt": "Low angle shot. An old lighthouse keeper in a wet oilskin coat climbs a narrow iron spiral staircase, one hand on the rail, an oil lantern swinging in the other. Rain streaks the small windows behind him; the shot ends as he reaches the top step. Cinematic film shot, continuous motion, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Camera movement: tracking shot moving alongside the subject. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "model.resolution": "480P",
+      "model.ratio": "adaptive",
+      "model.duration": "3",
+      "model.audio": false,
+      "model.prompt_extend": false,
+      "seed": 833096255,
+      "watermark": false,
+      "first_frame": [
+        "3",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "002B · Wan 3.0"
+    }
+  },
+  "12": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "11",
+        0
+      ],
+      "filename_prefix": "video/gobo/002B",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "002B · save"
+    }
+  },
+  "13": {
+    "class_type": "Wan3ImageToVideoApi",
+    "inputs": {
+      "model": "wan3.0-video",
+      "model.prompt": "Close-up. Close on the weathered hands of the old keeper striking a match and lifting it to the lighthouse lamp inside the great glass lens. The flame catches and the lens flares into brilliant light, filling the frame. Cinematic film shot, continuous motion, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Camera movement: slow push-in toward the subject. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "model.resolution": "480P",
+      "model.ratio": "adaptive",
+      "model.duration": "2",
+      "model.audio": false,
+      "model.prompt_extend": false,
+      "seed": 833097264,
+      "watermark": false,
+      "first_frame": [
+        "5",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "003B · Wan 3.0"
+    }
+  },
+  "14": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "13",
+        0
+      ],
+      "filename_prefix": "video/gobo/003B",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "003B · save"
+    }
+  },
+  "15": {
+    "class_type": "Wan3ImageToVideoApi",
+    "inputs": {
+      "model": "wan3.0-video",
+      "model.prompt": "Wide shot. From behind the old keeper standing on the gallery outside the lantern room, a powerful white beam sweeps out across a dark, storm-tossed sea. He stands still in the wind and rain as the beam passes overhead and the camera slowly pulls away into the night. Cinematic film shot, continuous motion, natural texture. Shot on large format cinema camera, anamorphic lens, 50mm, f/2.8. Camera movement: slow pull-out revealing the scene. Blue hour twilight, Kodak Portra 400 film, neo-noir look, teal and orange grade.",
+      "model.resolution": "480P",
+      "model.ratio": "adaptive",
+      "model.duration": "3",
+      "model.audio": false,
+      "model.prompt_extend": false,
+      "seed": 833098273,
+      "watermark": false,
+      "first_frame": [
+        "7",
+        0
+      ]
+    },
+    "_meta": {
+      "title": "004B · Wan 3.0"
+    }
+  },
+  "16": {
+    "class_type": "SaveVideo",
+    "inputs": {
+      "video": [
+        "15",
+        0
+      ],
+      "filename_prefix": "video/gobo/004B",
+      "format": "auto",
+      "codec": "auto"
+    },
+    "_meta": {
+      "title": "004B · save"
+    }
+  }
+}

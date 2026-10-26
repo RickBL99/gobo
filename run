@@ -1,0 +1,28 @@
+#!/bin/zsh
+# Start Gobo on this Mac:   ./run          (then it opens in your browser)
+#                                            PORT=8030 ./run
+# First run makes .venv and installs the requirements; later runs only
+# reinstall when requirements.txt changes. Ctrl-C stops it.
+set -e
+cd "$(dirname "$0")"
+PORT=${PORT:-8020}
+
+if ! command -v ffmpeg >/dev/null || ! command -v ffprobe >/dev/null; then
+  echo "ffmpeg is needed (stitching, frames, posters):  brew install ffmpeg"; exit 1
+fi
+if [ ! -x .venv/bin/python ]; then
+  echo "Setting up .venv (first run)…"
+  python3.12 -m venv .venv 2>/dev/null || python3 -m venv .venv
+fi
+if [ ! -f .venv/.req-stamp ] || [ requirements.txt -nt .venv/.req-stamp ] || [ requirements-dev.txt -nt .venv/.req-stamp ]; then
+  .venv/bin/pip install -q --upgrade pip
+  .venv/bin/pip install -q -r requirements-dev.txt
+  touch .venv/.req-stamp
+fi
+if [ ! -f .env ]; then
+  echo "No .env yet: copy .env.example to .env and add COMFY_API_KEY (and STUDIO_PASSWORD)."; exit 1
+fi
+
+( sleep 2; open "http://127.0.0.1:$PORT/" ) &
+echo "Gobo → http://127.0.0.1:$PORT/   (Ctrl-C to stop)"
+exec .venv/bin/uvicorn studio.app:app --host 127.0.0.1 --port "$PORT"
