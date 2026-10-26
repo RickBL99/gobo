@@ -69,6 +69,7 @@ input { width: 100%; height: 46px; border-radius: 10px; border: 1px solid rgba(2
 input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(242,193,78,.18); }
 .hint { color: var(--muted); font-size: .76rem; margin-top: 6px; }
 .hint a, .getkey a { color: var(--accent); }
+.getkey ol { margin: 6px 0 6px; padding-left: 20px; } .getkey li { margin: 3px 0; }
 .getkey { margin: 16px 0 0; padding: 12px 14px; border-radius: 10px; background: rgba(242,193,78,.07); border: 1px solid rgba(242,193,78,.25);
   font-size: .8rem; color: #d9d2bd; }
 .getkey b { color: var(--text); }
@@ -108,9 +109,16 @@ button:hover { filter: brightness(1.06); } button:active { transform: translateY
           <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>
         <h1>Gobo</h1>
       </div>
+      {% if front == "director" %}
+      <p class="pitch">Say the film. <em>Gobo shoots it.</em></p>
+      <p class="sub">One line in, a finished film out. Gobo writes the shots, films them on Comfy Router's video models,
+        cuts them together and grades them like film, in Rust. No nodes, no settings, and every camera, lens and light
+        control is still there when you want it.</p>
+      {% else %}
       <p class="pitch">Direct AI video like a <em>cinematographer.</em></p>
       <p class="sub">An open-source film studio on Comfy Router: {{ model_count }} image and video models, camera-true direction,
         one-line Autopilot films, and a film grade written in Rust.</p>
+      {% endif %}
       {% if tour %}
       <div class="screen">
         <video id="tour" src="{{ tour }}" poster="{{ tour_poster }}" autoplay muted loop playsinline controls preload="auto"
@@ -151,9 +159,13 @@ button:hover { filter: brightness(1.06); } button:active { transform: translateY
       <button type="submit">{{ 'Start directing' if visitor else 'Sign in' }}</button>
       {% if error %}<div class="err" role="alert">{{ error }}</div>{% endif %}
       {% if visitor %}
-      <div class="getkey"><b>No key yet?</b> It takes a minute: sign in at
-        <a href="https://platform.comfy.org/login" target="_blank" rel="noopener">platform.comfy.org</a>, add credits, then
-        API Keys, + New. You pay Comfy only for what you run; Gobo itself is free.</div>
+      <div class="getkey"><b>No key yet?</b> It takes a minute:
+        <ol>
+          <li>Sign in at <a href="https://platform.comfy.org/login" target="_blank" rel="noopener">platform.comfy.org</a>. It's free.</li>
+          <li>Add a few dollars of credits. A 15-second film costs about $2 to $5, depending on the quality you pick.</li>
+          <li>Open <b>API Keys</b>, press <b>+ New</b>, and paste the key above.</li>
+        </ol>
+        You pay Comfy only for what you make. Gobo itself is free.</div>
       {% endif %}
       <div class="foot">{% if visitor %}<a class="rec" href="/about">Public demo</a>{% else %}<span class="rec">Private preview</span>{% endif %}<span>{{ release }}</span></div>
     </form>

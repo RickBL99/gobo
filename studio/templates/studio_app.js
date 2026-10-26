@@ -12,6 +12,10 @@ async function api(path, opts) {
   if (!r.ok && !data.error) data.error = `Request failed (${r.status}).`;
   return data;
 }
+async function copyLink(url) {
+  try { await navigator.clipboard.writeText(url); toast(`Link copied: ${url}`); }
+  catch (e) { prompt("The public link:", url); }
+}
 let toastT = null;
 function toast(msg, bad) {
   const t = $("#toast"); t.textContent = msg; t.className = bad ? "bad" : ""; t.classList.remove("hidden");
@@ -717,6 +721,8 @@ function renderActions() {
     vid && extendTools().length ? `<button class="btn" data-a="extend" title="Carry the clip on past its end, camera move and all">Extend clip</button>` : "",
     vid ? `<button class="btn" data-a="leadin" title="Make a shot that ends exactly on this clip's first frame">Lead into it</button>` : "",
     `<span class="sep"></span>`,
+    t.share ? `<button class="btn" data-a="share" title="Copy the public link again">Copy share link</button><button class="btn" data-a="unshare" title="Take the public page down: the link stops working">Unshare</button>`
+      : `<button class="btn" data-a="share" title="A public page for this take that anyone with the link can watch">Share</button>`,
     comfyNode(t.model) ? `<a class="btn" href="${API}/reels/${t.reel}/comfyui?tid=${t.id}" title="This take as a ComfyUI workflow: drop workflow_api.json on the ComfyUI canvas (keyframes included)">Open in ComfyUI</a>` : "",
     `<button class="btn" data-a="upscale" title="${img ? "Upscale ×2" : "Upscale the clip"}">Upscale</button>`,
     img ? `<button class="btn" data-a="cutout" title="Cut the subject out onto transparency">Remove background</button>` : "",
@@ -739,6 +745,18 @@ async function takeAction(a, opts) {
   const R = `/reels/${S.reel.id}/takes/${t.id}`;
   if (a === "again") { reuseSettings(t); return generate({ parent: t.id, action: "again" }); }
   if (a === "reuse") return reuseSettings(t);
+  if (a === "share") {
+    const r = t.share ? { url: `/f/${t.share}` } : await api(`${R}/share`, { method: "POST", json: { title: S.reel.name } });
+    if (r.error) return toast(r.error, true);
+    if (r.take) mergeTakes([r.take]);
+    return copyLink(location.origin + r.url);
+  }
+  if (a === "unshare") {
+    const r = await api(`${R}/share`, { method: "DELETE" });
+    if (r.error) return toast(r.error, true);
+    mergeTakes([r.take]);
+    return toast("Unshared: that link no longer works.");
+  }
   if (a === "asref") { setMode("image"); useTakeAs(t, "ref"); return toast("Added as a reference."); }
   if (a === "animate") { animateFrom(t, "first"); return; }
   if (a === "asend") { animateFrom(t, "last"); return; }

@@ -81,6 +81,12 @@ SECURE_COOKIES = os.getenv("STUDIO_SECURE_COOKIES", "") == "1"
 # and sees only their own reels; the server's own keys are never spent.
 VISITOR_KEYS = os.getenv("STUDIO_KEYS", "server").strip().lower() == "visitor"
 
+# What "/" opens. "director" (the default): one line, a look, a length, and Gobo
+# makes the film (static/director.js, on top of the full studio, which "Direct
+# it yourself" opens). "studio": the home page with every tool on it, as
+# before; the Director is still at /direct.
+FRONT = "studio" if os.getenv("STUDIO_FRONT", "director").strip().lower() == "studio" else "director"
+
 # Where the code is, for the sign-in and About pages (a fork points it at its own).
 SOURCE_URL = os.getenv("STUDIO_SOURCE_URL", "https://github.com/RickBL99/gobo").rstrip("/")
 

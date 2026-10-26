@@ -226,8 +226,9 @@ if (!window.T) {
 
 # ── scenes of the real app ───────────────────────────────────────────────────
 class Tour:
-    def __init__(self, b: Browser, base: str, reel: str, work: str, source: str):
+    def __init__(self, b: Browser, base: str, reel: str, work: str, source: str, front_door: bool = True):
         self.b, self.base, self.reel, self.work, self.source = b, base.rstrip("/"), reel, work, source.rstrip("/")
+        self.front_door = front_door              # the tour of Make a film (STUDIO_FRONT=director), or of the studio
         info = json.load(urllib.request.urlopen(f"{self.base}/studio/reels/{reel}"))
         takes = [t for t in info["takes"] if t.get("status") == "done"]
         self.graded = next(t for t in reversed(takes) if t.get("action") == "grade")
@@ -255,7 +256,91 @@ class Tour:
         self.b.wait(pause)
         self.b.js(f"T.ring(); document.querySelector({json.dumps(sel)}).click(); 1")
 
-    # 2 ─ Autopilot: the line goes in
+    # Make a film, the front door. The tour only looks, so Autopilot's run is
+    # played back from the reel it made (the frames, the cut, the graded film)
+    def front(self):
+        b = self.b
+        b.view(ui=True)
+        b.go(f"{self.base}/direct", 3.5)
+        b.js(f"loadReel({json.dumps(self.reel)})")
+        b.wait(2.0)
+        b.js("director.show('compose'); $('#dLine').value = ''; $('#dFilms').hidden = true; 1")
+        b.js(OVERLAY)
+
+    # 2 ─ Make a film: the line goes in
+    def make_film(self):
+        b = self.b
+        self.front()
+        b.js("T.at(1000, 600, true)")
+        b.record()
+        b.wait(0.2)
+        b.js("T.cap('Make a film', 'Say it in one line. Pick a look, a length and a shape. No nodes, no settings.', 'bc')")
+        b.wait(1.0)
+        b.js("T.to('#dLine')")
+        b.wait(0.5)
+        b.js(f"T.type('#dLine', {json.dumps(LINE)}, 15)")
+        b.wait(len(LINE) * 0.015 + 0.4)
+        b.js("document.querySelector('#director .look[data-look=road]').scrollIntoView({behavior: 'smooth', inline: 'center', block: 'nearest'}); 1")
+        b.wait(0.8)
+        self.click("#director .look[data-look=road]", 0.6)
+        b.wait(0.4)
+        self.click('#dLen [data-v="10"]', 0.55)
+        b.wait(0.5)
+        b.js("T.hide()")                        # the caption sits over Roll camera
+        b.wait(0.3)
+        b.js("T.to('#dRoll')")
+        b.wait(0.9)
+        b.js("T.ring()")
+        b.wait(0.8)
+        return b.stop()
+
+    # 3 ─ it rolls, each step in plain words
+    def rolling(self):
+        b = self.b
+        self.front()
+        b.js("""autopilot.run = (o, ui) => new Promise(() => {
+            ui.start(o.line); ui.title(B.title || 'The Last Watch');
+            [['plan', 'now', 'Writing the shot list', 0], ['plan', 'ok', '4 shots, 10 seconds', 900], ['keys', 'now', 'A keyframe for every new setup, all at once', 950],
+             ['keys', 'ok', '', 2300], ['clips', 'now', 'Each shot animated from its keyframe', 2350], ['clips', 'ok', '', 4300],
+             ['check', 'now', 'Reading every cut, in Rust', 4350], ['check', 'ok', 'Light and colour carry across the cuts.', 5100],
+             ['cut', 'now', '', 5150], ['cut', 'ok', '', 5700], ['grade', 'now', 'Every frame through Portra 400 and Kodachrome, in Rust', 5750]]
+              .forEach(([k, st, n, ms]) => setTimeout(() => ui.step(k, st, n), ms));
+            setTimeout(() => { director.state.t0 = Date.now() - 98000; }, 60);
+          }); 1""")
+        b.js(f"$('#dLine').value = {json.dumps(LINE)}; $('#dRoll').click(); 1")
+        b.wait(0.8)
+        b.js("T.at(1200, 640, true)")
+        b.record()
+        b.wait(0.2)
+        b.js("T.cap('It rolls', 'Gobo writes the shots, paints the first frames, films them, checks every cut, edits and grades, and tells you each step.', 'bc')")
+        b.wait(4.6)
+        b.js("T.hide()")                        # and then the frames, uncovered
+        b.wait(2.0)
+        return b.stop()
+
+    # 5 ─ the film plays, with Share
+    def made(self):
+        b = self.b
+        self.front()
+        b.js(f"""autopilot.run = (o, ui) => {{ ui.start(o.line); director.state.t0 = Date.now() - 134000;
+            ui.done({{ final: {json.dumps(self.graded)}, film: {json.dumps(self.cut)}, title: B.title || 'The Last Watch' }});
+            return Promise.resolve({{}}); }}; 1""")
+        b.js(f"$('#dLine').value = {json.dumps(LINE)}; $('#dRoll').click(); 1")
+        b.wait(1.4)
+        b.js("T.at(1000, 760, true)")
+        b.record()
+        b.wait(0.2)
+        b.js("T.cap('Share it', 'It plays right there. Share it with a link, download it, or open it in the studio and change any shot.', 'tc')")
+        b.wait(1.4)
+        b.js("T.to('#dShare')")
+        b.wait(0.9)
+        b.js("T.ring()")
+        b.wait(1.2)
+        b.js("T.to('#dEdit')")
+        b.wait(1.8)
+        return b.stop()
+
+    # 2 ─ Autopilot: the line goes in (the tour before Make a film: --front studio)
     def autopilot(self):
         b = self.b
         self.studio()
@@ -290,7 +375,8 @@ class Tour:
         b.record()
         b.wait(0.2)
         b.js("T.zoom('#board .bcard:nth-child(2)', 1.16, 6000, 640, 330)")
-        b.js("T.cap('The Board', 'Every shot lands on a card: keyframe, animate, continue into the next, trim and cut. Change any of it.', 'bc')")
+        b.js("T.cap('Direct it yourself', 'Every film lands on the Board, a card a shot: keyframe, animate, continue, trim and cut. Change any of it.', 'bc')"
+             if self.front_door else "T.cap('The Board', 'Every shot lands on a card: keyframe, animate, continue into the next, trim and cut. Change any of it.', 'bc')")
         b.wait(1.2)
         b.js("T.to('#board .bcard:nth-child(2) img')")
         b.wait(1.6)
@@ -445,8 +531,8 @@ def title_slide(t: Tour):
   <div>
     <div class="up" style="display:flex;align-items:center;justify-content:center;gap:22px;animation-delay:.2s">
       <div style="width:96px;height:96px">{LOGO}</div><div style="font-size:92px;font-weight:800;letter-spacing:-.03em">Gobo</div></div>
-    <div class="up" style="font-size:76px;font-weight:800;letter-spacing:-.035em;line-height:1.05;margin-top:34px;animation-delay:.6s">Direct AI video like a <em>cinematographer.</em></div>
-    <div class="up" style="font-size:34px;color:#c9c7cf;margin-top:26px;animation-delay:1.1s">An open-source film studio on Comfy Router</div>
+    <div class="up" style="font-size:76px;font-weight:800;letter-spacing:-.035em;line-height:1.05;margin-top:34px;animation-delay:.6s">{"Say the film. <em>Gobo shoots it.</em>" if t.front_door else "Direct AI video like a <em>cinematographer.</em>"}</div>
+    <div class="up" style="font-size:34px;color:#c9c7cf;margin-top:26px;animation-delay:1.1s">An open-source AI film studio on Comfy Router</div>
   </div>
 </div>""")
 
@@ -459,7 +545,7 @@ def film_slide(t: Tour):
 <div style="position:absolute;left:80px;top:150px;width:1240px;border-radius:18px;overflow:hidden;border:1px solid rgba(255,255,255,.14);box-shadow:0 30px 90px rgba(0,0,0,.7)">
   <video src="{t.url(t.graded)}" autoplay muted playsinline style="display:block;width:1240px;height:698px;object-fit:cover;background:#000"></video></div>
 <div style="position:absolute;left:1390px;top:170px;width:460px">
-  <div class="kick up" style="animation-delay:.2s">Autopilot · start to finish</div>
+  <div class="kick up" style="animation-delay:.2s">{"One line" if t.front_door else "Autopilot"} · start to finish</div>
   <div class="up" style="font-size:66px;font-weight:800;letter-spacing:-.03em;margin:14px 0 26px;animation-delay:.45s">The Last Watch</div>
   <ul style="list-style:none;padding:0;margin:0;font-size:29px;line-height:1.35;color:#d6d4cf">{lis}</ul>
 </div>""", "li { padding: 10px 0 10px 30px; position: relative; border-top: 1px solid rgba(255,255,255,.09); } li::before { content: ''; position: absolute; left: 4px; top: 25px; width: 10px; height: 10px; border-radius: 50%; background: #f2c14e; }")
@@ -609,19 +695,21 @@ def main():
     ap.add_argument("base", nargs="?", default="http://127.0.0.1:8020")
     ap.add_argument("--reel", required=True, help="a reel Autopilot made, with a graded film")
     ap.add_argument("--source", default="https://github.com/RickBL99/gobo", help="where the code is, for the last card")
-    ap.add_argument("--only", type=int, help="record just this scene (1-12), into the work folder")
+    ap.add_argument("--only", type=int, help="record just this scene, into the work folder")
+    ap.add_argument("--front", choices=("director", "studio"), default="director",
+                    help="the tour of Make a film (the default front door) or, as before it, of the studio")
     ap.add_argument("--work", default=os.path.join(tempfile.gettempdir(), "gobo-tour"))
     a = ap.parse_args()
     os.makedirs(a.work, exist_ok=True)
     b = Browser()
     try:
-        t = Tour(b, a.base, a.reel, a.work, a.source)
+        t = Tour(b, a.base, a.reel, a.work, a.source, front_door=a.front == "director")
         samples = [f"{t.base}/static/samples/{os.path.basename(p)}" for p in sorted(glob.glob(os.path.join(ROOT, "studio/static/samples/*.webp")))]
+        opening = ([t.make_film, t.rolling, lambda: play_slide(t, film_slide(t), 7.5), t.made, t.board_scene] if t.front_door
+                   else [t.autopilot, t.board_scene, lambda: play_slide(t, film_slide(t), 7.5)])
         scenes = [
             lambda: play_slide(t, title_slide(t), 5.0),
-            t.autopilot,
-            t.board_scene,
-            lambda: play_slide(t, film_slide(t), 7.5),
+            *opening,
             t.direction,
             t.models,
             t.steal,

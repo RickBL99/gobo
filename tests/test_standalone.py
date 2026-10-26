@@ -24,7 +24,7 @@ os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OP
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from studio import prompts, settings, shell  # noqa: E402
+from studio import jobs as J, prompts, settings, shell  # noqa: E402
 from studio.app import app as APP  # noqa: E402
 
 
@@ -95,7 +95,7 @@ class SignIn(unittest.TestCase):
 
     def test_the_about_pill_is_on_the_home_page_and_in_the_studio(self):
         self.c.post("/login", data={"name": "Ada", "password": "s3cret"})
-        self.assertIn('class="chip about" href="/about"', self.c.get("/").text)
+        self.assertIn('class="chip about" href="/about"', self.c.get("/home").text)
         self.assertIn('href="/about"', self.c.get("/studio").text)
         self.assertIn('href="/">Open Gobo', self.c.get("/about").text, "signed in, the About page leads back in")
 
@@ -104,7 +104,7 @@ class SignIn(unittest.TestCase):
                         follow_redirects=False)
         self.assertEqual((r.status_code, r.headers["location"]), (303, "/studio"))
         self.assertEqual(self.c.get("/studio/library").json()["me"], "Ada Lovelace")
-        page = self.c.get("/").text
+        page = self.c.get("/home").text
         self.assertIn("Ada Lovelace", page)
         self.assertIn('href="/logout"', page)
         self.c.get("/logout")
@@ -141,7 +141,7 @@ class SignInOff(unittest.TestCase):
     def test_everyone_is_local(self):
         c = TestClient(APP)
         self.assertEqual(c.get("/studio/library").json()["me"], "local")
-        page = c.get("/").text
+        page = c.get("/home").text
         self.assertIn("Sign-in is off", page)
         self.assertNotIn('href="/logout"', page)
         self.assertEqual(c.get("/login", follow_redirects=False).status_code, 303)
@@ -152,15 +152,36 @@ class Pages(unittest.TestCase):
         self.c = TestClient(APP)
 
     def test_home(self):
-        r = self.c.get("/")
+        r = self.c.get("/home")
         self.assertEqual(r.status_code, 200)
         for link in ('href="/studio"', 'href="/studio/stills"', 'href="/studio?open=board"', 'href="/studio/guide"'):
             self.assertIn(link, r.text)
 
+    def test_the_front_door_is_the_director(self):
+        # the contest's front door: "/" opens the studio page on the Director
+        page = self.c.get("/").text
+        self.assertIn("const DIRECTOR = true;", page)
+        self.assertIn("/static/director.js", page)
+        self.assertIn('href="/home"', page, "the studio's Home button goes to the page with every tool")
+        self.assertIn("const DIRECTOR = false;", self.c.get("/studio").text, "the studio itself opens on the studio")
+        self.assertIn("const DIRECTOR_ON = true;", self.c.get("/studio").text, "and offers the Director")
+        self.assertIn("const DIRECTOR_ON = false;", self.c.get("/studio/stills").text, "the Content Generator doesn't")
+        # STUDIO_FRONT=studio: everything as it was before the Director
+        with mock.patch.object(settings, "FRONT", "studio"):
+            home = self.c.get("/").text
+            self.assertIn('href="/studio/stills"', home)
+            self.assertNotIn("director.js", home)
+            self.assertIn("const DIRECTOR_ON = false;", self.c.get("/studio").text)
+            self.assertIn("const DIRECTOR = true;", self.c.get("/direct").text, "the Director is still at /direct")
+        # switched off, the front door falls back to the home page instead of failing
+        with mock.patch.dict(os.environ, {"STUDIO_ENABLED": "0"}):
+            self.assertEqual(self.c.get("/").status_code, 200)
+            self.assertEqual(self.c.get("/direct").status_code, 503)
+
     def test_the_release_is_on_the_home_page_and_the_health_check(self):
         with mock.patch.object(settings, "RELEASE", "Take 7"), mock.patch.object(settings, "RELEASE_DATE", "2026-10-25"), \
                 mock.patch.object(settings, "RELEASE_ID", "take-7"):
-            page = self.c.get("/").text
+            page = self.c.get("/home").text
             self.assertIn('class="take"', page)
             self.assertIn("Take 7", page)
             self.assertIn("2026-10-25", page)
@@ -177,7 +198,7 @@ class Pages(unittest.TestCase):
         self.assertNotIn("/api/", r.text)                       # nothing points back at the back office
 
     def test_studio_and_guide_have_no_back_office_links(self):
-        for path in ("/studio", "/studio/guide", "/studio/app.js"):
+        for path in ("/", "/direct", "/studio", "/studio/guide", "/studio/app.js", "/static/director.js"):
             body = self.c.get(path).text
             self.assertNotIn("/api/", body, path)
             self.assertNotIn("back office", body.lower(), path)
@@ -186,6 +207,79 @@ class Pages(unittest.TestCase):
         with mock.patch.dict(os.environ, {"STUDIO_ENABLED": "0"}):
             self.assertEqual(self.c.get("/studio/stills").status_code, 503)
             self.assertEqual(self.c.post("/studio/prompt-variants", files={"file": ("a.png", png(), "image/png")}).status_code, 503)
+
+
+
+class Shares(unittest.TestCase):
+    """Share: a public page for one finished take, only when its maker asks."""
+    def setUp(self):
+        shell._failures.clear()
+        self.p = mock.patch.object(settings, "PASSWORD", "s3cret")
+        self.p.start()
+        self.c = TestClient(APP)
+        self.c.post("/login", data={"name": "Ada", "password": "s3cret"})
+        self.reel = self.c.post("/studio/reels", json={"name": "The Last Watch"}).json()["id"]
+
+    def tearDown(self):
+        self.p.stop()
+
+    def film(self, **kw):
+        t = J.new_take(self.reel, 1, 0, kind="video", status="done", file="cut-abc.mp4", poster="cut-abc.jpg",
+                       label="The cut", seconds=15.2, w=1280, h=720, by="Ada", **kw)
+        os.makedirs(os.path.dirname(J.out_path(self.reel, t["file"])), exist_ok=True)
+        open(J.out_path(self.reel, t["file"]), "wb").write(b"\0\0\0\x18ftypmp42 a film")
+        open(J.out_path(self.reel, t["poster"]), "wb").write(png())
+        return t
+
+    def test_share_unshare_and_the_public_page(self):
+        t = self.film()
+        r = self.c.post(f"/studio/reels/{self.reel}/takes/{t['id']}/share", json={"title": "The Last Watch"}).json()
+        url, token = r["url"], r["take"]["share"]
+        self.assertEqual(url, f"/f/{token}")
+        again = self.c.post(f"/studio/reels/{self.reel}/takes/{t['id']}/share", json={}).json()
+        self.assertEqual(again["url"], url, "sharing again gives the same link")
+        self.assertTrue(os.path.exists(os.path.join(J.reel_dir(self.reel), J.SHARED)))
+        anyone = TestClient(APP)                                   # not signed in
+        page = anyone.get(url)
+        self.assertEqual(page.status_code, 200)
+        for want in ("The Last Watch", f'src="{url}/film"', f'poster="{url}/poster"', 'property="og:video"',
+                     'name="robots" content="noindex"', "Make your own film"):
+            self.assertIn(want, page.text)
+        self.assertEqual(anyone.get(f"{url}/film").content[4:8], b"ftyp")
+        self.assertEqual(anyone.get(f"{url}/poster").headers["content-type"], "image/jpeg")
+        self.assertEqual(anyone.get("/studio/reels").status_code, 401, "the link opens the film, nothing else")
+        # unshared: the link is dead, and the reel loses its marker
+        self.c.delete(f"/studio/reels/{self.reel}/takes/{t['id']}/share")
+        self.assertEqual(anyone.get(url).status_code, 404)
+        self.assertEqual(anyone.get(f"{url}/film").status_code, 404)
+        self.assertFalse(os.path.exists(os.path.join(J.reel_dir(self.reel), J.SHARED)))
+
+    def test_only_a_finished_take_and_only_a_real_token(self):
+        t = J.new_take(self.reel, 1, 0, kind="video", status="running", by="Ada")
+        self.assertEqual(self.c.post(f"/studio/reels/{self.reel}/takes/{t['id']}/share", json={}).status_code, 400)
+        anyone = TestClient(APP)
+        for bad in ("nope", "x" * 40, "AAAAAAAAAAAA", "a.b.c.d.e.f"):
+            self.assertEqual(anyone.get(f"/f/{bad}").status_code, 404, bad)
+        # a deleted take takes its link with it
+        f = self.film()
+        url = self.c.post(f"/studio/reels/{self.reel}/takes/{f['id']}/share", json={}).json()["url"]
+        self.c.delete(f"/studio/reels/{self.reel}/takes/{f['id']}")
+        self.assertEqual(anyone.get(url).status_code, 404)
+
+    def test_a_shared_reel_is_the_last_the_trim_clears(self):
+        old = self.c.post("/studio/reels", json={"name": "old"}).json()["id"]
+        t = J.new_take(old, 1, 0, kind="video", status="done", file="a.mp4", by="Ada")
+        open(J.out_path(old, "a.mp4"), "wb").write(b"x" * 3000)
+        shared = self.film()
+        self.c.post(f"/studio/reels/{self.reel}/takes/{shared['id']}/share", json={})
+        long_ago = 1_000_000_000
+        for rid in (old, self.reel):
+            for d in (J.reel_dir(rid), os.path.join(J.reel_dir(rid), "takes"), os.path.join(J.reel_dir(rid), "out")):
+                os.utime(d, (long_ago, long_ago))
+        os.utime(J.reel_dir(self.reel), (long_ago - 10, long_ago - 10))   # the shared one is even older
+        with mock.patch.object(J, "KEEP_GB", 1e-12):
+            J.trim_to_size(force=True)
+        self.assertFalse(os.path.isdir(J.reel_dir(old)), "the unshared reel went first")
 
 
 class Prompts(unittest.TestCase):

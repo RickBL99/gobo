@@ -1,14 +1,16 @@
 # Gobo
 
-**Direct it like a cinematographer. Shoot it on Comfy Router. Grade it in Rust.**
+**Say the film. Gobo shoots it.**
 
 ![The Last Watch: a ten-second film Autopilot made from one line](docs/media/the-last-watch.gif)
 
-*The Last Watch.* One line typed into Autopilot: *"A lighthouse keeper's last night before the light goes automatic: he climbs the stairs in a storm, lights the lamp one final time, and watches the beam sweep the sea."* About two minutes and 80¢ of Comfy credit later, there was a film. Autopilot wrote four shots. FLUX 3 drew a keyframe for each, and Wan 3.0 animated each shot from its keyframe. Gobo's Rust checked every cut, the film was cut together, and the Lab graded it in Rust as Portra 400 printed through Kodachrome. [Watch the MP4](docs/media/the-last-watch.mp4) · [Open it in ComfyUI](workflows/the-last-watch/workflow_api.json)
+*The Last Watch.* One line typed into Gobo: *"A lighthouse keeper's last night before the light goes automatic: he climbs the stairs in a storm, lights the lamp one final time, and watches the beam sweep the sea."* About two minutes and 80¢ of Comfy credit later, there was a film. Autopilot wrote four shots. FLUX 3 drew a keyframe for each, and Wan 3.0 animated each shot from its keyframe. Gobo's Rust checked every cut, the film was cut together, and the Lab graded it in Rust as Portra 400 printed through Kodachrome. [Watch the MP4](docs/media/the-last-watch.mp4) · [Open it in ComfyUI](workflows/the-last-watch/workflow_api.json)
 
 ![The four keyframes](docs/media/keyframes.jpg)
 
-Gobo is an open-source AI film studio built on [Comfy Router](https://platform.comfy.org): 134 image and video models behind one API key. You direct a shot with the controls a cinematographer uses (camera body, lens, focal length, aperture, framing, angle, camera move, light, film stock, look, grade, composition), and Gobo turns them into the prompt each model responds to best. Or you type one line and let Autopilot make the whole film.
+Gobo is an open-source AI film studio for people who would rather direct than wire up nodes. Write one line, pick a look, a length and a shape, and Gobo writes the shots, films them on [Comfy Router](https://platform.comfy.org)'s video models, cuts them together and grades them like film, in Rust. Then share it with a link.
+
+When you want more, every control a cinematographer uses is underneath: camera body, lens, focal length, aperture, framing, angle, camera move, light, film stock, look, grade and composition, turned into the prompt each of 134 image and video models responds to best, all behind one API key.
 
 Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspired by Higgsfield's Cinema Studio.
 
@@ -20,7 +22,8 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
 
 ## What it does
 
-- **Autopilot.** One line becomes a film. Autopilot writes a shot list with a title and a length. Every new setup gets a keyframe, and every shot is animated from it. A shot marked *continue* starts on the last frame of the shot before, so the action carries across the cut. A Rust script supervisor checks every cut, the film is cut together, and the whole film is graded in Rust. Everything lands on the Board, so you can change any shot afterwards.
+- **Make a film.** Gobo opens on one box: *What's your film?* Write a line, pick a look (Drama, Western, Neon night, Black & white and eight more), 10, 15 or 30 seconds, wide, tall or square, and Draft, Standard or Best (LTX 2.5 Fast, LTX 2.5 Pro, or Seedance 2.5 for the finest clips). The cost is shown before anything runs, each step is told in plain words while it rolls, and the finished film plays with **Share** (a public page anyone with the link can watch) and **Download**. **Direct it yourself** opens the full studio, where any film it made can be changed shot by shot.
+- **Autopilot.** The engine behind Make a film. One line becomes a film. Autopilot writes a shot list with a title and a length. Every new setup gets a keyframe, and every shot is animated from it. A shot marked *continue* starts on the last frame of the shot before, so the action carries across the cut. A Rust script supervisor checks every cut, the film is cut together, and the whole film is graded in Rust. Everything lands on the Board, so you can change any shot afterwards.
 - **The Board.** Shot cards for a spot or a short: keyframe them, animate them, continue one shot into the next, trim them, and cut a timed animatic or the film.
 - **Direction you can see.** Every control adds the words a cinematographer would use, in the order models respond to: framing first, the look last. That includes 28 camera moves, from push-ins and dolly zooms to bullet time, FPV dives, snorricam and an Earth zoom-out. The prompt preview is compiled in your browser by a Rust shot compiler, and the server sends exactly the same text.
 - **134 models, one key.** LTX 2.5, Wan 3.0, Seedance 2.x, Veo 3.1, Kling 3 Omni, MiniMax H3, FLUX 3, Nano Banana and the rest of Comfy Router's image, video, editing and upscaling models. Each shot is mapped onto each model's own inputs: aspect, resolution, length, sound, first and last frames, references. Claude (through Router, on the same key) is the **Director**, who rewrites your shot for the model you picked, and the **planner** behind Autopilot.
@@ -31,7 +34,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte.
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
-- **And:** a model shootout, a library, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
+- **And:** a public share link for any take, a model shootout, a library, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 
 ---
 
@@ -97,6 +100,7 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 | `OPENAI_API_KEY` | Optional: GPT-4o writes "prompts from a reference". |
 | `STUDIO_COMFY_SYNC=1` | Run every take on Router's direct route. Gobo switches to it on its own when Router's queue stops moving. |
 | `STUDIO_SOURCE_URL` | Where the sign-in and About pages say the code lives. Defaults to this repo; a fork points it at its own. |
+| `STUDIO_FRONT=studio` | What `/` opens. Unset (or `director`): Make a film, the one-line front door. `studio`: the home page with every tool on it, as before Make a film; it's still at `/direct`. |
 | `STUDIO_KEEP_GB` | A ceiling on the data folder, for a public demo on shared storage. Over it, whole reels go, the one touched longest ago first; a reel used in the last hour stays. Unset (the default): no ceiling, and nothing is ever deleted for space. |
 
 ### Running a public demo

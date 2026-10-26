@@ -94,6 +94,9 @@ class Visitors(unittest.TestCase):
         self.assertEqual((theirs["items"], theirs["counts"]["all"]), ([], 0))
         r = b.get(f"/studio/library/download?items={reel['id']}:{t['id']}")
         self.assertNotEqual(r.headers.get("content-type"), "application/zip", "nobody downloads another visitor's take")
+        self.assertEqual(b.post(f"/studio/reels/{reel['id']}/takes/{t['id']}/share", json={}).status_code, 404,
+                         "nobody shares another visitor's take")
+        self.assertEqual(a.post(f"/studio/reels/{reel['id']}/takes/{t['id']}/share", json={}).status_code, 200)
 
     def test_comfy_calls_run_on_the_visitors_key_never_the_servers(self):
         self.assertEqual(comfy.api_key(), "", "outside a visitor's request there is no key at all")

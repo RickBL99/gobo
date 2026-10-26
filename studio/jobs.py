@@ -172,8 +172,9 @@ _trimmed = 0.0
 def trim_to_size(force: bool = False) -> int:
     """Over KEEP_GB, whole reels go, the one touched longest ago first, until
     the folder fits again. A reel touched in the last hour stays (a take may
-    still be landing in it). At most once a minute unless forced. Guarded, like
-    the purge."""
+    still be landing in it), and a reel with a film someone shared goes only
+    after every other. At most once a minute unless forced. Guarded, like the
+    purge."""
     global _trimmed
     if KEEP_GB <= 0 or (not force and time.time() - _trimmed < 60):
         return 0
@@ -188,9 +189,9 @@ def trim_to_size(force: bool = False) -> int:
             size = _size(d)
             total += size
             touched = max(os.path.getmtime(p) for p in (d, os.path.join(d, "takes"), os.path.join(d, "out")) if os.path.exists(p))
-            reels.append((touched, size, d))
+            reels.append((os.path.exists(os.path.join(d, SHARED)), touched, size, d))
         recent = time.time() - 3600
-        for touched, size, d in sorted(reels):
+        for _shared, touched, size, d in sorted(reels):
             if total <= KEEP_GB * 1e9:
                 break
             if touched > recent:
@@ -203,6 +204,37 @@ def trim_to_size(force: bool = False) -> int:
     except Exception as e:
         print(f"[studio] trim failed (non-fatal): {e}")
     return removed
+
+
+# ── shared films ────────────────────────────────────────────────────────────
+# A share is a public link to one finished take: <BASE>/_shares/<token>.json
+# says which, the take carries the token (so sharing again gives the same
+# link), and the reel holds a SHARED marker while any of its takes is shared.
+SHARES = os.path.join(BASE, "_shares")
+SHARED = ".shared"
+_TOKEN = re.compile(r"^[A-Za-z0-9_-]{8,32}$")
+
+
+def get_share(token: str) -> Optional[Dict]:
+    return _read(os.path.join(SHARES, token + ".json")) if _TOKEN.match(token or "") else None
+
+
+def put_share(token: str, data: Dict) -> None:
+    _write(os.path.join(SHARES, token + ".json"), data)
+    open(os.path.join(reel_dir(data["reel"]), SHARED), "a").close()
+
+
+def drop_share(token: str, reel: str) -> None:
+    if _TOKEN.match(token or ""):
+        try:
+            os.remove(os.path.join(SHARES, token + ".json"))
+        except OSError:
+            pass
+    if not any(t.get("share") for t in list_takes(reel)):
+        try:
+            os.remove(os.path.join(reel_dir(reel), SHARED))
+        except OSError:
+            pass
 
 
 # ── the library: every finished take, across reels ──────────────────────────

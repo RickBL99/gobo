@@ -91,10 +91,18 @@ footer { max-width: 980px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 3
 <main>
   <div class="hero">
     <div class="eyebrow">About Gobo</div>
+    {% if front == "director" %}
+    <h1>Say the film. <em>Gobo shoots it.</em></h1>
+    <p class="lede">Gobo is an open-source AI film studio for people who would rather direct than wire up nodes. Write one line,
+      pick a look and a length, and Gobo writes the shots, films them on {{ model_count }} image and video models through one Comfy key,
+      cuts them together and grades them like film, in Rust. When you want more, every control a cinematographer has is underneath:
+      camera, lens, light, film stock and move, a storyboard, and a Lab for looks and grading. Any of it opens in ComfyUI.</p>
+    {% else %}
     <h1>An open-source AI film studio, <em>directed like a shoot.</em></h1>
     <p class="lede">Gobo lets you direct AI video the way a cinematographer works: camera, lens, light, film stock and move.
       Shoot on {{ model_count }} image and video models through one Comfy key, or type one line and let Autopilot make the whole film.
       Then grade it like film, in Rust, and open any of it in ComfyUI.</p>
+    {% endif %}
     {% if tour %}
     <video class="tour" src="{{ tour }}" poster="{{ tour_poster }}" controls playsinline preload="metadata"
       aria-label="A tour of Gobo: Autopilot, direction, the models, the Board, the Lab, grading and ComfyUI"></video>
@@ -125,7 +133,8 @@ footer { max-width: 980px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 3
   <section id="inside">
     <h2>What's inside</h2>
     <div class="grid">
-      <div class="card"><h3>Autopilot</h3><p>One line in, a film out: a shot list, a keyframe for each new setup, every shot animated from it, the cuts checked, the film cut and graded.</p></div>
+      <div class="card"><h3>Make a film</h3><p>The front door: one line, a look, a length and a shape. Gobo makes the film and tells you each step in plain words, then you share it with a link, or open it in the studio and change any shot.</p></div>
+      <div class="card"><h3>Autopilot</h3><p>The engine behind Make a film. One line in, a film out: a shot list, a keyframe for each new setup, every shot animated from it, the cuts checked, the film cut and graded.</p></div>
       <div class="card"><h3>Direction</h3><p>Camera body, lens, focal length, aperture, framing, angle, light, film stock, look, grade and 28 camera moves become the prompt a DP would write.</p></div>
       <div class="card"><h3>{{ model_count }} models, one key</h3><p>LTX, Wan, Seedance, Veo, Kling, MiniMax, FLUX and more through Comfy Router, each shot mapped onto each model's own inputs.</p></div>
       <div class="card"><h3>The Board</h3><p>Shot cards for a spot or a short: keyframe, animate, continue one shot into the next, trim, and cut the animatic or the film.</p></div>
@@ -180,6 +189,8 @@ footer { max-width: 980px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 3
         on thousands of generated shots before it ran anywhere, and only then was the Python retired.</li>
       <li><b>Prove it live, on a budget.</b> Every model path was tried against the real Router with the smallest run that
         answered the question. The whole build spent a few dollars of credit.</li>
+      <li><b>Simple on top, everything underneath.</b> Make a film is a front door, not a second app: it drives the same
+        studio a person would, card by card on the Board, so every film it makes can be opened and changed shot by shot.</li>
       <li><b>Test what ships.</b> The browser tests drive real Chrome, the WebAssembly tests run the shipped <code>.wasm</code>
         rather than a native build, and every ComfyUI export is checked against ComfyUI's own node definitions.</li>
     </ul>

@@ -135,6 +135,7 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
   <span class="take" title="The release running here{% if release_date %}, out {{ release_date }}{% endif %}">{{ release }}</span>
   <a class="chip about" href="/about" title="Who made Gobo, why, and how it's built"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.01"/></svg>About</a>
   <nav>
+    <a href="{{ '/' if front == 'director' else '/direct' }}">Make a film</a>
     <a href="{{ api }}">Studio</a>
     <a href="{{ api }}/stills">Content Generator</a>
     <a href="{{ api }}?open=board">Board</a>

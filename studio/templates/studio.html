@@ -526,7 +526,7 @@ main.boardview #inspector { display: none !important; }
 </head>
 <body>
 <header>
-  <a class="homebtn" href="/" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
+  <a class="homebtn" href="{{ '/home' if front == 'director' else '/' }}" title="Home: every tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
 {% if stills %}
   <h1>Content Generator<span class="pill">Stills</span></h1>
   <input class="reelname" id="reelName" value="Untitled session" aria-label="Session name" maxlength="80">
@@ -732,6 +732,10 @@ const MODELS = {{ models|safe }};
 const API = "{{ api }}";
 // the Content Generator: this page and engine, stills only, with the batch tools
 const STILLS = {{ 'true' if stills else 'false' }};
+// the Director (static/director.js): open on it, and whether the studio offers it at all
+const DIRECTOR = {{ 'true' if director else 'false' }};
+const DIRECTOR_ON = {{ 'true' if (director or front == 'director') and not stills else 'false' }};
+const SIGN_IN = {{ 'true' if sign_in else 'false' }};
 const $ = (s, el) => (el || document).querySelector(s);
 const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
@@ -905,6 +909,7 @@ const optOf = (g, id) => (CAT.groups[g].options.find(o => o.id === id) || CAT.gr
 <script src="/static/gobo.js"></script>
 <script src="/static/gobo_lab.js"></script>
 <script src="/static/autopilot.js"></script>
+<script src="/static/director.js"></script>
 <script src="/static/standalone.js"></script>
 </body>
 </html>

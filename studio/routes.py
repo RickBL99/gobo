@@ -12,7 +12,7 @@
 #   models.py      every Comfy Router model: capabilities, payload, result
 #   jobs.py        reels and takes on disk (multi-worker safe)
 # =========================================================
-import base64, contextvars, io, json, math, os, re, shutil, subprocess, threading, time, uuid, zipfile
+import base64, contextvars, io, json, math, os, re, secrets, shutil, subprocess, threading, time, uuid, zipfile
 from typing import Dict, List, Optional
 
 from fastapi import APIRouter, Depends, File, Form, HTTPException, Request, UploadFile
@@ -243,10 +243,11 @@ def _who(request: Request) -> str:
 
 # ── page ────────────────────────────────────────────────────────────────────
 @router.get("", response_class=HTMLResponse)
-async def studio_page(request: Request, stills: int = 0):
+async def studio_page(request: Request, stills: int = 0, director: bool = False):
     """The studio, or with stills=1 the Content Generator: the same engine and
     page limited to still models, with the batch tools (variations, prompts
-    from a reference image or a whole folder, upsized downloads)."""
+    from a reference image or a whole folder, upsized downloads). director:
+    open on the Director (static/director.js), the one-line front door."""
     models = M.public_models()
     if stills:
         models = [m for m in models if m["kind"] in ("image", "upscale")]
@@ -255,6 +256,9 @@ async def studio_page(request: Request, stills: int = 0):
         "models": json.dumps(models),
         "stills": bool(stills),
         "api": PREFIX,
+        "director": bool(director) and not stills,
+        "front": settings.FRONT,
+        "sign_in": settings.sign_in_on(),
     })
 
 
@@ -1232,6 +1236,49 @@ async def grade_take(reel: str, tid: str, request: Request):
     nt = _local_take(reel, t, t["kind"], "grade", name, by=_who(request),
                      label=str(b.get("label") or "").strip()[:60] or "Graded", look=spec, **extra)
     return {"take": _public_take(nt), "frames": info.get("frames"), "seconds": info.get("seconds")}
+
+
+# ── share a film ────────────────────────────────────────────────────────────
+# A public page for one finished take (shell.py serves it at /f/<token>, no
+# sign-in). Nothing is public until its maker presses Share, and Unshare
+# takes the link down. The reel's owner check (app.py) covers both routes.
+@router.post("/reels/{reel}/takes/{tid}/share", response_class=JSONResponse)
+async def share_take(reel: str, tid: str, request: Request):
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    try:
+        t = J.get_take(reel, tid)
+    except ValueError:
+        t = None
+    if not t or t.get("status") != "done" or t.get("kind") not in ("video", "image") or not t.get("file"):
+        return _err("Only a finished take can be shared.")
+    try:
+        b = await request.json()
+    except Exception:
+        b = {}
+    token = t.get("share") or secrets.token_urlsafe(9)
+    old = J.get_share(token) or {}                     # shared again: the same link, and its title unless a new one comes
+    J.put_share(token, {"reel": reel, "take": tid, "by": old.get("by") or _who(request),
+                        "created": old.get("created") or time.time(),
+                        "title": " ".join(str(b.get("title") or old.get("title") or t.get("label") or "").split())[:90]})
+    t = J.update_take(reel, tid, share=token)
+    return {"url": f"/f/{token}", "take": _public_take(t)}
+
+
+@router.delete("/reels/{reel}/takes/{tid}/share", response_class=JSONResponse)
+async def unshare_take(reel: str, tid: str):
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    try:
+        t = J.get_take(reel, tid)
+    except ValueError:
+        t = None
+    if not t:
+        return _err("No such take.", 404)
+    token = t.get("share")
+    t = J.update_take(reel, tid, share="")
+    J.drop_share(token, reel)
+    return {"take": _public_take(t)}
 
 
 @router.post("/reels/{reel}/stitch", response_class=JSONResponse)

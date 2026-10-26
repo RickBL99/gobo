@@ -1,5 +1,6 @@
-"""What a standalone app needs around the studio: the home page, sign-in, the
-About page, and the Content Generator's own address.
+"""What a standalone app needs around the studio: the front door (the
+Director, or the home page), sign-in, the About page, shared films, and the
+Content Generator's own address.
 
 Sign-in is deliberately small for now: one shared password (people type their
 own name with it) or a short name:password list, and a signed session cookie.
@@ -13,19 +14,20 @@ from collections import defaultdict, deque
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
-from . import comfy, models as M, routes, settings, visitors
+from . import comfy, jobs as J, models as M, routes, settings, visitors
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
 router = APIRouter()
 
 # Paths anyone may load: the sign-in page itself, the About page it links to,
-# the health check, and the static files both are drawn with.
+# the health check, the static files they are drawn with, and shared films.
 OPEN_PATHS = ("/login", "/logout", "/about", "/healthz", "/favicon.ico")
+OPEN_PREFIXES = ("/static/", "/f/")
 TOUR = "/static/tour/gobo-tour.mp4"
 
 _failures = defaultdict(deque)        # client → times of recent wrong passwords
@@ -33,7 +35,7 @@ MAX_FAILURES, WINDOW = 8, 600
 
 
 def is_open(path: str) -> bool:
-    return path in OPEN_PATHS or path.startswith("/static/")
+    return path in OPEN_PATHS or path.startswith(OPEN_PREFIXES)
 
 
 def wants_page(request: Request) -> bool:
@@ -61,7 +63,7 @@ def _page(request: Request, **extra) -> dict:
     tour = os.path.isfile(os.path.join(HERE, TOUR.lstrip("/")))
     return {"release": settings.RELEASE, "visitor": settings.VISITOR_KEYS, "source": settings.SOURCE_URL,
             "tour": TOUR if tour else "", "tour_poster": TOUR[:-4] + ".jpg" if tour else "",
-            "model_count": len(M.MODELS), **extra}
+            "model_count": len(M.MODELS), "front": settings.FRONT, **extra}
 
 
 def check_login(name: str, password: str):
@@ -140,12 +142,31 @@ async def about(request: Request):
         request, signed_in=signed, api=settings.PREFIX, release_date=settings.RELEASE_DATE))
 
 
+def _director_on() -> bool:
+    return os.getenv("STUDIO_ENABLED", "1").strip() != "0"
+
+
 @router.get("/", response_class=HTMLResponse)
+async def front(request: Request):
+    """The Director (STUDIO_FRONT=director, the default) or the home page."""
+    if settings.FRONT == "director" and _director_on():
+        return await routes.studio_page(request, director=True)
+    return await home(request)
+
+
+@router.get("/direct", response_class=HTMLResponse, dependencies=[Depends(routes._switched_on)])
+async def direct(request: Request):
+    """The Director, whatever the front door is."""
+    return await routes.studio_page(request, director=True)
+
+
+@router.get("/home", response_class=HTMLResponse)
 async def home(request: Request):
     return templates.TemplateResponse(request, "home.html", {
         "api": settings.PREFIX, "visitor": settings.VISITOR_KEYS,
         "user": "Your Comfy key" if settings.VISITOR_KEYS else request.session.get("user_name", ""),
         "sign_in": settings.sign_in_on(), "samples": _samples(), "release": settings.RELEASE,
+        "front": settings.FRONT,
         "release_date": settings.RELEASE_DATE,
         "model_count": len(M.MODELS),
         "keys": {"comfy": bool(comfy.api_key()),
@@ -158,3 +179,58 @@ async def home(request: Request):
             dependencies=[Depends(routes._switched_on)])
 async def content_generator(request: Request):
     return await routes.studio_page(request, stills=1)
+
+
+# ── shared films ────────────────────────────────────────────────────────────
+# /f/<token>: one finished take its maker chose to share (routes.share_take).
+# Open to anyone; kept out of search engines; gone when it's unshared, deleted,
+# or cleared for space.
+def _shared(token: str):
+    s = J.get_share(token)
+    try:
+        t = J.get_take(s["reel"], s["take"]) if s else None
+    except ValueError:
+        t = None
+    if not t or t.get("share") != token or t.get("status") != "done" or not t.get("file"):
+        return None, None, None
+    p = J.out_path(s["reel"], t["file"])
+    return (s, t, p) if os.path.isfile(p) else (None, None, None)
+
+
+def _poster_path(s: dict, t: dict):
+    name = t.get("poster") if t.get("kind") == "video" else t.get("file")
+    p = J.out_path(s["reel"], name) if name else None
+    return p if p and os.path.isfile(p) else None
+
+
+@router.get("/f/{token}", response_class=HTMLResponse)
+async def shared_film(request: Request, token: str):
+    s, t, _ = _shared(token)
+    if not s:
+        return templates.TemplateResponse(request, "film.html", {"film": None, "release": settings.RELEASE},
+                                          status_code=404)
+    base = str(request.base_url).rstrip("/")
+    return templates.TemplateResponse(request, "film.html", {
+        "film": {"title": s.get("title") or "A film made with Gobo", "kind": t["kind"],
+                 "src": f"/f/{token}/film", "poster": f"/f/{token}/poster" if _poster_path(s, t) else "",
+                 "w": t.get("w"), "h": t.get("h"), "seconds": t.get("seconds")},
+        "page": f"{base}/f/{token}", "base": base, "release": settings.RELEASE, "source": settings.SOURCE_URL})
+
+
+@router.get("/f/{token}/film")
+async def shared_film_file(token: str, download: int = 0):
+    s, t, p = _shared(token)
+    if not s:
+        return HTMLResponse("Not found.", status_code=404)
+    return FileResponse(p, media_type=routes._media_type(p),
+                        filename=("gobo-" + os.path.basename(p)) if download else None,
+                        headers={"Cache-Control": "public, max-age=3600"})
+
+
+@router.get("/f/{token}/poster")
+async def shared_film_poster(token: str):
+    s, t, _ = _shared(token)
+    p = _poster_path(s, t) if s else None
+    if not p:
+        return HTMLResponse("Not found.", status_code=404)
+    return FileResponse(p, media_type=routes._media_type(p), headers={"Cache-Control": "public, max-age=3600"})

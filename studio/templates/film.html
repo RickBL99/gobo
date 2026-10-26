@@ -1,0 +1,93 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex">
+<title>{{ film.title if film else "Film not found" }} · Gobo</title>
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<meta name="theme-color" content="#0b0b0d">
+{% if film %}
+<meta property="og:site_name" content="Gobo">
+<meta property="og:title" content="{{ film.title }}">
+<meta property="og:description" content="Made with Gobo: one line in, a finished film out.">
+<meta property="og:url" content="{{ page }}">
+{% if film.poster %}<meta property="og:image" content="{{ base }}{{ film.poster }}">{% endif %}
+{% if film.kind == "video" %}
+<meta property="og:type" content="video.other">
+<meta property="og:video" content="{{ base }}{{ film.src }}">
+<meta property="og:video:type" content="video/mp4">
+{% if film.w and film.h %}<meta property="og:video:width" content="{{ film.w }}"><meta property="og:video:height" content="{{ film.h }}">{% endif %}
+{% endif %}
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ film.title }}">
+{% if film.poster %}<meta name="twitter:image" content="{{ base }}{{ film.poster }}">{% endif %}
+{% endif %}
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;800&display=swap">
+<style>
+:root { --bg: #0b0b0d; --panel: #131316; --line: #2a2a31; --line2: #3a3a44; --text: #ecebe8; --muted: #9a98a0;
+  --accent: #f2c14e; --accent-ink: #1b1505; }
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: var(--bg); color: var(--text); font: 15px/1.5 Inter, system-ui, sans-serif;
+  display: flex; flex-direction: column; }
+a { color: inherit; text-decoration: none; }
+.top { display: flex; align-items: center; gap: 10px; padding: 14px 16px; max-width: 1100px; width: 100%; margin: 0 auto; }
+.logo { display: flex; align-items: center; gap: 9px; font-weight: 800; }
+.logo svg { width: 26px; height: 26px; }
+.grow { flex: 1; }
+main { flex: 1; width: 100%; max-width: 1100px; margin: 0 auto; padding: 8px 16px 28px; display: flex; flex-direction: column; align-items: center; }
+.screen { width: 100%; display: flex; justify-content: center; background: #000; border-radius: 14px; overflow: hidden;
+  border: 1px solid var(--line); }
+.screen video, .screen img { display: block; max-width: 100%; max-height: 74vh; }
+h1 { font-size: clamp(1.3rem, 3vw, 1.9rem); letter-spacing: -.02em; margin: 18px 0 4px; text-align: center; }
+.by { color: var(--muted); margin: 0 0 20px; text-align: center; }
+.ctas { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.btn { display: inline-flex; align-items: center; height: 46px; padding: 0 20px; border-radius: 12px; font-weight: 700;
+  border: 1px solid var(--line2); background: var(--panel); }
+.btn.go { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.gone { text-align: center; padding: 80px 16px; color: var(--muted); }
+.gone h1 { color: var(--text); }
+footer { text-align: center; color: #6c6a73; font-size: .8rem; padding: 0 16px 24px; }
+footer a { text-decoration: underline; }
+</style>
+</head>
+<body>
+<header class="top">
+  <a class="logo" href="/">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
+      <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>
+      <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>
+    Gobo
+  </a>
+  <span class="grow"></span>
+  <a class="btn go" href="/">Make your own</a>
+</header>
+<main>
+{% if film %}
+  <div class="screen">
+  {% if film.kind == "video" %}
+    <video src="{{ film.src }}" {% if film.poster %}poster="{{ film.poster }}"{% endif %} controls playsinline autoplay muted loop></video>
+  {% else %}
+    <img src="{{ film.src }}" alt="{{ film.title }}">
+  {% endif %}
+  </div>
+  <h1>{{ film.title }}</h1>
+  <p class="by">Made with Gobo{% if film.seconds %} · {{ film.seconds|round|int }} seconds{% endif %}. One line in, a finished film out.</p>
+  <div class="ctas">
+    <a class="btn go" href="/">Make your own film</a>
+    <a class="btn" href="{{ film.src }}?download=1">Download</a>
+  </div>
+{% else %}
+  <div class="gone">
+    <h1>This film isn't here any more</h1>
+    <p>Its maker took the link down, or it was cleared to make room.</p>
+    <p><a class="btn go" href="/">Make your own film</a></p>
+  </div>
+{% endif %}
+</main>
+<footer>Gobo · open source{% if source %} · <a href="{{ source }}" target="_blank" rel="noopener">the code</a>{% endif %} · <a href="/about">About</a></footer>
+</body>
+</html>

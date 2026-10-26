@@ -12,9 +12,13 @@
 //      the server (the same gobo.wasm, POST …/takes/{id}/grade), at the
 //      strength picked, since the prompt already asked the model for the stock
 //
-// A model that can't start from a frame (LTX on Router) runs every shot from
-// its words, all straight cuts. A shot that fails is retried once, then left
-// out of the cut rather than stopping the film.
+// A model that can't start from a frame runs every shot from its words, all
+// straight cuts (LTX can: its frame-start shots go through Comfy's LTX proxy).
+// A shot that fails is retried once, then left out of the cut rather than
+// stopping the film.
+//
+// run(opts, ui) reports to ui (start, step, chips, title, done); the corner
+// card here is the default, and the Director (director.js) brings its own.
 (function () {
   "use strict";
   if (typeof STILLS !== "undefined" && STILLS) return;
@@ -72,7 +76,7 @@
   function openDialog() {
     const vids = videoModels(), stills = stillModels();
     const pick = (list, ids) => ids.map(id => list.find(m => m.id === id)).find(Boolean) || list[0];
-    const dv = pick(vids, ["byteplus/dreamina-seedance-2-0-fast-260128", "wan/wan3.0-video", "ltx/ltx-2-5-fast"]);
+    const dv = pick(vids, ["ltx/ltx-2-5-pro", "ltx/ltx-2-5-fast", "byteplus/dreamina-seedance-2-0-fast-260128", "wan/wan3.0-video"]);
     const ds = pick(stills, ["bfl/flux-3-image", "vertexai/gemini-nano-banana-2.1"]);
     const m = document.createElement("div");
     m.id = "apModal";
@@ -107,7 +111,7 @@
       if (!line) return $m("#apLine").focus();
       const opts = { line, seconds: +$m("#apLen").value, clip: $m("#apClip").value, key: $m("#apKey").value, look: $m("#apLook").value, grade: +$m("#apGrade").value };
       m.remove();
-      run(opts).catch(e => { step(null, "bad", e.message || String(e)); toast(e.message || String(e), true); });
+      run(opts).catch(e => { cardUI.step(null, "bad", e.message || String(e)); toast(e.message || String(e), true); });
     };
   }
   btn.onclick = () => { if (!document.getElementById("apRun") || confirm("Autopilot is already rolling. Start another film?")) openDialog(); };
@@ -137,6 +141,18 @@
     const c = panel && panel.querySelector(`[data-c="${k}"]`);
     if (c) c.innerHTML = items.map(([label, st]) => `<span class="${st || ""}">${h(label)}</span>`).join("");
   }
+  function cardDone({ final, film }) {
+    const end = panel.querySelector("#apEnd");
+    end.innerHTML = `<button class="btn small primary" id="apWatch">Watch it</button><button class="btn small" id="apGrade" title="The Lab, on the film as shot">Regrade in the Lab</button>
+      <a class="btn small" href="${h(final.url)}?download=1">Download</a>
+      <a class="btn small" href="${API}/reels/${S.reel.id}/comfyui" title="The whole film as one ComfyUI workflow: every keyframe node wired into its clip">Open in ComfyUI</a>
+      <button class="btn small" id="apClose">Close</button>`;
+    end.querySelector("#apWatch").onclick = () => { setView("shot"); select(final.id); };
+    end.querySelector("#apGrade").onclick = () => { setView("shot"); select(film.id); const l = document.getElementById("labBtn"); if (l) { l.click(); const t = document.querySelector('#lab [data-tab="grade"]'); if (t) t.click(); } };
+    end.querySelector("#apClose").onclick = () => { panel.remove(); panel = null; };
+  }
+  const cardUI = { start: card, step, chips, done: cardDone,
+                   title: t => { const el = panel && panel.querySelector("#apTitle"); if (el) el.textContent = t; } };
 
   // ── waiting on takes (S.takes is kept fresh by the page's poll) ───────────
   function waitFor(s, role, minutes) {
@@ -163,7 +179,7 @@
   }
 
   // ── the run ─────────────────────────────────────────────────────────────
-  async function run(o) {
+  async function run(o, ui = cardUI) {
     if (!S.mode || S.mode !== "video") setMode("video", true);
     setView("board");
     await newReel();
@@ -173,26 +189,26 @@
     B.brief = o.line; B.target = o.seconds;
     if (o.look === "auto") Object.keys(S.direction).forEach(k => { if (k !== "move" && k !== "shot") S.direction[k] = "auto"; });
     saveBoard(true); renderBoard();
-    card(o.line);
+    ui.start(o.line);
 
-    step("plan", "now", "Writing the shot list…");
+    ui.step("plan", "now", "Writing the shot list…");
     const plan = await planSpot(true);
-    if (!plan || plan.error || !B.shots.length) { step("plan", "bad", (plan && plan.error) || "No shot list came back."); return; }
+    if (!plan || plan.error || !B.shots.length) { ui.step("plan", "bad", (plan && plan.error) || "No shot list came back."); return; }
     if (!fromFrame) B.shots.forEach(s => { s.start = "cut"; });
     saveBoard(true); renderBoard();
-    if (B.title) panel.querySelector("#apTitle").textContent = B.title;
-    step("plan", "ok", `${B.shots.length} shots: ${B.notes || ""}`);
+    if (B.title) ui.title(B.title);
+    ui.step("plan", "ok", `${B.shots.length} shots: ${B.notes || ""}`);
     const shots = B.shots.filter(s => s.type !== "footage");
     const name = s => `Shot ${B.shots.indexOf(s) + 1}`;
     const state = new Map(shots.map(s => [s.id, { key: fromFrame && s.start !== "continue" ? "run" : "", clip: "" }]));
     const show = () => {
-      chips("keys", shots.filter(s => fromFrame && s.start !== "continue").map(s => [name(s), state.get(s.id).key]));
-      chips("clips", shots.map(s => [name(s) + (s.start === "continue" ? " ↪" : ""), state.get(s.id).clip]));
+      ui.chips("keys", shots.filter(s => fromFrame && s.start !== "continue").map(s => [name(s), state.get(s.id).key]));
+      ui.chips("clips", shots.map(s => [name(s) + (s.start === "continue" ? " ↪" : ""), state.get(s.id).clip]));
     };
 
     // keyframes for every new setup, together
     if (fromFrame) {
-      step("keys", "now", "Every new setup gets its keyframe, all at once.");
+      ui.step("keys", "now", "Every new setup gets its keyframe, all at once.");
       show();
       await Promise.all(shots.filter(s => s.start !== "continue").map(async s => {
         try { await attempt(s, "key", keyframe, 15); state.get(s.id).key = "ok"; }
@@ -200,11 +216,11 @@
         show();
       }));
       const bad = shots.filter(s => state.get(s.id).key === "bad");
-      step("keys", bad.length ? "bad" : "ok", bad.length ? `${bad.map(name).join(", ")} had no keyframe: ${bad[0]._apErr}` : "");
-    } else step("keys", "skip", `${clip.label} starts from words: no keyframes.`);
+      ui.step("keys", bad.length ? "bad" : "ok", bad.length ? `${bad.map(name).join(", ")} had no keyframe: ${bad[0]._apErr}` : "");
+    } else ui.step("keys", "skip", `${clip.label} starts from words: no keyframes.`);
 
     // clips: in parallel, except a continuing shot waits for the one before it
-    step("clips", "now", "Animating. A shot marked ↪ starts on the last frame of the one before.");
+    ui.step("clips", "now", "Animating. A shot marked ↪ starts on the last frame of the one before.");
     const tasks = [];
     shots.forEach((s, i) => {
       tasks[i] = (async () => {
@@ -223,11 +239,11 @@
     });
     const clips = await Promise.all(tasks);
     const made = clips.filter(Boolean);
-    if (!made.length) { step("clips", "bad", "No clip came back: " + (shots[0]._apErr || "")); return; }
-    step("clips", made.length === shots.length ? "ok" : "bad", made.length === shots.length ? "" : `${shots.length - made.length} shot(s) left out: ${(shots.find(s => s._apErr) || {})._apErr || ""}`);
+    if (!made.length) { ui.step("clips", "bad", "No clip came back: " + (shots[0]._apErr || "")); return; }
+    ui.step("clips", made.length === shots.length ? "ok" : "bad", made.length === shots.length ? "" : `${shots.length - made.length} shot(s) left out: ${(shots.find(s => s._apErr) || {})._apErr || ""}`);
 
     // the script supervisor, in Rust
-    step("check", "now", "Reading every cut…");
+    ui.step("check", "now", "Reading every cut…");
     const g = await window.goboReady;
     const flags = [];
     if (g && made.length > 1) {
@@ -249,44 +265,38 @@
         }
       } catch (e) { flags.length = 0; }
     }
-    chips("check", flags.map(([l, st]) => [l, st]));
+    ui.chips("check", flags.map(([l, st]) => [l, st]));
     const jumps = flags.filter(f => f[2].verdict === "jump");
-    step("check", "ok", jumps.length ? `Cut ${jumps.map(f => f[0].split(" ")[0]).join(", ")} jumps: ${jumps[0][2].notes.slice(0, 2).join("; ")}. Open the Lab's Continuity tab for fixes.` : "Light and colour carry across the cuts.");
+    ui.step("check", "ok", jumps.length ? `Cut ${jumps.map(f => f[0].split(" ")[0]).join(", ")} jumps: ${jumps[0][2].notes.slice(0, 2).join("; ")}. Open the Lab's Continuity tab for fixes.` : "Light and colour carry across the cuts.");
 
     // the cut
-    step("cut", "now", "Cutting the film…");
+    ui.step("cut", "now", "Cutting the film…");
     await flushBoard();
     const film = await cutSpot(false);
-    if (!film) { step("cut", "bad", "The cut didn't come back."); return; }
-    step("cut", "ok", `${B.title || "The film"} · ${Math.round(film.seconds || 0)} s`);
+    if (!film) { ui.step("cut", "bad", "The cut didn't come back."); return; }
+    ui.step("cut", "ok", `${B.title || "The film"} · ${Math.round(film.seconds || 0)} s`);
 
     // the grade, in Rust: the stock and grade the shots were made with
     let final = film;
     const stock = S.direction.film && S.direction.film !== "auto" ? S.direction.film : null;
     const tone = S.direction.grade && S.direction.grade !== "auto" ? S.direction.grade : null;
-    if (!o.grade) step("grade", "skip", "Grading was off: the film is as shot.");
-    else if (!stock && !tone) step("grade", "skip", "No stock or grade was set, so the film is as shot.");
+    if (!o.grade) ui.step("grade", "skip", "Grading was off: the film is as shot.");
+    else if (!stock && !tone) ui.step("grade", "skip", "No stock or grade was set, so the film is as shot.");
     else {
       const name = [stock && optLabel("film", stock), tone && optLabel("grade", tone)].filter(Boolean).join(" + ");
-      step("grade", "now", `Grading every frame through ${name}…`);
+      ui.step("grade", "now", `Grading every frame through ${name}…`);
       const r = await api(`/reels/${S.reel.id}/takes/${film.id}/grade`, { method: "POST",
         json: { look: { film: stock || "clean", grade: tone || "natural", amount: o.grade }, label: `${B.title || "The film"} · ${name}` } });
-      if (r.error) step("grade", "bad", `The grade didn't take (${r.error}); the film is as shot.`);
+      if (r.error) ui.step("grade", "bad", `The grade didn't take (${r.error}); the film is as shot.`);
       else {
         mergeTakes([r.take]); final = r.take;
-        step("grade", "ok", `${name} at ${Math.round(o.grade * 100)}%: ${r.frames} frames in ${r.seconds} s`);
+        ui.step("grade", "ok", `${name} at ${Math.round(o.grade * 100)}%: ${r.frames} frames in ${r.seconds} s`);
       }
     }
-    const end = panel.querySelector("#apEnd");
-    end.innerHTML = `<button class="btn small primary" id="apWatch">Watch it</button><button class="btn small" id="apGrade" title="The Lab, on the film as shot">Regrade in the Lab</button>
-      <a class="btn small" href="${h(final.url)}?download=1">Download</a>
-      <a class="btn small" href="${API}/reels/${S.reel.id}/comfyui" title="The whole film as one ComfyUI workflow: every keyframe node wired into its clip">Open in ComfyUI</a>
-      <button class="btn small" id="apClose">Close</button>`;
-    end.querySelector("#apWatch").onclick = () => { setView("shot"); select(final.id); };
-    end.querySelector("#apGrade").onclick = () => { setView("shot"); select(film.id); const l = document.getElementById("labBtn"); if (l) { l.click(); const t = document.querySelector('#lab [data-tab="grade"]'); if (t) t.click(); } };
-    end.querySelector("#apClose").onclick = () => { panel.remove(); panel = null; };
+    ui.done({ final, film, title: B.title || "The film" });
     toast(`${B.title || "The film"} is cut.`);
+    return { final, film };
   }
-  window.autopilot = { run, openDialog };
+  window.autopilot = { run, openDialog, estimate, startsFromFrame, videoModels, stillModels };
   if (new URLSearchParams(location.search).get("autopilot")) setTimeout(openDialog, 900);
 })();

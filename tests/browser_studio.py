@@ -819,6 +819,51 @@ def main():
         check("guide: no sideways scroll on a phone", tab.js("document.documentElement.scrollWidth - window.innerWidth") <= 1)
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
 
+        # ── the Director: one line in, a film out (/direct opens it whatever the front door is) ──
+        tab.call("Page.navigate", url=f"{BASE}/direct"); time.sleep(3)
+        tab.js("localStorage.clear(); 1"); tab.call("Page.reload"); time.sleep(3)
+        check("director: opens on the line", tab.js("!$('#director').classList.contains('off')") and "film" in tab.js("$('#director h1').textContent"))
+        check("director: 13 looks, Let Gobo decide first", tab.js("$$('#director .look img').length") == 13
+              and tab.js("$('#director .look.on').dataset.look") == "auto")
+        c0 = tab.js("$('#dCost').textContent")
+        check("director: the cost and the wait are shown", "$" in c0 and "minutes" in c0, c0)
+        tab.shot("30-director")
+        tab.js("$('#director .look[data-look=western]').click(); $('#dLen [data-v=\"30\"]').click();"
+               "$('#dShape [data-v=\"9:16\"]').click(); $('#dQual [data-v=best]').click(); 1")
+        c1 = tab.js("$('#dCost').textContent")
+        check("director: Best and 30 seconds cost more", float(c1.split("$")[1].split()[0]) > float(c0.split("$")[1].split()[0]), f"{c0} → {c1}")
+        tab.js("window._runs = []; window.autopilot.run = (o, ui) => { _runs.push(o); window._ui = ui; return new Promise(r => { window._fin = r; }); }; 1")
+        tab.js("$('#dLine').value = ''; $('#dRoll').click(); 1"); time.sleep(0.5)
+        check("director: no line, no run", not tab.js("$('#dWarn').hidden") and tab.js("_runs.length") == 0)
+        tab.js("$('#director .ideas button').click(); $('#dRoll').click(); 1"); time.sleep(1.2)
+        o = tab.js("_runs[0]") or {}
+        check("director: Roll camera hands Autopilot the choices", (o.get("seconds"), o.get("look"), o.get("grade")) == (30, "shot", 0.65)
+              and o.get("clip") == tab.js("director.models(director.quality[2]).clip.id"), o)
+        check("director: the look and shape are on the shot", tab.js("[S.direction.look, S.direction.film, S.direction.grade, S.direction.lens, S.aspect].join()")
+              == "western,slide,desert,auto,9:16", tab.js("[S.direction.look, S.direction.film, S.direction.grade, S.aspect].join()"))
+        tab.js("_ui.start('A test film'); _ui.step('plan', 'ok', '3 shots'); _ui.step('keys', 'now', ''); 1"); time.sleep(1.2)
+        check("director: the shoot shows each step and a clock", not tab.js("$('#dShoot').hidden") and tab.js("$('#dSteps li.now span').textContent") == "Painting the first frames"
+              and "Rolling" in tab.js("$('#dClock').textContent"))
+        tab.js("$('#dSelf').click(); 1"); time.sleep(0.3)
+        check("director: Direct it yourself opens the studio, which says it's rolling",
+              tab.js("$('#director').classList.contains('off')") and "rolling" in tab.js("$('#dirBtn').textContent"))
+        tab.js("$('#dirBtn').click(); 1"); time.sleep(0.3)
+        check("director: and its button comes back to the shoot", not tab.js("$('#dShoot').hidden"))
+        tab.js("_ui.step('clips', 'bad', 'Shot 2: the provider said no'); _fin(undefined); 1"); time.sleep(0.8)
+        check("director: a failed film says why and offers Try again", "the provider said no" in tab.js("$('#dFail').textContent")
+              and tab.js("!!$('#dAgain')"))
+        film = {"id": "17940000000000-film00", "reel": tab.js("S.reel && S.reel.id") or "abcdef123456", "kind": "video", "status": "done",
+                "url": "/static/tour/gobo-tour.mp4", "seconds": 15, "label": "The cut"}
+        tab.js(f"_ui.done({{ final: {json.dumps(film)}, film: {json.dumps(film)}, title: 'A test film' }}); 1"); time.sleep(1)
+        check("director: the finished film plays, with Share and Download", not tab.js("$('#dDone').hidden")
+              and tab.js("$('#dDone video').getAttribute('src')") == film["url"] and tab.js("!!$('#dShare') && $('#dShareBox').hidden"))
+        tab.shot("31-director-film")
+        tab.js("$('#dNew').click(); 1"); time.sleep(0.6)
+        check("director: Make another goes back to the line", not tab.js("$('#dCompose').hidden"))
+        tab.shot("32-director-phone", w=390, h=844)
+        check("director: no sideways scroll on a phone", tab.js("$('#director').scrollWidth <= innerWidth + 1"))
+        tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
+
         check("no script errors", not tab.errors, tab.errors[:3])
     finally:
         chrome.terminate()
