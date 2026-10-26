@@ -1015,14 +1015,16 @@ def run_sync(slug: str, body: Dict, kind: str = "", key: Optional[str] = None) -
     return {**found, "credits": credits, "cost": dollars(credits)}
 
 
-def submit(slug: str, body: Dict, key: Optional[str] = None, kind: str = "", sync: bool = False) -> Dict:
+def submit(slug: str, body: Dict, key: Optional[str] = None, kind: str = "", sync: Optional[bool] = None) -> Dict:
+    """Send a run: directly (sync) or into Router's queue. sync=None decides by go_sync();
+    a resend under the same key passes the route it was first sent on."""
     from .models import RunError
     if not api_key():
         raise RunError("Sign in again with your Comfy key to run this." if settings.VISITOR_KEYS
                        else "Add COMFY_API_KEY to run models on Comfy Router.", "unavailable")
     if body.get("_route"):
         return _proxy_submit(dict(body))
-    if sync or go_sync():
+    if sync or (sync is None and go_sync()):
         return run_sync(slug, body, kind, key)
     url = f"{BASE}/v2/models/{slug}/requests"
     try:

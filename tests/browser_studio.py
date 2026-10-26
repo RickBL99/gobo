@@ -672,6 +672,18 @@ def main():
               and "Don't run it" in stage and "Rendering" not in stage, stage)
         check("line: the strip says In line", "In line" in tab.js(f"$(`#strip .tk[data-t='${{_qid}}']`).textContent"))
         tab.js("S.takes = S.takes.filter(t => t.id !== _qid); setView('board'); refreshBoard(); 1"); time.sleep(0.3)
+        # a grade runs in the background as a take of its own and says which frame it's on
+        tab.js("""window._gid = '17959999999997-grade1'; const s = B.shots[1];
+          mergeTakes([{id: _gid, reel: 'fttest00', shot: s.n, letter: 'H', kind: 'video', status: 'running', model: 'local', label: 'Graded · Noir',
+            action: 'grade', aspect: '16:9', created: Date.now() / 1000, started: Date.now() / 1000, progress: 'frame 12 of 48'}]);
+          setView('shot'); select(_gid); 1""")
+        time.sleep(0.3)
+        stage = tab.js("$('#frame').textContent")
+        check("grade: the Shot view says it's grading, which frame, and offers Stop grading", "Grading shot" in stage and "frame 12 of 48" in stage
+              and "Stop grading" in stage and "Rendering" not in stage, stage)
+        tab.js("S.takes.find(t => t.id === _gid).progress = 'frame 30 of 48'; tickStage(); 1")
+        check("grade: the frame count moves without redrawing the stage", tab.js("$('#gradeprog').textContent") == "frame 30 of 48")
+        tab.js("S.takes = S.takes.filter(t => t.id !== _gid); setView('board'); refreshBoard(); 1"); time.sleep(0.3)
         tab.js("S.takes = S.takes.filter(t => t.id !== _fid); _ft.refuse = 'The server said no.'; refreshBoard(); 1")
         tab.js(f"{card}.querySelector('[data-act=tool]').click(); 1"); time.sleep(0.5)
         check("failures: a run the server refuses stays said, with the model's name", "not run" in tab.js("$('#fails').textContent")

@@ -631,6 +631,7 @@ function tickStage() {
     const s = (Date.now() / 1000) - (t.started || t.created);
     el.textContent = fmtTime(s);
     const slow = $("#slownote"); if (slow) slow.classList.toggle("hidden", s < 30);
+    const gp = $("#gradeprog"); if (gp) gp.textContent = t.progress || "";
   }
 }
 function renderStage() {
@@ -647,6 +648,12 @@ function renderStage() {
       <div class="hint" style="margin-top:8px;max-width:380px">${esc(lineNote(t))}. It starts by itself; you can keep working.</div>
       <div style="margin-top:12px"><button class="btn small" id="cancelTake">Don't run it</button></div></div>`;
     $("#cancelTake").onclick = () => takeAction("cancel");
+  } else if ((t.status === "queued" || t.status === "running") && t.action === "grade") {
+    f.innerHTML = `<div class="render"><div class="spinner"></div>Grading shot ${t.shot}, take ${t.letter} · <span id="gradeprog">${esc(t.progress || "")}</span> · <span id="elapsed">0:00</span>
+      <div class="hint" style="margin-top:8px;max-width:380px">Every frame goes through the look in Rust, here on the server. You can keep working; the graded take lands beside the original.</div>
+      <div style="margin-top:12px"><button class="btn small" id="cancelTake">Stop grading</button></div></div>`;
+    $("#cancelTake").onclick = () => takeAction("cancel");
+    tickStage(); elapsedT = setInterval(tickStage, 1000);
   } else if (t.status === "queued" || t.status === "running") {
     f.innerHTML = `<div class="render"><div class="spinner"></div>Rendering shot ${t.shot}, take ${t.letter} on ${esc(t.label)} · <span id="elapsed">0:00</span>
       <div class="hint hidden" id="slownote" style="margin-top:8px;max-width:360px">${t.kind === "video" ? "Clips usually take one to five minutes. You can keep directing; it lands in the sequence when it's done." : "Still going. Some models take about a minute."}</div>
@@ -2210,7 +2217,7 @@ window.STUDIO = {
   direction: () => S.direction, aspect: () => S.aspect, mode: () => S.mode,
   current: () => cur(), takes: () => S.takes.slice(), toast, api,
   reel: () => S.reel && S.reel.id,
-  addTakes(ts) { mergeTakes(ts); },
+  addTakes(ts) { mergeTakes(ts); poll(); },
   show(id) { setView("shot"); select(id); },
   // Draw the move's "Shoot it": the take on screen again with the drawn move
   // and action (a still is animated from), and nothing else changed

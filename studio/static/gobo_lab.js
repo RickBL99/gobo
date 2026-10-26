@@ -447,7 +447,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       // show the result: the Lab covers the stage, so it closes on the graded take
       close();
       if (ST().show) ST().show(r.take.id);
-      ST().toast(r.frames ? `Graded ${r.frames} frames in ${r.seconds} s, in Rust. You're watching the graded take; the original is beside it.` : "Graded. You're looking at the graded take; the original is beside it.");
+      ST().toast(r.take.status === "running" ? "Grading every frame in the background, frame by frame on screen. Keep working if you like; the graded take lands beside the original."
+        : "Graded. You're looking at the graded take; the original is beside it.");
     } finally { b.disabled = false; b.textContent = "Grade the take"; }
   };
   q("#gCube", lab).onclick = async () => {

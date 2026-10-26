@@ -15,7 +15,9 @@ import subprocess
 import tempfile
 import threading
 import time
-from typing import Dict, Tuple
+from collections import deque
+from concurrent.futures import ThreadPoolExecutor
+from typing import Callable, Dict, Optional, Tuple
 
 import wasmtime
 from PIL import Image, ImageOps
@@ -135,46 +137,80 @@ def _matrix(path: str) -> str:
 SWS = "accurate_rnd+full_chroma_int+bicubic"
 
 
-def grade_film(src: str, dst: str, spec: Dict, timeout: int = 900) -> Dict:
+class Stopped(Exception):
+    """The grade was called off: its progress callback said stop."""
+
+
+def _cores() -> int:
+    # frames grade independently and wasmtime lets go of the GIL while one
+    # runs, so each core grades its own frame (two on the B2 plan: twice as fast)
+    return max(1, min(4, os.cpu_count() or 1))
+
+
+def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
+               progress: Optional[Callable[[int, int], bool]] = None) -> Dict:
     """Every frame of a clip through a look, the grain moving frame to frame (seed
     = frame number, as the Lab plays it); the sound is copied untouched.
 
-    ffmpeg decodes to RGBA on a pipe, each frame is graded in the module's
-    memory, and a second ffmpeg encodes what comes back. Both write their errors
-    to a file, never a pipe, so neither can stall on a full buffer."""
+    ffmpeg decodes to RGBA on a pipe, each core grades a frame in its own
+    instance's memory, and a second ffmpeg encodes them in order. Both write
+    their errors to a file, never a pipe, so neither can stall on a full buffer.
+    `progress(done, total)` hears after each frame; returning False stops it."""
     look(spec)
     info = probe(src)
     w, h, fps = int(info["width"]), int(info["height"]), info.get("fps") or 24
     if not w or not h:
         raise RuntimeError("the clip has no picture size")
+    total = max(1, round((info.get("duration") or 0) * fps))
     m = _matrix(src)
     n = w * h * 4
-    g = Wasm("gobo.wasm")
-    px = (g.call("alloc", n), n)
+    mine = threading.local()
+
+    def one(buf: bytes, seed: int) -> bytes:
+        if not hasattr(mine, "g"):
+            mine.g = Wasm("gobo.wasm")
+            mine.px = (mine.g.call("alloc", n), n)
+        g, px = mine.g, mine.px
+        g.mem.write(g.store, buf, px[0])
+        _grade(g, px, w, h, spec, seed)
+        return g.mem.read(g.store, px[0], px[0] + n)
+
+    cores = _cores()
     t0 = time.time()
-    frames = 0
-    with tempfile.TemporaryFile() as err:
+    frames = read = 0
+    with tempfile.TemporaryFile() as err, ThreadPoolExecutor(cores) as pool:
         dec = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-i", src, "-map", "0:v:0",
                                 "-vf", f"scale=in_color_matrix={m}:flags={SWS}", "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"],
                                stdin=subprocess.DEVNULL, stdout=subprocess.PIPE, stderr=err)
+        # CRF 19: indistinguishable from the 17 it was, about a third smaller
         enc = subprocess.Popen(["ffmpeg", "-nostdin", "-y", "-v", "error",
                                 "-f", "rawvideo", "-pix_fmt", "rgba", "-s", f"{w}x{h}", "-r", str(fps), "-i", "pipe:0",
                                 "-i", src, "-map", "0:v", "-map", "1:a?",
                                 "-vf", f"scale=out_color_matrix={m}:out_range=tv:flags={SWS},format=yuv420p",
                                 "-colorspace", m.replace("bt601", "smpte170m"), "-c:v", "libx264", "-preset", "veryfast",
-                                "-crf", "17", "-c:a", "copy", "-shortest", "-movflags", "+faststart", dst],
+                                "-crf", "19", "-c:a", "copy", "-shortest", "-movflags", "+faststart", dst],
                                stdin=subprocess.PIPE, stdout=subprocess.DEVNULL, stderr=err)
+        ahead: deque = deque()
+
+        def write_until(left: int) -> None:
+            nonlocal frames
+            while len(ahead) > left:
+                enc.stdin.write(ahead.popleft().result())
+                frames += 1
+                if progress and progress(frames, max(total, frames)) is False:
+                    raise Stopped()
+                if time.time() - t0 > timeout:
+                    raise RuntimeError(f"grading took longer than {timeout}s")
+
         try:
             while True:
                 buf = dec.stdout.read(n)
                 if len(buf) < n:
                     break
-                g.mem.write(g.store, buf, px[0])
-                frames += 1
-                _grade(g, px, w, h, spec, frames)
-                enc.stdin.write(g.mem.read(g.store, px[0], px[0] + n))
-                if time.time() - t0 > timeout:
-                    raise RuntimeError(f"grading took longer than {timeout}s")
+                read += 1
+                ahead.append(pool.submit(one, buf, read))
+                write_until(2 * cores - 1)       # every core busy, a few frames in hand
+            write_until(0)
             enc.stdin.close()
             ok = enc.wait(timeout=300) == 0 and dec.wait(timeout=30) == 0
         except BaseException:

@@ -287,10 +287,19 @@
       ui.step("grade", "now", `Grading every frame through ${name}…`);
       const r = await api(`/reels/${S.reel.id}/takes/${film.id}/grade`, { method: "POST",
         json: { look: { film: stock || "clean", grade: tone || "natural", amount: o.grade }, label: `${B.title || "The film"} · ${name}` } });
-      if (r.error) ui.step("grade", "bad", `The grade didn't take (${r.error}); the film is as shot.`);
+      // a film grades in the background (minutes on a small server): wait for it
+      let t = r.take;
+      if (t) mergeTakes([t]);
+      while (t && (t.status === "running" || t.status === "queued")) {
+        await new Promise(res => setTimeout(res, 2000));
+        const now = await api(`/reels/${S.reel.id}`);
+        t = (now.takes || []).find(x => x.id === t.id) || t;
+        if (t.progress) ui.step("grade", "now", `Grading every frame through ${name}: ${t.progress}`);
+      }
+      if (r.error || !t || t.status !== "done") ui.step("grade", "bad", `The grade didn't take (${r.error || (t && t.error) || "it stopped"}); the film is as shot.`);
       else {
-        mergeTakes([r.take]); final = r.take;
-        ui.step("grade", "ok", `${name} at ${Math.round(o.grade * 100)}%: ${r.frames} frames in ${r.seconds} s`);
+        mergeTakes([t]); final = t;
+        ui.step("grade", "ok", `${name} at ${Math.round(o.grade * 100)}%: ${t.frames} frames in ${Math.round(t.grade_seconds)} s`);
       }
     }
     ui.done({ final, film, title: B.title || "The film" });

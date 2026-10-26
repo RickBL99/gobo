@@ -99,8 +99,17 @@ def _pump_once() -> None:
             J.unmark_active(reel, tid)
             continue
         if not t.get("poll_url"):
-            # being sent: it holds its slot, unless its worker died sending it
-            if time.time() - float(t.get("beat") or t.get("started") or 0) > J.SYNC_STALE:
+            # being sent: it holds its slot while its worker beats (_submit). A
+            # direct run whose worker died is collected under its own key.
+            quiet = time.time() - float(t.get("beat") or t.get("started") or 0)
+            tries = int(t.get("resends") or 0)
+            if quiet > DEAD and tries < RESENDS and J.get_call(reel, tid) and J.claim(reel, tid):
+                try:
+                    J.update_take(reel, tid, resends=tries + 1)
+                finally:
+                    J.release(reel, tid)
+                _spawn(_recover, reel, tid)
+            elif quiet > J.SYNC_STALE:
                 J.unmark_active(reel, tid)
             continue
         if time.time() - float(t.get("polled") or 0) >= POLL_EVERY:
@@ -814,27 +823,99 @@ def _start(reel: str, tid: str) -> None:
 def _send(reel: str, tid: str, t: Dict) -> None:
     try:
         call = M.build(t["model"], t["request"], lambda n: _find_file(reel, n))
-        call["sync"] = bool(t.get("comfy_sync"))       # Router's queue stalled on this take once
-        J.update_take(reel, tid, endpoint=call["endpoint"],
-                      payload_preview=M.elide(call["payload"]))
-        res = M.submit(call)
-    except M.RunError as e:
-        if e.reason in WAIT_REASONS:
-            return _requeue(reel, tid, e)
-        J.update_take(reel, tid, status="failed", reason=e.reason, error=str(e),
-                      finished=time.time())
-        J.unmark_active(reel, tid)
-        return
     except Exception as e:
-        J.update_take(reel, tid, status="failed", reason="client", error=str(e)[:400],
-                      finished=time.time())
-        J.unmark_active(reel, tid)
-        return
+        return _refused(reel, tid, e)
+    # each send is a run of its own under a fresh key (Router's queue may still
+    # hold the last one), on the route it goes by: direct once Router's queue
+    # stalled on this take, or while it's stalled for everyone
+    call.update(sync=bool(t.get("comfy_sync")) or comfy.go_sync(), key=uuid.uuid4().hex)
+    J.update_take(reel, tid, endpoint=call["endpoint"], payload_preview=M.elide(call["payload"]))
+    _deliver(reel, tid, call)
+
+
+def _refused(reel: str, tid: str, e: Exception) -> None:
+    if isinstance(e, M.RunError) and e.reason in WAIT_REASONS:
+        return _requeue(reel, tid, e)
+    if isinstance(e, M.RunError):
+        J.update_take(reel, tid, status="failed", reason=e.reason, error=str(e), finished=time.time())
+    else:
+        J.update_take(reel, tid, status="failed", reason="client", error=str(e)[:400], finished=time.time())
+    J.unmark_active(reel, tid)
+
+
+def _deliver(reel: str, tid: str, call: Dict) -> None:
+    """Send a built call and land what comes back."""
+    try:
+        res = _submit(reel, tid, call)
+    except Exception as e:
+        J.drop_call(reel, tid)
+        return _refused(reel, tid, e)
     if res.get("poll_url"):
         J.update_take(reel, tid, poll_url=res["poll_url"], request_id=res.get("request_id"),
                       polled=time.time())
+    else:
+        _store_result(reel, tid, res)
+    J.drop_call(reel, tid)
+
+
+# ── a direct run whose worker died ──────────────────────────────────────────
+# A direct run holds one connection for minutes, and a restart in that time
+# lost the answer while Comfy finished and billed the clip (two MiniMax clips,
+# 2026-10-26: a release at 05:04 in the middle of them). Router keeps the
+# generation, and the same Idempotency-Key with the same body collects it
+# without charging again; that is also how a direct run past Router's
+# ten-minute deadline (504) is collected. So the call that was sent waits
+# beside the take, the worker beats while it waits, and the pump resends a
+# take whose worker went quiet.
+BEAT_EVERY = 30
+DEAD = 4 * BEAT_EVERY
+RESENDS = 2
+SAME_KEY_TRIES = 3
+
+
+def _submit(reel: str, tid: str, call: Dict) -> Dict:
+    J.put_call(reel, tid, call)
+    stop = threading.Event()
+
+    def beat() -> None:
+        while not stop.wait(BEAT_EVERY):
+            t = J.get_take(reel, tid)
+            if t and t.get("status") == "running":
+                try:
+                    J.update_take(reel, tid)         # (update_take sets the beat)
+                except RuntimeError:
+                    pass
+
+    ticker = threading.Thread(target=beat, daemon=True)
+    ticker.start()
+    try:
+        for n in range(SAME_KEY_TRIES):
+            try:
+                return M.submit(call)
+            except M.RunError as e:
+                # a direct run that timed out or is still being admitted is still
+                # running at Comfy: ask again under the same key, never a new one
+                if not call.get("sync") or e.reason not in WAIT_REASONS or n == SAME_KEY_TRIES - 1:
+                    raise
+                time.sleep(15 * (n + 1))
+    finally:
+        stop.set()
+        ticker.join()
+
+
+def _recover(reel: str, tid: str) -> None:
+    t, call = J.get_take(reel, tid), J.get_call(reel, tid)
+    if not t or not call or t.get("status") != "running" or t.get("poll_url"):
         return
-    _store_result(reel, tid, res)
+    with V.acting_for(_maker(reel, t)) as keyed:
+        if not keyed:                            # the demo restarted and forgot this visitor's key
+            J.drop_call(reel, tid)
+            J.update_take(reel, tid, status="failed", reason="unavailable", finished=time.time(),
+                          error="The studio restarted while this was rendering, and it needs your Comfy key to "
+                                "collect it. Check your usage at platform.comfy.org before running it again.")
+            J.unmark_active(reel, tid)
+            return
+        _deliver(reel, tid, call)
 
 
 def _advance(reel: str, tid: str) -> None:
@@ -1040,7 +1121,11 @@ async def cancel(reel: str, tid: str):
         t = None
     if not t:
         return _err("No such take.", 404)
-    if t.get("status") == "queued" and not t.get("poll_url"):
+    if t.get("model") == "local" and t.get("status") in ("queued", "running"):
+        # a grade in the background: its worker sees this and stops
+        t = J.update_take(reel, tid, status="cancelled", finished=time.time(), progress=None,
+                          error="You stopped it. The original take is untouched; nothing was spent.")
+    elif t.get("status") == "queued" and not t.get("poll_url"):
         J.dequeue(reel, tid)
         t = J.update_take(reel, tid, status="cancelled", finished=time.time(),
                           error="You took it out of the line before it was sent. Nothing was spent.")
@@ -1161,6 +1246,8 @@ def _local_take(reel: str, src: Dict, kind: str, action: str, file: str, by: str
                    prompt=src.get("prompt", ""), aspect=src.get("aspect"),
                    request={}, settings=src.get("settings"), action=action,
                    parent=src.get("id"), by=by)
+    if file is None:                             # still being made: it renders like any take
+        return J.update_take(reel, t["id"], status="running", started=time.time(), **extra)
     return J.update_take(reel, t["id"], status="done", file=file, finished=time.time(), **extra)
 
 
@@ -1202,12 +1289,67 @@ async def grab_frame(reel: str, tid: str, request: Request):
     return {"take": _public_take(nt)}
 
 
+# ── grading ─────────────────────────────────────────────────────────────────
+# A 2K clip, or a whole film, takes minutes to grade on the B2 plan: longer than
+# Azure keeps a request open (about 230 s), so the page lost the answer while
+# the server went on and made the take. A clip's grade is a take of its own now,
+# rendering like any other and saying which frame it's on; a still is quick and
+# comes back at once. One clip at a time: the cores are shared.
+_grading = threading.Lock()
+
+
+def _grade_clip(reel: str, tid: str, src: str, name: str, spec: Dict) -> None:
+    dst = J.out_path(reel, name)
+    said = [0.0]
+
+    def live(note: str) -> bool:
+        """Say where it is (once a second at most); False once it was stopped."""
+        if time.time() - said[0] < 1:
+            return True
+        said[0] = time.time()
+        t = J.get_take(reel, tid)
+        if t is None:                            # being rewritten this instant: next time
+            return True
+        if t.get("status") != "running":
+            return False
+        try:
+            J.update_take(reel, tid, progress=note)
+        except RuntimeError:
+            pass
+        return True
+
+    info = None
+    try:
+        while not _grading.acquire(timeout=5):
+            if not live("waiting for another grade to finish"):
+                return
+        try:
+            info = R.grade_film(src, dst, spec, progress=lambda done, total: live(f"frame {done} of {total}"))
+        finally:
+            _grading.release()
+    except R.Stopped:
+        pass
+    except Exception as e:
+        J.update_take(reel, tid, status="failed", reason="client", finished=time.time(), progress=None,
+                      error=f"Grading failed: {str(e)[-300:]}")
+    extra = _poster(reel, dst, name) if info else {}
+    t = J.get_take(reel, tid)
+    if not info or not t or t.get("status") != "running":      # failed, or stopped from the page
+        for f in (name, extra.get("poster")):
+            if f and os.path.exists(J.out_path(reel, f)):
+                os.remove(J.out_path(reel, f))
+        return
+    J.update_take(reel, tid, status="done", file=name, finished=time.time(), progress=None,
+                  frames=info["frames"], grade_seconds=info["seconds"], **extra)
+
+
 @router.post("/reels/{reel}/takes/{tid}/grade", response_class=JSONResponse)
 async def grade_take(reel: str, tid: str, request: Request):
     """A take through a look ({film, grade, amount, grain, …}), in Rust: the
     Lab's own grader (crates/scrim), run here by wasmtime. A clip is graded
-    frame by frame with the grain moving and its sound kept; a still at full
-    size. The graded take sits beside the original, which is left alone."""
+    frame by frame with the grain moving and its sound kept, in the background
+    (the answer is the new take, running); a still at full size, at once. The
+    graded take sits beside the original, which is left alone."""
     if not _reel_or_404(reel):
         return _err("No such reel.", 404)
     try:
@@ -1221,21 +1363,28 @@ async def grade_take(reel: str, tid: str, request: Request):
     spec = b.get("look")
     if not isinstance(spec, dict) or not spec:
         return _err("Pick a look.")
-    video = t["kind"] == "video"
-    name = f"graded-{uuid.uuid4().hex[:10]}.{'mp4' if video else 'jpg'}"
-    dst = J.out_path(reel, name)
     try:
-        info = await run_in_threadpool(R.grade_film if video else R.grade_still, J.out_path(reel, t["file"]), dst, spec)
+        await run_in_threadpool(R.look, spec)
     except ValueError as e:
         return _err(f"That look doesn't work: {e}")
+    label = str(b.get("label") or "").strip()[:60] or "Graded"
+    video = t["kind"] == "video"
+    name = f"graded-{uuid.uuid4().hex[:10]}.{'mp4' if video else 'jpg'}"
+    if video:
+        nt = _local_take(reel, t, "video", "grade", None, by=_who(request), label=label, look=spec,
+                         progress="starting", w=t.get("w"), h=t.get("h"))
+        _spawn(_grade_clip, reel, nt["id"], J.out_path(reel, t["file"]), name, spec)
+        return {"take": _public_take(nt)}
+    dst = J.out_path(reel, name)
+    try:
+        info = await run_in_threadpool(R.grade_still, J.out_path(reel, t["file"]), dst, spec)
     except Exception as e:
         if os.path.exists(dst):
             os.remove(dst)
         return _err(f"Grading failed: {str(e)[-300:]}", 500)
-    extra = _poster(reel, dst, name) if video else {"w": info["w"], "h": info["h"]}
-    nt = _local_take(reel, t, t["kind"], "grade", name, by=_who(request),
-                     label=str(b.get("label") or "").strip()[:60] or "Graded", look=spec, **extra)
-    return {"take": _public_take(nt), "frames": info.get("frames"), "seconds": info.get("seconds")}
+    nt = _local_take(reel, t, "image", "grade", name, by=_who(request), label=label, look=spec,
+                     w=info["w"], h=info["h"])
+    return {"take": _public_take(nt)}
 
 
 # ── share a film ────────────────────────────────────────────────────────────

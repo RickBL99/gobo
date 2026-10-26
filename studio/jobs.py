@@ -35,6 +35,8 @@ KEEP_GB = float(os.getenv("STUDIO_KEEP_GB") or 0)
 # the worker dead. An async take is never stale while its poll URL answers.
 SYNC_STALE = 420
 ASYNC_STALE = 45 * 60
+# work done here (a grade) says where it is every few seconds while it runs
+LOCAL_STALE = 90
 LETTERS = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
 _ID = re.compile(r"^[a-z0-9-]{6,40}$")
 
@@ -373,12 +375,17 @@ def stale_check(t: Dict) -> Dict:
     if t.get("status") == "queued" and t.get("reel") and t.get("id") and is_queued(t["reel"], t["id"]):
         return t                                 # waiting its turn in line, not lost
     if t.get("status") in ("queued", "running"):
-        limit = ASYNC_STALE if t.get("poll_url") else SYNC_STALE
+        local = t.get("model") == "local"
+        limit = LOCAL_STALE if local else ASYNC_STALE if t.get("poll_url") else SYNC_STALE
         if time.time() - float(t.get("beat") or t.get("created") or 0) > limit:
             t["status"] = "failed"
-            t["reason"] = "timeout"
-            t["error"] = t.get("error") or ("We stopped waiting for the result. A run that "
-                                            "finishes later may still be billed.")
+            if local:
+                t["reason"] = "restart"
+                t["error"] = t.get("error") or "The studio restarted while it was working on this."
+            else:
+                t["reason"] = "timeout"
+                t["error"] = t.get("error") or ("We stopped waiting for the result. A run that "
+                                                "finishes later may still be billed.")
     return t
 
 
@@ -408,7 +415,31 @@ def release(reel: str, take: str) -> None:
         pass
 
 
+# ── a run's exact request, while it's out ───────────────────────────────────
+# Router collects a dropped run when the same Idempotency-Key comes back with
+# the same body, and a rebuilt body isn't the same (references upload again
+# under new links), so the one that was sent waits here until it lands.
+def _call_path(reel: str, take: str) -> str:
+    return _take_path(reel, take)[:-len(".json")] + ".call"
+
+
+def put_call(reel: str, take: str, call: Dict) -> None:
+    _write(_call_path(reel, take), call)
+
+
+def get_call(reel: str, take: str) -> Optional[Dict]:
+    return _read(_call_path(reel, take))
+
+
+def drop_call(reel: str, take: str) -> None:
+    try:
+        os.remove(_call_path(reel, take))
+    except FileNotFoundError:
+        pass
+
+
 def delete_take(reel: str, take: str) -> None:
+    drop_call(reel, take)
     t = get_take(reel, take) or {}
     for k in ("file", "thumb", "poster"):
         if t.get(k):

@@ -32,7 +32,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Grade:** film stocks (Portra, 500T, bleach bypass, slide, VHS and more) and grades, with halation, moving grain and a vignette, live on video at 10 to 16 ms a frame. An Amount control sets the strength, and the look exports as a `.cube` file for Resolve, Premiere or Final Cut.
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
-- **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte.
+- **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
 - **And:** a public share link for any take, a model shootout, a library, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 

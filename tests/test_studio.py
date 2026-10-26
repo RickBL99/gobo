@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import threading
 import time
 import unittest
 import zipfile
@@ -372,6 +373,55 @@ class Flow(unittest.TestCase):
     def reel(self):
         return self.c.post("/studio/reels", json={"name": "Flow"}).json()["id"]
 
+    def test_a_direct_run_that_times_out_is_asked_again_under_its_key(self):
+        """Router's 504 on a direct run doesn't stop the generation: a new key
+        would start (and bill) a second one, the same key collects the first."""
+        reel = self.reel()
+        sent = []
+
+        def flaky(call):
+            sent.append(dict(call))
+            if len(sent) == 1:
+                raise M.RunError("Comfy Router is briefly unavailable; the take goes again shortly.", "rateLimit")
+            return {"url": "https://out.jpg"}
+        with mock.patch.object(M, "submit", flaky), mock.patch.object(comfy, "go_sync", lambda: True), \
+                mock.patch.object(M, "fetch_output", lambda res: (jpeg((64, 64)), ".jpg")), mock.patch.object(time, "sleep", lambda s: None):
+            t = self.c.post(f"/studio/reels/{reel}/run", json={
+                "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A beach."}).json()["takes"][0]
+        self.assertEqual([(c["sync"], c["key"]) for c in sent], [(True, sent[0]["key"])] * 2)
+        self.assertEqual(J.get_take(reel, t["id"])["status"], "done")
+        self.assertIsNone(J.get_call(reel, t["id"]), "the call is dropped once it lands")
+
+    def test_a_direct_run_whose_worker_died_is_collected_under_its_key(self):
+        reel = self.reel()
+        call = {"endpoint": "x/y", "payload": {"prompt": "p"}, "sync": True, "key": "k-123", "kind": "image"}
+        ids = []
+        for quiet in (studio.DEAD + 5, 10):                 # one worker died; one is just slow
+            t = J.new_take(reel, 1, 0, kind="image", model="byteplus/seedream-5-0-260128", status="running")
+            J.put_call(reel, t["id"], call)
+            J._write(J._take_path(reel, t["id"]), {**J.get_take(reel, t["id"]), "beat": time.time() - quiet})
+            J.mark_active(reel, t["id"])
+            ids.append(t["id"])
+        sent = []
+        with mock.patch.object(M, "submit", lambda c: sent.append(c) or {"url": "https://out.jpg"}), \
+                mock.patch.object(M, "fetch_output", lambda res: (jpeg((64, 64)), ".jpg")):
+            studio._pump_once()
+        self.assertEqual([(c["key"], c["sync"], c["payload"]) for c in sent], [("k-123", True, {"prompt": "p"})])
+        dead, slow = (J.get_take(reel, i) for i in ids)
+        self.assertEqual((dead["status"], dead["resends"]), ("done", 1))
+        self.assertIsNone(J.get_call(reel, ids[0]))
+        self.assertEqual((slow["status"], slow.get("resends")), ("running", None))
+
+    def settle(self, reel, tid, wait=60):
+        """A take made in the background (a grade), once it stops running."""
+        deadline = time.time() + wait
+        while time.time() < deadline:
+            t = J.get_take(reel, tid)
+            if t and t.get("status") not in ("queued", "running"):
+                return t
+            time.sleep(0.1)
+        return J.get_take(reel, tid)
+
     def finish(self, reel, tid, data, ext, cost=0.05):
         with mock.patch.object(M, "poll", lambda url, model="": {"url": "https://out" + ext, "cost": cost}), \
              mock.patch.object(M, "fetch_output", lambda res: (data, ext)):
@@ -506,18 +556,37 @@ class Flow(unittest.TestCase):
         self.assertAlmostEqual(float(st["seconds"]), 2.0, delta=0.3)
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/stitch", json={"takes": ids[:1]}).status_code, 400)
         # the grade, in Rust: every frame of the film through a look, a new take beside it
+        # (in the background: the answer is the new take, running, and it says which frame it's on)
         gr = self.c.post(f"/studio/reels/{reel}/takes/{st['id']}/grade", json={"look": {"grade": "noir"}, "label": "Noir"}).json()
-        self.assertEqual((gr["take"]["kind"], gr["take"]["action"], gr["take"]["parent"], gr["take"]["label"]),
-                         ("video", "grade", st["id"], "Noir"))
-        self.assertAlmostEqual(gr["frames"], 48, delta=2)
-        self.assertTrue(probe(J.out_path(reel, gr["take"]["file"]))["has_audio"], "the sound comes along")
+        self.assertEqual((gr["take"]["kind"], gr["take"]["action"], gr["take"]["parent"], gr["take"]["label"], gr["take"]["status"]),
+                         ("video", "grade", st["id"], "Noir", "running"))
+        done = self.settle(reel, gr["take"]["id"])
+        self.assertEqual(done["status"], "done", done.get("error"))
+        self.assertAlmostEqual(done["frames"], 48, delta=2)
+        self.assertTrue(done.get("poster"))
+        self.assertTrue(probe(J.out_path(reel, done["file"]))["has_audio"], "the sound comes along")
         png = os.path.join(TMP, "graded.png")
-        subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", J.out_path(reel, gr["take"]["file"]),
+        subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", J.out_path(reel, done["file"]),
                         "-frames:v", "1", png], check=True)
         r, g, b = Image.open(png).convert("RGB").getpixel((160, 90))
         self.assertTrue(max(r, g, b) - min(r, g, b) <= 3, f"the red clip graded noir is grey: {(r, g, b)}")
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{st['id']}/grade", json={"look": {"film": "nope"}}).status_code, 400)
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{st['id']}/grade", json={}).status_code, 400)
+        # Stop grading: the take says so, and no half-made file is left behind
+        # (another grade holds the cores, so this one is still waiting when it's stopped)
+        graded = lambda: {f for f in os.listdir(os.path.dirname(J.out_path(reel, "x"))) if f.startswith("graded-")}
+        before = graded()
+        with studio._grading, mock.patch.object(studio, "_spawn", lambda fn, *a: threading.Thread(target=fn, args=a, daemon=True).start()):
+            stop = self.c.post(f"/studio/reels/{reel}/takes/{st['id']}/grade", json={"look": {"grade": "teal"}}).json()["take"]
+            self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{stop['id']}/cancel").json()["take"]["status"], "cancelled")
+        deadline = time.time() + 30
+        time.sleep(0.3)
+        while (studio._grading.locked() or graded() != before) and time.time() < deadline:
+            time.sleep(0.1)
+        self.assertEqual((J.get_take(reel, stop["id"])["status"], graded()), ("cancelled", before))
+        # a grade the studio restarted in the middle of says so, not "still rendering" for ever
+        lost = {**J.get_take(reel, stop["id"]), "status": "running", "beat": time.time() - J.LOCAL_STALE - 5}
+        self.assertEqual((J.stale_check(lost)["status"], lost["reason"]), ("failed", "restart"))
         # stills stitch too, held for still_seconds, and the frame follows the first CLIP
         still = self.c.post(f"/studio/reels/{reel}/run", json={
             "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A beach."}).json()["takes"][0]

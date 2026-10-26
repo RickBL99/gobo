@@ -490,6 +490,8 @@ def failure_hint(t: Dict) -> str:
         return f"{label} is down or overloaded right now. Try again in a few minutes, or pick another model."
     if reason == "network":
         return "We couldn't reach Comfy Router. Run it again in a moment."
+    if reason == "restart":
+        return "Nothing was charged: run it again. The original take is untouched."
     if reason == "timeout":
         return ("We stopped waiting after the run went quiet. Click Check again in the Shot view: if it "
                 "finished, the result is collected.")
@@ -880,7 +882,7 @@ def busy_limit(msg: str) -> Optional[int]:
 
 def submit(call: Dict) -> Dict:
     return comfy.submit(call["endpoint"], call["payload"], call.get("key"),
-                        kind=call.get("kind", ""), sync=bool(call.get("sync")))
+                        kind=call.get("kind", ""), sync=call.get("sync"))
 
 
 def poll(poll_url: str, model: str = "") -> Dict:
