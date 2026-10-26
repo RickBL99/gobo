@@ -58,6 +58,21 @@ const loop = []; for (let i = 0; i <= 60; i++) { const a = i / 60 * 6.283; loop.
 out.loop = g.direct({ w: 960, h: 540, strokes: [{ pen: "camera", points: loop },
   { pen: "subject", label: "the keeper", points: [[100, 500], [500, 400], [900, 300]] }] });
 out.junk = g.direct({ strokes: "no" });
+// the colourist's tools: a .cube from elsewhere, the wheels, the curves, a CDL
+let swap = "TITLE \"Swap\"\nLUT_3D_SIZE 2\n";
+for (let b = 0; b < 2; b++) for (let gg = 0; gg < 2; gg++) for (let r = 0; r < 2; r++) swap += `${b} ${gg} ${r}\n`;
+out.lut_load = g.loadLut("lut-swap", swap);
+out.lut_bad = g.loadLut("lut-bad", "LUT_3D_SIZE 3\n0 0 0\n");
+const warmPx = () => img(16, 16, () => [200, 120, 40]);
+const sw = warmPx(); out.lut_grade = g.grade(sw, { lut3d: { id: "lut-swap" } }, 1); out.swapped = Array.from(sw.data.slice(0, 3));
+out.lut_missing = g.grade(warmPx(), { lut3d: { id: "lut-nope" } }, 1);
+out.colour_look = g.look({ wheels: { lift: [0, 0, 0.05, 0], gain: [0, 0, 0, -0.1] }, curves: { y: [[0, 0], [0.5, 0.6], [1, 1]] },
+  cdl: { slope: [1.1, 1, 0.9], offset: 0, power: 1, sat: 0.9 }, lut3d: { id: "lut-swap", mix: 0.5 } });
+const lifted = warmPx(); g.grade(lifted, { wheels: { lift: [0, 0, 0.2, 0] } }, 1); out.lifted = Array.from(lifted.data.slice(0, 3));
+out.cube_has_lut = g.cube({ lut3d: { id: "lut-swap" } }, 2).split("\n").filter(l => /^[0-9]/.test(l))[1];
+const wf = g.scope(scene(0), "waveform", 256, 128), vs = g.scope(scene(0), "vector", 160, 160);
+out.scope = [wf.width, wf.height, wf.data.length, Array.from(wf.data).filter((v, i) => i % 4 === 3 && v > 0).length,
+             vs.data.length, Array.from(vs.data).filter((v, i) => i % 4 === 3 && v > 0).length];
 // one frame graded in the page, for the server to grade too
 const src = scene(0), mine = new Uint8ClampedArray(src.data);
 g.grade(src, LOOK, 5);
@@ -113,6 +128,27 @@ class GoboWasm(unittest.TestCase):
         self.assertEqual(self.out["cube"][0], 'TITLE "Teal"')
         self.assertIn("LUT_3D_SIZE 17", self.out["cube"])
         self.assertEqual(self.out["cube_lines"], 17 ** 3)
+
+    def test_the_colourists_tools(self):
+        o = self.out
+        self.assertEqual(o["lut_load"], {"id": "lut-swap", "title": "Swap", "kind": "3D", "size": 2})
+        self.assertIn("27 rows", o["lut_bad"]["error"])
+        self.assertEqual(o["lut_grade"], {"ok": True})
+        r, g, b = o["swapped"]
+        self.assertTrue(abs(r - 40) <= 2 and abs(b - 200) <= 2, o["swapped"])
+        self.assertIn("isn't loaded", o["lut_missing"]["error"])
+        lk = o["colour_look"]
+        self.assertEqual((lk["wheels"]["lift"][2], lk["wheels"]["gain"][3]), (0.05, -0.1))
+        self.assertEqual(lk["curves"]["y"][1], [0.5, 0.6])
+        self.assertEqual((lk["cdl"]["slope"], lk["cdl"]["sat"]), ([1.1, 1.0, 0.9], 0.9))
+        self.assertEqual((lk["lut3d"]["id"], lk["lut3d"]["mix"], lk["lut3d"]["title"]), ("lut-swap", 0.5, "Swap"))
+        self.assertGreater(o["lifted"][2], 40 + 20, "a blue lift raises the blue")
+        row = [float(v) for v in o["cube_has_lut"].split()]
+        self.assertTrue(all(abs(a - b) < 1e-4 for a, b in zip(row, [0, 0, 1])), f"the exported .cube carries the LUT: {row}")
+        w, h, n, lit, vn, vlit = o["scope"]
+        self.assertEqual((w, h, n, vn), (256, 128, 256 * 128 * 4, 160 * 160 * 4))
+        self.assertGreater(lit, 256, "the waveform has a trace")
+        self.assertGreater(vlit, 10)
 
     def test_continuity(self):
         self.assertEqual(self.out["same"]["verdict"], "match")

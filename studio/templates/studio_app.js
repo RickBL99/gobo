@@ -2215,7 +2215,7 @@ function setView(v) {
 // ── the Lab's way in (static/gobo_lab.js): read the shot, change it, refresh ──
 window.STUDIO = {
   direction: () => S.direction, aspect: () => S.aspect, mode: () => S.mode,
-  current: () => cur(), takes: () => S.takes.slice(), toast, api,
+  current: () => cur(), takes: () => S.takes.slice(), toast, api, apiBase: API,
   reel: () => S.reel && S.reel.id,
   addTakes(ts) { mergeTakes(ts); poll(); },
   show(id) { setView("shot"); select(id); },

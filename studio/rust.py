@@ -84,9 +84,28 @@ def compile_shot(body: Dict, vocabulary: Dict) -> Dict:
 
 
 # ── the grader (crates/scrim) ───────────────────────────────────────────────
-def look(spec: Dict) -> Dict:
-    """A look resolved to its numbers, or ValueError naming what's wrong."""
+# A look may name a .cube ({"lut3d": {"id"}}): each instance loads the files
+# it names once (`luts`: id → the file's text), then grades by id.
+def _loaded(g: Wasm, luts: Optional[Dict[str, str]]) -> Wasm:
+    for lut_id, text in (luts or {}).items():
+        out = json.loads(g.answer(g.call("scrim_lut_load", *g.json({"id": lut_id, "text": text}))))
+        if "error" in out:
+            raise ValueError(f"the LUT doesn't read: {out['error']}")
+    return g
+
+
+def cube_info(text: str) -> Dict:
+    """What a .cube file is ({title, kind, size}), or ValueError saying why it isn't one."""
     g = Wasm("gobo.wasm")
+    out = json.loads(g.answer(g.call("scrim_lut_load", *g.json({"id": "check", "text": text}))))
+    if "error" in out:
+        raise ValueError(out["error"])
+    return out
+
+
+def look(spec: Dict, luts: Optional[Dict[str, str]] = None) -> Dict:
+    """A look resolved to its numbers, or ValueError naming what's wrong."""
+    g = _loaded(Wasm("gobo.wasm"), luts)
     out = json.loads(g.answer(g.call("scrim_look", *g.json(spec))))
     if "error" in out:
         raise ValueError(out["error"])
@@ -110,13 +129,13 @@ def _grade(g: Wasm, px: Tuple[int, int], w: int, h: int, spec: Dict, seed: int) 
         raise ValueError(out["error"])
 
 
-def grade_still(src: str, dst: str, spec: Dict) -> Dict:
+def grade_still(src: str, dst: str, spec: Dict, luts: Optional[Dict[str, str]] = None) -> Dict:
     """A still through a look at full size (grain seed 7, as the Lab's still)."""
-    look(spec)
+    look(spec, luts)
     with Image.open(src) as im:
         im = ImageOps.exif_transpose(im).convert("RGBA")
     w, h = im.size
-    g = Wasm("gobo.wasm")
+    g = _loaded(Wasm("gobo.wasm"), luts)
     px = g.put(im.tobytes())
     _grade(g, px, w, h, spec, 7)
     Image.frombytes("RGBA", (w, h), bytes(g.mem.read(g.store, px[0], px[0] + px[1]))).convert("RGB") \
@@ -148,7 +167,7 @@ def _cores() -> int:
 
 
 def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
-               progress: Optional[Callable[[int, int], bool]] = None) -> Dict:
+               progress: Optional[Callable[[int, int], bool]] = None, luts: Optional[Dict[str, str]] = None) -> Dict:
     """Every frame of a clip through a look, the grain moving frame to frame (seed
     = frame number, as the Lab plays it); the sound is copied untouched.
 
@@ -156,7 +175,7 @@ def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
     instance's memory, and a second ffmpeg encodes them in order. Both write
     their errors to a file, never a pipe, so neither can stall on a full buffer.
     `progress(done, total)` hears after each frame; returning False stops it."""
-    look(spec)
+    look(spec, luts)
     info = probe(src)
     w, h, fps = int(info["width"]), int(info["height"]), info.get("fps") or 24
     if not w or not h:
@@ -168,7 +187,7 @@ def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
 
     def one(buf: bytes, seed: int) -> bytes:
         if not hasattr(mine, "g"):
-            mine.g = Wasm("gobo.wasm")
+            mine.g = _loaded(Wasm("gobo.wasm"), luts)
             mine.px = (mine.g.call("alloc", n), n)
         g, px = mine.g, mine.px
         g.mem.write(g.store, buf, px[0])

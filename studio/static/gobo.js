@@ -42,6 +42,20 @@
       look: l => { const [p, n] = json(l); return obj(x.scrim_look(p, n)); },
       /** The look as a .cube file. */
       cube: (l, size) => { const [p, n] = json(l); return text(x.scrim_cube(p, n, size || 33)); },
+      /** Load a .cube for looks to name ({lut3d: {id}}): {id, title, kind, size} or {error}. */
+      loadLut: (id, cubeText) => { const [p, n] = json({ id, text: cubeText }); return obj(x.scrim_lut_load(p, n)); },
+      /** A scope of ImageData as ImageData, w × h: "waveform", "parade", "vector" or "histogram". */
+      scope(img, kind, w, h) {
+        const code = { waveform: 0, parade: 1, vector: 2, histogram: 3 }[kind] || 0;
+        return withPixels(img, (p, n) => {
+          const packed = x.scrim_scope(p, n, img.width, img.height, code, w, h);
+          const at = Number(packed >> 32n), len = Number(packed & 0xffffffffn);
+          const px = new Uint8ClampedArray(mem().slice(at, at + len));
+          const out = typeof ImageData !== "undefined" ? new ImageData(px, w, h) : { width: w, height: h, data: px };
+          x.free(at, len);
+          return out;
+        });
+      },
       /** Does B pick up where A stopped? (A's last frame, B's first.) */
       compare(a, b, continuous) {
         return withPixels(a, (pa, na) => withPixels(b, (pb, nb) =>

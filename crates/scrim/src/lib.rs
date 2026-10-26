@@ -11,16 +11,24 @@
 //!   studio's stocks and grades as presets.
 //! * [`grade`]: pictures through a look (via a 3D LUT, then halation, grain
 //!   and vignette), and the LUT as a .cube file for any editor.
+//! * [`colour`]: a colourist's tools, as Resolve's Color page has them: an
+//!   ASC CDL, lift/gamma/gain/offset wheels, curves and a .cube from any
+//!   editor, all folded into the look's LUT.
+//! * [`scope`]: the scopes a colourist grades by: waveform, RGB parade,
+//!   vectorscope and histogram.
 //!
 //! Everything runs in the page as WebAssembly (crates/gobo-wasm), on the
 //! pixels of a canvas: nothing is uploaded to read or grade a frame.
 
 pub mod color;
+pub mod colour;
 pub mod grade;
 pub mod look;
 pub mod read;
+pub mod scope;
 pub mod steal;
 
+pub use colour::{parse_cube, Cdl, Cube, Curves, Ext, Wheels};
 pub use grade::{grade_rgba, grade_with, lut, Lut};
 pub use look::{compose, film, grade as grade_preset, Look};
 pub use read::{read, Frame, Reading};

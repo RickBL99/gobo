@@ -15,6 +15,7 @@
 #     heartbeat and marked failed rather than spinning for ever.
 # Outputs are downloaded the moment they exist: provider links expire.
 # =========================================================
+import hashlib
 import json, os, re, time, uuid, shutil
 from typing import Dict, List, Optional
 
@@ -566,3 +567,46 @@ def out_path(reel: str, name: str) -> str:
 
 def ref_path(reel: str, name: str) -> str:
     return os.path.join(reel_dir(reel), "refs", os.path.basename(name))
+
+
+# ── LUTs: .cube files a reel's grades can name ──────────────────────────────
+# Kept per reel, by the hash of their text ("lut-<12 hex>"): one id is one
+# table, wherever it's loaded (the page's gobo.wasm and the server's agree).
+_LUT = re.compile(r"^lut-[0-9a-f]{12}$")
+
+
+def _lut_dir(reel: str) -> str:
+    return os.path.join(reel_dir(reel), "luts")
+
+
+def lut_id(text: str) -> str:
+    return "lut-" + hashlib.sha1(text.encode("utf-8", "replace")).hexdigest()[:12]
+
+
+def put_lut(reel: str, text: str, meta: Dict) -> Dict:
+    lid = lut_id(text)
+    d = _lut_dir(reel)
+    os.makedirs(d, exist_ok=True)
+    with open(os.path.join(d, lid + ".cube"), "w", encoding="utf-8") as f:
+        f.write(text)
+    meta = {**meta, "id": lid, "added": time.time()}
+    _write(os.path.join(d, lid + ".json"), meta)
+    return meta
+
+
+def lut_text(reel: str, lid: str) -> Optional[str]:
+    if not _LUT.match(lid or ""):
+        return None
+    try:
+        with open(os.path.join(_lut_dir(reel), lid + ".cube"), encoding="utf-8") as f:
+            return f.read()
+    except FileNotFoundError:
+        return None
+
+
+def list_luts(reel: str) -> List[Dict]:
+    d = _lut_dir(reel)
+    if not os.path.isdir(d):
+        return []
+    out = [m for m in (_read(os.path.join(d, f)) for f in sorted(os.listdir(d)) if f.endswith(".json")) if m]
+    return sorted(out, key=lambda m: m.get("added", 0))

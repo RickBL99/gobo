@@ -412,6 +412,29 @@ class Flow(unittest.TestCase):
         self.assertIsNone(J.get_call(reel, ids[0]))
         self.assertEqual((slow["status"], slow.get("resends")), ("running", None))
 
+    def test_a_lut_from_elsewhere_grades_the_take(self):
+        """A .cube kept with the reel, named by a look, used by the server's grader."""
+        reel = self.reel()
+        swap = "TITLE \"Swap\"\nLUT_3D_SIZE 2\n" + "".join(f"{b} {g} {r}\n" for b in (0, 1) for g in (0, 1) for r in (0, 1))
+        up = self.c.post(f"/studio/reels/{reel}/luts", files={"file": ("swap.cube", swap.encode(), "application/octet-stream")}).json()["lut"]
+        self.assertEqual((up["title"], up["kind"], up["size"], up["name"]), ("Swap", "3D", 2, "swap.cube"))
+        self.assertTrue(up["id"].startswith("lut-") and up["id"] == J.lut_id(swap), "one file, one id")
+        self.assertEqual([m["id"] for m in self.c.get(f"/studio/reels/{reel}/luts").json()["luts"]], [up["id"]])
+        self.assertEqual(self.c.get(f"/studio/reels/{reel}/luts/{up['id']}").text, swap)
+        self.assertEqual(self.c.get(f"/studio/reels/{reel}/luts/lut-000000000000").status_code, 404)
+        bad = self.c.post(f"/studio/reels/{reel}/luts", files={"file": ("x.cube", b"LUT_3D_SIZE 3\n0 0 0\n", "text/plain")})
+        self.assertEqual(bad.status_code, 400)
+        self.assertIn("27 rows", bad.json()["error"])
+        still = self.c.post(f"/studio/reels/{reel}/run", json={
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A beach."}).json()["takes"][0]
+        self.finish(reel, still["id"], jpeg((64, 64), (200, 120, 40)), ".jpg")
+        gs = self.c.post(f"/studio/reels/{reel}/takes/{still['id']}/grade",
+                         json={"look": {"lut3d": {"id": up["id"]}, "wheels": {"lift": [0, 0, 0, 0]}}}).json()
+        r, g, b = Image.open(J.out_path(reel, gs["take"]["file"])).getpixel((32, 32))
+        self.assertTrue(b > 180 and r < 60, f"red and blue swapped: {(r, g, b)}")
+        gone = self.c.post(f"/studio/reels/{reel}/takes/{still['id']}/grade", json={"look": {"lut3d": {"id": "lut-0123456789ab"}}})
+        self.assertIn("isn't in this reel", gone.json()["error"])
+
     def settle(self, reel, tid, wait=60):
         """A take made in the background (a grade), once it stops running."""
         deadline = time.time() + wait

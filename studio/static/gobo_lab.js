@@ -8,7 +8,9 @@
 //   Grade            the take through a film stock and grade, live, grain dancing
 //                    on video; save it as a graded take (every frame, in Rust on
 //                    the server: studio/rust.py runs this same gobo.wasm), or
-//                    download the graded still or the .cube.
+//                    download the graded still or the .cube. A .cube or a CDL
+//                    from any editor goes on the grade too, and Advanced opens
+//                    the full-screen Colour page (gobo_colour.js) on it.
 //   Continuity       the script supervisor: each cut's last and first frames
 //                    compared, what jumped and how to fix it, the odd shot out.
 //
@@ -114,6 +116,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
 #lab .cut ul { margin: 4px 0 0; padding-left: 16px; font-size: .76rem; color: var(--muted); }
 #lab .cut .fix { color: var(--text); }
 #lab .odd { margin: 10px 0; padding: 10px; border-radius: 10px; background: #3a301455; font-size: .8rem; }
+#lab .linkbtn, #colour .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
 `;
   document.head.appendChild(style);
 
@@ -149,6 +152,12 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       <input type="range" class="wipe" id="gWipe" min="0" max="100" value="0" title="Drag to compare with the original">
       <div class="perf" id="gPerf"></div>
       <div id="gSliders"></div>
+      <div class="row"><select class="field" id="gLut" title="A LUT from Resolve, Premiere, a LUT pack or a camera maker" style="flex:1;min-width:120px"><option value="">No LUT</option></select>
+        <input type="file" id="gLutFile" accept=".cube,.cdl,.cc,.ccc,.xml" hidden>
+        <button class="btn small" id="gLutPick" title="A .cube LUT, or a colourist's CDL (.cdl, .cc)">Import LUT or CDL</button></div>
+      <label class="sl hidden" id="gLutMixRow"><span>LUT amount</span><input type="range" id="gLutMix" min="0" max="1" step="0.01" value="1"><output></output></label>
+      <div class="hint hidden" id="gCdlNote"></div>
+      <div class="row"><button class="btn small" id="gAdv" title="Lift, gamma, gain and offset wheels, curves and scopes, full screen">Advanced: wheels, curves, scopes →</button></div>
       <div class="row"><button class="btn small primary" id="gBake" title="Every frame through this look, in Rust, as a new take beside the original">Grade the take</button>
         <button class="btn small" id="gStill">Download graded still</button><button class="btn small" id="gCube">Download .cube</button>
         <button class="btn small" id="gReset">Reset</button></div>
@@ -369,7 +378,86 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   }
   function syncSliders() {
     qa("#gSliders input", lab).forEach(i => { i.value = gradeLook[i.dataset.k]; i.nextElementSibling.textContent = Number(gradeLook[i.dataset.k]).toFixed(2); });
+    syncLut();
   }
+
+  // ── LUTs and CDLs: from any editor, kept with the reel ─────────────────
+  // A .cube is uploaded to the reel (so Grade the take can use it on the
+  // server) and loaded into this page's gobo.wasm; the look names it by id.
+  const loadedLuts = new Set();
+  let reelLuts = [], lutsFor = null;
+  async function listLuts(force) {
+    const reel = ST() && ST().reel();
+    if (!reel) return [];
+    if (force || lutsFor !== reel) { const r = await ST().api(`/reels/${reel}/luts`); reelLuts = r.luts || []; lutsFor = reel; }
+    return reelLuts;
+  }
+  async function ensureLut(look) {
+    const id = look && look.lut3d && look.lut3d.id;
+    if (!id || loadedLuts.has(id)) return true;
+    const g = await window.goboReady, reel = ST().reel();
+    const res = await fetch(`${ST().apiBase}/reels/${reel}/luts/${id}`);
+    if (!res.ok) { delete look.lut3d; say("That LUT isn't in this reel any more, so it's off.", true); return false; }
+    const r = g.loadLut(id, await res.text());
+    if (r.error) { delete look.lut3d; say(r.error, true); return false; }
+    loadedLuts.add(id);
+    return true;
+  }
+  function parseCdl(text) {
+    // ASC CDL XML (.cdl, .cc, .ccc): the first correction's SOP and saturation
+    const doc = new DOMParser().parseFromString(text, "application/xml");
+    const nums = tag => { const el = doc.getElementsByTagName(tag)[0]; return el ? el.textContent.trim().split(/\s+/).map(Number) : null; };
+    const slope = nums("Slope"), offset = nums("Offset"), power = nums("Power"), sat = nums("Saturation");
+    if (!slope && !offset && !power && !sat) throw new Error("That file has no CDL in it (no Slope, Offset, Power or Saturation).");
+    const three = (v, d) => v && v.length === 3 && v.every(Number.isFinite) ? v : [d, d, d];
+    return { slope: three(slope, 1), offset: three(offset, 0), power: three(power, 1), sat: sat && Number.isFinite(sat[0]) ? sat[0] : 1 };
+  }
+  async function importGrade(file) {
+    const text = await file.text(), g = await window.goboReady;
+    if (/\.(cdl|cc|ccc|xml)$/i.test(file.name) || /<(ColorCorrection|ColorDecision|SOPNode)/.test(text.slice(0, 4000))) {
+      gradeLook.cdl = parseCdl(text);
+      say(`The CDL from ${file.name} is on the look: slope, offset, power and saturation, before everything else.`);
+      return "cdl";
+    }
+    const reel = ST().reel();
+    if (!reel) throw new Error("Open a reel first: a LUT is kept with the reel.");
+    const fd = new FormData(); fd.append("file", file, file.name);
+    const r = await ST().api(`/reels/${reel}/luts`, { method: "POST", body: fd });
+    if (r.error) throw new Error(r.error);
+    const loaded = g.loadLut(r.lut.id, text);
+    if (loaded.error) throw new Error(loaded.error);
+    loadedLuts.add(r.lut.id);
+    gradeLook.lut3d = { id: r.lut.id, mix: 1, first: false };
+    await listLuts(true);
+    say(`${r.lut.title} (a ${r.lut.size}${r.lut.kind === "3D" ? "³" : "-point 1D"} LUT) is on the look, after the stock and grade. Its amount is under the list.`);
+    return "lut";
+  }
+  async function syncLut() {
+    if (!gradeLook) return;
+    const sel = q("#gLut", lab), cur = gradeLook.lut3d;
+    const list = await listLuts().catch(() => []);
+    sel.innerHTML = `<option value="">No LUT</option>` + list.map(m => `<option value="${h(m.id)}">${h(m.title || m.name)}</option>`).join("");
+    sel.value = cur ? cur.id : "";
+    q("#gLutMixRow", lab).classList.toggle("hidden", !cur);
+    if (cur) { q("#gLutMix", lab).value = cur.mix == null ? 1 : cur.mix; q("#gLutMix", lab).nextElementSibling.textContent = Number(q("#gLutMix", lab).value).toFixed(2); }
+    const c = gradeLook.cdl, note = q("#gCdlNote", lab);
+    note.classList.toggle("hidden", !c);
+    if (c) note.innerHTML = `CDL: slope ${c.slope.map(v => v.toFixed(3)).join(" ")} · offset ${c.offset.map(v => v.toFixed(3)).join(" ")} · power ${c.power.map(v => v.toFixed(3)).join(" ")} · sat ${Number(c.sat).toFixed(2)} <button class="linkbtn" id="gCdlOff">Remove</button>`;
+    const off = q("#gCdlOff", lab); if (off) off.onclick = () => { delete gradeLook.cdl; syncLut(); render(); };
+  }
+  q("#gLutPick", lab).onclick = () => q("#gLutFile", lab).click();
+  q("#gLutFile", lab).onchange = async e => {
+    const f = e.target.files[0]; e.target.value = "";
+    if (!f || !gradeLook) return;
+    try { await importGrade(f); gradeFrom = "lab"; syncLut(); render(); } catch (err) { say(err.message, true); }
+  };
+  q("#gLut", lab).onchange = async e => {
+    const id = e.target.value;
+    if (!id) delete gradeLook.lut3d;
+    else { gradeLook.lut3d = { id, mix: 1, first: gradeLook.lut3d ? !!gradeLook.lut3d.first : false }; await ensureLut(gradeLook); }
+    gradeFrom = "lab"; syncLut(); render();
+  };
+  q("#gLutMix", lab).oninput = e => { if (gradeLook.lut3d) { gradeLook.lut3d.mix = Number(e.target.value); e.target.nextElementSibling.textContent = Number(e.target.value).toFixed(2); render(); } };
   async function fromShot() {
     const d = ST().direction();
     q("#gFilm", lab).value = hasOpt("film", d.film) ? d.film : "clean";
@@ -379,8 +467,11 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   }
   q("#gShot", lab).onclick = fromShot;
   q("#gReset", lab).onclick = fromShot;
-  q("#gFilm", lab).onchange = q("#gGrade", lab).onchange = async () => { gradeLook = await baseLook(q("#gFilm", lab).value, q("#gGrade", lab).value); syncSliders(); render(); };
-  qa("#gSliders input", lab).forEach(i => i.oninput = () => { gradeLook[i.dataset.k] = Number(i.value); i.nextElementSibling.textContent = Number(i.value).toFixed(2); render(); });
+  // a new stock or grade replaces the look's numbers, not the colourist's tools on it
+  const TOOLS = ["cdl", "wheels", "curves", "lut3d"];
+  const keepTools = (base, from) => { TOOLS.forEach(k => { if (from && from[k]) base[k] = from[k]; }); return base; };
+  q("#gFilm", lab).onchange = q("#gGrade", lab).onchange = async () => { gradeLook = keepTools(await baseLook(q("#gFilm", lab).value, q("#gGrade", lab).value), gradeLook); gradeFrom = "lab"; syncSliders(); render(); };
+  qa("#gSliders input", lab).forEach(i => i.oninput = () => { gradeLook[i.dataset.k] = Number(i.value); gradeFrom = "lab"; i.nextElementSibling.textContent = Number(i.value).toFixed(2); render(); });
   q("#gWipe", lab).oninput = () => render();
   function stopVideo() { cancelAnimationFrame(raf); raf = 0; if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid = null; } }
   async function gradeSetup() {
@@ -404,6 +495,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   async function render() {
     const g = await window.goboReady;
     if (!g || !gsrc || !gradeLook || gbusy) return;
+    if (gradeLook.lut3d && !loadedLuts.has(gradeLook.lut3d.id) && !(await ensureLut(gradeLook))) syncLut();
     if (gsrc === vid && (vid.readyState < 2)) return;
     gbusy = true;
     try {
@@ -435,26 +527,57 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     const c = document.createElement("canvas"); paint(c, full);
     c.toBlob(b => save(b, `${(t && (t.shot + (t.letter || ""))) || "take"}-graded.png`), "image/png");
   };
-  q("#gBake", lab).onclick = async () => {
-    const t = ST().current(), b = q("#gBake", lab);
+  function gradeName() {
+    const parts = [`${optLabel("film", q("#gFilm", lab).value)} + ${optLabel("grade", q("#gGrade", lab).value)}`];
+    const lut = gradeLook && gradeLook.lut3d && reelLuts.find(m => m.id === gradeLook.lut3d.id);
+    if (lut) parts.push(lut.title || lut.name);
+    if (gradeLook && (gradeLook.wheels || gradeLook.curves || gradeLook.cdl)) parts.push("colour");
+    return parts.join(" · ");
+  }
+  async function bake(button) {
+    const t = ST().current(), b = button || q("#gBake", lab);
     if (!t || t.status !== "done" || !gradeLook) return ST().toast("Pick a finished take to grade it.", true);
-    const look = `${optLabel("film", q("#gFilm", lab).value)} + ${optLabel("grade", q("#gGrade", lab).value)}`;
+    const label = b.textContent;
     b.disabled = true; b.textContent = t.kind === "video" ? "Grading every frame…" : "Grading…";
     try {
-      const r = await ST().api(`/reels/${ST().reel()}/takes/${t.id}/grade`, { method: "POST", json: { look: gradeLook, label: `Graded · ${look}` } });
+      const r = await ST().api(`/reels/${ST().reel()}/takes/${t.id}/grade`, { method: "POST", json: { look: gradeLook, label: `Graded · ${gradeName()}` } });
       if (r.error) return ST().toast(r.error, true);
       ST().addTakes([r.take]);
-      // show the result: the Lab covers the stage, so it closes on the graded take
+      // show the result: the Lab (and the Colour page) cover the stage, so they close on the graded take
+      if (window.goboColour) window.goboColour.close();
       close();
       if (ST().show) ST().show(r.take.id);
       ST().toast(r.take.status === "running" ? "Grading every frame in the background, frame by frame on screen. Keep working if you like; the graded take lands beside the original."
         : "Graded. You're looking at the graded take; the original is beside it.");
-    } finally { b.disabled = false; b.textContent = "Grade the take"; }
-  };
-  q("#gCube", lab).onclick = async () => {
+    } finally { b.disabled = false; b.textContent = label; }
+  }
+  q("#gBake", lab).onclick = () => bake();
+  async function saveCube() {
     const g = await window.goboReady;
-    const title = `Gobo ${optLabel("film", q("#gFilm", lab).value)} + ${optLabel("grade", q("#gGrade", lab).value)}`;
-    save(new Blob([g.cube(Object.assign({}, gradeLook, { title }), 33)], { type: "text/plain" }), "gobo-look.cube");
+    if (!(await ensureLut(gradeLook))) return;
+    save(new Blob([g.cube(Object.assign({}, gradeLook, { title: `Gobo ${gradeName()}` }), 33)], { type: "text/plain" }), "gobo-look.cube");
+  }
+  q("#gCube", lab).onclick = saveCube;
+  async function saveStill() { q("#gStill", lab).onclick(); }
+
+  // the Colour page (gobo_colour.js) works on this same look
+  q("#gAdv", lab).onclick = async () => {
+    if (!gradeLook) await fromShot();
+    stopVideo();
+    if (window.goboColour) window.goboColour.open();
+  };
+  window.goboGrade = {
+    get look() { return gradeLook; },
+    async ready() { if (!gradeLook) await fromShot(); return gradeLook; },
+    edited() { gradeFrom = "lab"; },
+    changed() { gradeFrom = "lab"; syncSliders(); if (!lab.classList.contains("hidden") && tab === "grade") gradeSetup(); },
+    async setPreset(film, grade) {
+      q("#gFilm", lab).value = film; q("#gGrade", lab).value = grade;
+      gradeLook = keepTools(await baseLook(film, grade), gradeLook); gradeFrom = "lab"; return gradeLook;
+    },
+    preset: () => ({ film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value }),
+    reset: fromShot, ensureLut, listLuts, importGrade, bake, saveCube, saveStill, name: gradeName,
+    reopen() { open("grade"); },
   };
 
   // ── Continuity ──────────────────────────────────────────────────────────

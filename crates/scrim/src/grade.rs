@@ -8,6 +8,7 @@
 use crate::color::{smoothstep, to_linear, to_srgb};
 use crate::look::Look;
 
+#[derive(Debug)]
 pub struct Lut {
     pub n: usize,
     /// sRGB in, sRGB out, red fastest (the .cube order)
@@ -22,10 +23,26 @@ pub fn lut(look: &Look, n: usize) -> Lut {
         for g in 0..n {
             for r in 0..n {
                 let d = [r as f32 / s, g as f32 / s, b as f32 / s];
-                let o = look.apply([to_linear(d[0]), to_linear(d[1]), to_linear(d[2])]);
+                // a camera's LUT first, then the colourist's tools, the look,
+                // and a creative LUT last (crate::colour), all on display values
+                let mut c = d;
+                if let Some(e) = look.ext.as_ref().filter(|e| e.first) {
+                    c = e.apply(c);
+                }
+                if look.corrects() {
+                    if let Some(cdl) = &look.cdl {
+                        c = cdl.apply(c);
+                    }
+                    c = look.curves.apply(look.wheels.apply(c).map(|v| v.clamp(0.0, 1.0)));
+                }
+                let o = look.apply([to_linear(c[0]), to_linear(c[1]), to_linear(c[2])]);
+                let mut o = o.map(to_srgb);
+                if let Some(e) = look.ext.as_ref().filter(|e| !e.first) {
+                    o = e.apply(o);
+                }
                 // a partial look mixes with the picture as shot, as a colourist's key gain does
                 let m = look.amount;
-                data.push([0, 1, 2].map(|k| d[k] + (to_srgb(o[k]) - d[k]) * m));
+                data.push([0, 1, 2].map(|k| d[k] + (o[k] - d[k]) * m));
             }
         }
     }
@@ -233,6 +250,37 @@ mod tests {
         for k in 0..3 {
             assert!((h[k] - (c[k] + a[k]) / 2.0).abs() < 0.01, "half is halfway: {c:?} {a:?} {h:?}");
         }
+    }
+
+    #[test]
+    fn the_colourists_tools_are_in_the_table_and_in_order() {
+        use crate::colour::{parse_cube, Cdl, Curves, Ext, Wheels};
+        use serde_json::json;
+        use std::sync::Arc;
+        let c = [0.6, 0.4, 0.2];
+        // a CDL alone: the table is the CDL
+        let cdl = Cdl { slope: [1.1, 1.0, 0.9], ..Cdl::default() };
+        let t = lut(&Look { cdl: Some(cdl.clone()), ..Look::default() }, 33);
+        let (a, b) = (t.sample(c), cdl.apply(c));
+        assert!((0..3).all(|k| (a[k] - b[k]).abs() < 4e-3), "{a:?} {b:?}");
+        // wheels then curves: lift the blues, then a curve that crushes the blues
+        let w = Wheels { lift: [0.0, 0.0, 0.2, 0.0], ..Wheels::default() };
+        let cv = Curves::from_json(&json!({"b": [[0, 0], [0.5, 0.0], [1, 1]]})).unwrap();
+        let t = lut(&Look { wheels: w, curves: cv, ..Look::default() }, 33);
+        assert!(t.sample([0.0, 0.0, 0.0])[2] < 0.01, "the curve comes after the wheel");
+        // a LUT that swaps red and blue: first, it's under the look; last, over it
+        let mut text = String::from("LUT_3D_SIZE 2\n");
+        for b in 0..2 { for g in 0..2 { for r in 0..2 { text += &format!("{b} {g} {r}\n"); } } }
+        let cube = Arc::new(parse_cube(&text).unwrap());
+        let swap = |first| Some(Ext { id: "swap".into(), mix: 1.0, first, cube: cube.clone() });
+        let o = lut(&Look { ext: swap(false), ..Look::default() }, 33).sample(c);
+        assert!((o[0] - 0.2).abs() < 4e-3 && (o[2] - 0.6).abs() < 4e-3, "{o:?}");
+        let warm = Look { temp: 0.6, ..Look::default() };
+        let (before, after) = (lut(&Look { ext: swap(true), ..warm.clone() }, 33).sample(c), lut(&Look { ext: swap(false), ..warm }, 33).sample(c));
+        // first: swapped, then warmed (red up a touch); last: warmed, then swapped (the warmth lands in blue)
+        assert!(before[0] > after[0] && before[2] < after[2], "{before:?} {after:?}");
+        let half = lut(&Look { ext: Some(Ext { mix: 0.5, ..swap(false).unwrap() }), ..Look::default() }, 33).sample(c);
+        assert!((half[0] - 0.4).abs() < 4e-3, "a half mix is halfway");
     }
 
     #[test]

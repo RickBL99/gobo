@@ -31,6 +31,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
 - **The Lab: Rust in your browser.**
   - **Steal the Look:** drop in any frame. In about 9 ms it reads the tone curve, colour, palette, grain, letterbox, focus and light, names the nearest film stock and grade, and sets them for you.
   - **Grade:** film stocks (Portra, 500T, bleach bypass, slide, VHS and more) and grades, with halation, moving grain and a vignette, live on video at 10 to 16 ms a frame. An Amount control sets the strength, and the look exports as a `.cube` file for Resolve, Premiere or Final Cut.
+  - **Colour:** the advanced grade, full screen and in the spirit of DaVinci Resolve's Color page: lift, gamma, gain and offset wheels, custom curves, a waveform, RGB parade, vectorscope and histogram, and `.cube` LUTs (3D or 1D) and ASC CDLs imported from any editor. All of it folds into the look's one 3D LUT, so the live preview, the exported `.cube` and the server's grade match.
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.

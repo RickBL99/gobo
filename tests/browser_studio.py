@@ -78,6 +78,15 @@ class Tab:
 RESULTS = []
 
 
+def _bars_clip() -> str:
+    """Two seconds of colour bars as an MP4, base64, for the Colour checks."""
+    out = os.path.join(tempfile.mkdtemp(prefix="bars-"), "bars.mp4")
+    subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24:duration=2",
+                    "-pix_fmt", "yuv420p", "-c:v", "libx264", "-movflags", "+faststart", out], check=True)
+    with open(out, "rb") as f:
+        return base64.b64encode(f.read()).decode()
+
+
 def check(name, ok, detail=""):
     RESULTS.append((name, bool(ok), detail))
 
@@ -877,6 +886,61 @@ def main():
         tab.shot("32-director-phone", w=390, h=844)
         check("director: no sideways scroll on a phone", tab.js("$('#director').scrollWidth <= innerWidth + 1"))
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
+
+        # ── Colour: the Lab's Grade, advanced, on a real clip the server keeps ──
+        tab.call("Page.navigate", url=f"{BASE}/studio"); time.sleep(3)
+        made = tab.js(f"""(async () => {{
+          const r = await api('/reels', {{method: 'POST', json: {{name: 'Colour check'}}}});
+          const bin = Uint8Array.from(atob('{_bars_clip()}'), c => c.charCodeAt(0));
+          const fd = new FormData(); fd.append('file', new Blob([bin], {{type: 'video/mp4'}}), 'bars.mp4');
+          const t = await api(`/reels/${{r.id}}/footage`, {{method: 'POST', body: fd}});
+          await loadReel(r.id); select(t.take.id); return [r.id, t.take.id];
+        }})()""")
+        tab.js("$('#labBtn').click(); $('#lab [data-tab=grade]').click(); 1"); time.sleep(2)
+        tab.js("$('#gAdv').click(); 1"); time.sleep(3)
+        check("colour: Advanced opens the Colour page on the take", tab.js("!$('#colour').classList.contains('hidden') && $('#cCv').width > 0")
+              and "take A" in tab.js("$('#cWhat').textContent"), tab.js("$('#cWhat').textContent"))
+        lit = "(() => { const c = $('#cScope'), d = c.getContext('2d').getImageData(0, 0, c.width, c.height).data; let n = 0; for (let i = 3; i < d.length; i += 4) if (d[i] > 0) n++; return n; })()"
+        check("colour: the waveform draws the picture", tab.js(lit) > 1000, tab.js(lit))
+        tab.js("""const c = $('#cWheels [data-wheel=lift] canvas'), b = c.getBoundingClientRect(), r = b.width / 2;
+          const at = (t, f) => c.dispatchEvent(new PointerEvent(t, {clientX: b.left + r + f[0] * r, clientY: b.top + r + f[1] * r, pointerId: 7, bubbles: true}));
+          at('pointerdown', [0.85, 0.1]); at('pointerup', [0.85, 0.1]); 1""")
+        lift = tab.js("goboGrade.look.wheels && goboGrade.look.wheels.lift")
+        check("colour: dragging the lift wheel toward blue lifts the blue", bool(lift) and lift[2] > 0.05 and lift[0] < 0, lift)
+        tab.js("""const c = $('#cCurve'), b = c.getBoundingClientRect(), pad = 14 * b.width / c.width, span = b.width - 2 * pad;
+          const ev = t => c.dispatchEvent(new PointerEvent(t, {clientX: b.left + pad + 0.5 * span, clientY: b.top + pad + 0.3 * span, pointerId: 8, bubbles: true}));
+          ev('pointerdown'); ev('pointerup'); 1""")
+        check("colour: a click on the curve adds a point", tab.js("goboGrade.look.curves && goboGrade.look.curves.y.length") == 3, tab.js("JSON.stringify(goboGrade.look.curves)"))
+        tab.js("$('#cScopes [data-scope=vector]').click(); 1"); time.sleep(0.8)
+        check("colour: the vectorscope", tab.js("$('#cScope').width") == 220 and tab.js(lit) > 50)
+        swap = "TITLE \\\"Swap\\\"\\nLUT_3D_SIZE 2\\n" + "".join(f"{b} {g} {r}\\n" for b in (0, 1) for g in (0, 1) for r in (0, 1))
+        tab.js(f"""const dt = new DataTransfer(); dt.items.add(new File(["{swap}"], 'swap.cube'));
+          $('#cLutFile').files = dt.files; $('#cLutFile').dispatchEvent(new Event('change')); 1""")
+        time.sleep(2.5)
+        lut = tab.js("goboGrade.look.lut3d")
+        check("colour: a .cube imports, uploads to the reel and goes on the look", bool(lut) and lut["id"].startswith("lut-")
+              and tab.js("$('#cLut').selectedOptions[0].textContent") == "Swap" and not tab.js("$('#cLutOpts').classList.contains('hidden')"), lut)
+        tab.shot("33-colour")
+        tab.js("$('#cSimple').click(); 1"); time.sleep(1.5)
+        check("colour: Simple goes back to the Lab's Grade, the grade kept", tab.js("$('#colour').classList.contains('hidden')")
+              and not tab.js("$('#lab').classList.contains('hidden')") and tab.js("$('#gLut').value") == (lut or {}).get("id")
+              and tab.js("!!goboGrade.look.wheels"))
+        tab.js("$('#gAdv').click(); 1"); time.sleep(2.5)
+        tab.js("$('#cBake').click(); 1")
+        graded = None
+        for _ in range(60):
+            time.sleep(0.5)
+            graded = tab.js("(S.takes.find(t => t.action === 'grade') || {}).status")
+            if graded in ("done", "failed"):
+                break
+            tab.js("loadReel(S.reel.id); 1")
+        g = tab.js("JSON.stringify(S.takes.find(t => t.action === 'grade') || {})")
+        check("colour: Grade the take grades it on the server with the LUT and the wheels", graded == "done" and '"lut3d"' in g and '"wheels"' in g, g[:300])
+        tab.js("$('#gAdv').click(); 1"); time.sleep(2)
+        tab.shot("34-colour-phone", w=390, h=844)
+        check("colour: no sideways scroll on a phone", tab.js("$('#colour').scrollWidth <= innerWidth + 1"))
+        tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
+        tab.js("$('#cDone').click(); 1")
 
         check("no script errors", not tab.errors, tab.errors[:3])
     finally:

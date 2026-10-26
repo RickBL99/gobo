@@ -1298,7 +1298,7 @@ async def grab_frame(reel: str, tid: str, request: Request):
 _grading = threading.Lock()
 
 
-def _grade_clip(reel: str, tid: str, src: str, name: str, spec: Dict) -> None:
+def _grade_clip(reel: str, tid: str, src: str, name: str, spec: Dict, luts: Optional[Dict[str, str]] = None) -> None:
     dst = J.out_path(reel, name)
     said = [0.0]
 
@@ -1324,7 +1324,7 @@ def _grade_clip(reel: str, tid: str, src: str, name: str, spec: Dict) -> None:
             if not live("waiting for another grade to finish"):
                 return
         try:
-            info = R.grade_film(src, dst, spec, progress=lambda done, total: live(f"frame {done} of {total}"))
+            info = R.grade_film(src, dst, spec, progress=lambda done, total: live(f"frame {done} of {total}"), luts=luts)
         finally:
             _grading.release()
     except R.Stopped:
@@ -1363,8 +1363,14 @@ async def grade_take(reel: str, tid: str, request: Request):
     spec = b.get("look")
     if not isinstance(spec, dict) or not spec:
         return _err("Pick a look.")
+    luts, lut = {}, spec.get("lut3d")
+    if isinstance(lut, dict) and lut.get("id"):
+        text = J.lut_text(reel, str(lut["id"]))
+        if text is None:
+            return _err("That LUT isn't in this reel any more: import it again.")
+        luts[lut["id"]] = text
     try:
-        await run_in_threadpool(R.look, spec)
+        await run_in_threadpool(R.look, spec, luts)
     except ValueError as e:
         return _err(f"That look doesn't work: {e}")
     label = str(b.get("label") or "").strip()[:60] or "Graded"
@@ -1373,11 +1379,11 @@ async def grade_take(reel: str, tid: str, request: Request):
     if video:
         nt = _local_take(reel, t, "video", "grade", None, by=_who(request), label=label, look=spec,
                          progress="starting", w=t.get("w"), h=t.get("h"))
-        _spawn(_grade_clip, reel, nt["id"], J.out_path(reel, t["file"]), name, spec)
+        _spawn(_grade_clip, reel, nt["id"], J.out_path(reel, t["file"]), name, spec, luts)
         return {"take": _public_take(nt)}
     dst = J.out_path(reel, name)
     try:
-        info = await run_in_threadpool(R.grade_still, J.out_path(reel, t["file"]), dst, spec)
+        info = await run_in_threadpool(R.grade_still, J.out_path(reel, t["file"]), dst, spec, luts)
     except Exception as e:
         if os.path.exists(dst):
             os.remove(dst)
@@ -1385,6 +1391,46 @@ async def grade_take(reel: str, tid: str, request: Request):
     nt = _local_take(reel, t, "image", "grade", name, by=_who(request), label=label, look=spec,
                      w=info["w"], h=info["h"])
     return {"take": _public_take(nt)}
+
+
+# ── LUTs ────────────────────────────────────────────────────────────────────
+# A .cube from Resolve, Premiere, a LUT pack or a camera maker, kept with the
+# reel so Grade the take can use it on the server: the page loads the same
+# file into its own gobo.wasm, and a look names it by id.
+MAX_LUT_BYTES = 16 * 1024 * 1024                # a 65³ table is about 7 MB
+
+
+@router.post("/reels/{reel}/luts", response_class=JSONResponse)
+async def add_lut(reel: str, file: UploadFile = File(...)):
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    data = await file.read(MAX_LUT_BYTES + 1)
+    if len(data) > MAX_LUT_BYTES:
+        return _err("That LUT is over 16 MB.")
+    text = data.decode("utf-8", errors="replace")
+    try:
+        info = await run_in_threadpool(R.cube_info, text)
+    except ValueError as e:
+        return _err(f"That isn't a LUT Gobo can read: {e}")
+    name = os.path.basename(file.filename or "look.cube")[:80]
+    meta = J.put_lut(reel, text, {"name": name, "title": info.get("title") or os.path.splitext(name)[0],
+                                  "kind": info["kind"], "size": info["size"]})
+    return {"lut": meta}
+
+
+@router.get("/reels/{reel}/luts", response_class=JSONResponse)
+async def reel_luts(reel: str):
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    return {"luts": J.list_luts(reel)}
+
+
+@router.get("/reels/{reel}/luts/{lid}")
+async def lut_file(reel: str, lid: str):
+    text = J.lut_text(reel, lid) if _reel_or_404(reel) else None
+    if text is None:
+        return _err("No such LUT.", 404)
+    return Response(text, media_type="text/plain; charset=utf-8")
 
 
 # ── share a film ────────────────────────────────────────────────────────────

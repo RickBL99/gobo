@@ -14,9 +14,21 @@
 
 use serde_json::{json, Value};
 use std::cell::RefCell;
+use std::collections::HashMap;
+use std::sync::Arc;
 
 thread_local! {
     static LAST: RefCell<Option<(scrim::Look, scrim::Lut)>> = const { RefCell::new(None) };
+    // .cube files the page (or the server) has loaded, by id: a look names one
+    // ({"lut3d": {"id"}}) instead of carrying its table on every frame
+    static CUBES: RefCell<HashMap<String, Arc<scrim::Cube>>> = RefCell::new(HashMap::new());
+}
+
+fn look_from(v: &Value) -> Result<scrim::Look, String> {
+    CUBES.with(|c| {
+        let cubes = c.borrow();
+        scrim::Look::from_json_with(v, &|id| cubes.get(id).cloned())
+    })
 }
 
 fn take_json(ptr: *mut u8, len: usize) -> Result<Value, String> {
@@ -72,7 +84,7 @@ pub extern "C" fn scrim_read(px: *mut u8, len: usize, w: u32, h: u32) -> u64 {
 /// Grade pixels in place with a look ({"film": "portra", "grade": "teal", "grain": 0.3, …}).
 #[no_mangle]
 pub extern "C" fn scrim_grade(px: *mut u8, len: usize, w: u32, h: u32, look: *mut u8, look_len: usize, seed: u32) -> u64 {
-    let lk = match take_json(look, look_len).and_then(|v| scrim::Look::from_json(&v)) {
+    let lk = match take_json(look, look_len).and_then(|v| look_from(&v)) {
         Ok(l) => l,
         Err(e) => return reply(json!({"error": e})),
     };
@@ -91,7 +103,7 @@ pub extern "C" fn scrim_grade(px: *mut u8, len: usize, w: u32, h: u32, look: *mu
 /// A look resolved to its numbers (presets by name, then overrides).
 #[no_mangle]
 pub extern "C" fn scrim_look(look: *mut u8, look_len: usize) -> u64 {
-    match take_json(look, look_len).and_then(|v| scrim::Look::from_json(&v)) {
+    match take_json(look, look_len).and_then(|v| look_from(&v)) {
         Ok(l) => reply(l.to_json()),
         Err(e) => reply(json!({"error": e})),
     }
@@ -102,10 +114,38 @@ pub extern "C" fn scrim_look(look: *mut u8, look_len: usize) -> u64 {
 pub extern "C" fn scrim_cube(look: *mut u8, look_len: usize, size: u32) -> u64 {
     let v = take_json(look, look_len).unwrap_or(Value::Null);
     let title = v.get("title").and_then(Value::as_str).unwrap_or("Gobo look").to_string();
-    match scrim::Look::from_json(&v) {
+    match look_from(&v) {
         Ok(l) => answer(scrim::lut(&l, size as usize).cube(&title).into_bytes()),
         Err(e) => answer(format!("# error: {e}\n").into_bytes()),
     }
+}
+
+/// Load a .cube ({"id", "text"}) for looks to name: {id, title, kind, size}.
+#[no_mangle]
+pub extern "C" fn scrim_lut_load(body: *mut u8, len: usize) -> u64 {
+    let v = match take_json(body, len) {
+        Ok(v) => v,
+        Err(e) => return reply(json!({"error": e})),
+    };
+    let (Some(id), Some(text)) = (v.get("id").and_then(Value::as_str), v.get("text").and_then(Value::as_str)) else {
+        return reply(json!({"error": "a LUT is {id, text}"}));
+    };
+    match scrim::parse_cube(text) {
+        Ok(c) => {
+            let out = json!({"id": id, "title": c.title, "kind": c.kind, "size": c.size});
+            CUBES.with(|m| m.borrow_mut().insert(id.to_string(), Arc::new(c)));
+            reply(out)
+        }
+        Err(e) => reply(json!({"error": e})),
+    }
+}
+
+/// A scope of a picture as RGBA pixels, `ow` × `oh`: kind 0 waveform,
+/// 1 RGB parade, 2 vectorscope, 3 histogram. (Bytes, not JSON.)
+#[no_mangle]
+pub extern "C" fn scrim_scope(px: *mut u8, len: usize, w: u32, h: u32, kind: u32, ow: u32, oh: u32) -> u64 {
+    let k = scrim::scope::Kind::from_code(kind).unwrap_or(scrim::scope::Kind::Waveform);
+    answer(scrim::scope::scope(lend(px, len), w as usize, h as usize, k, ow as usize, oh as usize))
 }
 
 /// Does shot B pick up where shot A left off? (A's last frame, B's first.)

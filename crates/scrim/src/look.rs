@@ -5,7 +5,9 @@
 //! interpolates, and as a .cube file any editor can load.
 
 use crate::color::{chroma, linear, oklab, smoothstep, Lab, Rgb};
+use crate::colour::{Cdl, Cube, Curves, Ext, Wheels};
 use serde_json::{json, Map, Value};
+use std::sync::Arc;
 
 #[derive(Clone, Debug, PartialEq)]
 pub struct Look {
@@ -37,6 +39,13 @@ pub struct Look {
     /// how much of the look reaches the picture: 1 is all of it, 0 is the
     /// picture as shot (for a take whose prompt already asked for the stock)
     pub amount: f32,
+    // the colourist's tools (crate::colour), on display values, before the
+    // look: a CDL, the primary wheels and the curves; and a .cube from
+    // elsewhere, first or after the look
+    pub cdl: Option<Cdl>,
+    pub wheels: Wheels,
+    pub curves: Curves,
+    pub ext: Option<Ext>,
 }
 
 impl Default for Look {
@@ -45,6 +54,7 @@ impl Default for Look {
             exposure: 0.0, temp: 0.0, tint: 0.0, contrast: 1.0, pivot: 0.57, fade: 0.0, white: 1.0,
             sat: 1.0, shadows: [0.0; 2], highlights: [0.0; 2], mono: None, bleach: 0.0,
             halation: 0.0, grain: 0.0, grain_size: 1.4, vignette: 0.0, amount: 1.0,
+            cdl: None, wheels: Wheels::default(), curves: Curves::default(), ext: None,
         }
     }
 }
@@ -152,6 +162,11 @@ pub fn compose(a: &Look, b: &Look) -> Look {
         grain_size: if b.grain > a.grain { b.grain_size } else { a.grain_size },
         vignette: a.vignette.max(b.vignette),
         amount: a.amount * b.amount,
+        // presets are looks only; the colourist's tools come from the numbers on top
+        cdl: b.cdl.clone().or(a.cdl.clone()),
+        wheels: if b.wheels.is_identity() { a.wheels.clone() } else { b.wheels.clone() },
+        curves: if b.curves.is_identity() { a.curves.clone() } else { b.curves.clone() },
+        ext: b.ext.clone().or(a.ext.clone()),
     }
 }
 
@@ -227,12 +242,34 @@ impl Look {
         if let Some(mo) = self.mono {
             m["mono"] = json!([r(mo[0]), r(mo[1]), r(mo[2])]);
         }
+        if let Some(c) = &self.cdl {
+            m["cdl"] = c.to_json();
+        }
+        if !self.wheels.is_identity() {
+            m["wheels"] = self.wheels.to_json();
+        }
+        if !self.curves.is_identity() {
+            m["curves"] = self.curves.to_json();
+        }
+        if let Some(e) = &self.ext {
+            m["lut3d"] = e.to_json();
+        }
         m
+    }
+
+    /// Does the look change colour at all before the picture-wide effects?
+    pub fn corrects(&self) -> bool {
+        self.cdl.is_some() || !self.wheels.is_identity() || !self.curves.is_identity()
     }
 
     /// A look from JSON: a preset by name ({"film": "portra", "grade": "teal"}),
     /// numbers on top of it, or both; anything missing stays as it was.
     pub fn from_json(v: &Value) -> Result<Look, String> {
+        Look::from_json_with(v, &|_| None)
+    }
+
+    /// The same, with a way to find the .cube a look names ({"lut3d": {"id"}}).
+    pub fn from_json_with(v: &Value, find: &dyn Fn(&str) -> Option<Arc<Cube>>) -> Result<Look, String> {
         let o = v.as_object().ok_or("a look is a JSON object")?;
         let pick = |key: &str, f: fn(&str) -> Option<Look>| -> Result<Look, String> {
             match o.get(key).and_then(Value::as_str) {
@@ -270,6 +307,19 @@ impl Look {
         l.white = l.white.clamp(0.5, 1.0).max(l.fade + 0.2);
         l.grain_size = l.grain_size.clamp(0.5, 6.0);
         l.amount = l.amount.clamp(0.0, 1.0);
+        match o.get("cdl") {
+            None | Some(Value::Null) => {}
+            Some(c) => l.cdl = Some(Cdl::from_json(c)?).filter(|c| *c != Cdl::default()),
+        }
+        if let Some(w) = o.get("wheels").filter(|w| !w.is_null()) {
+            l.wheels = Wheels::from_json(w)?;
+        }
+        if let Some(c) = o.get("curves").filter(|c| !c.is_null()) {
+            l.curves = Curves::from_json(c)?;
+        }
+        if let Some(e) = o.get("lut3d").filter(|e| !e.is_null()) {
+            l.ext = Some(Ext::from_json(e, find)?);
+        }
         Ok(l)
     }
 }
