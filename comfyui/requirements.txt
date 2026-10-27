@@ -1,0 +1,2 @@
+# ComfyUI already has torch, numpy, av (PyAV) and pillow; Gobo's Rust needs one more.
+wasmtime>=30

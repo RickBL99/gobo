@@ -412,6 +412,53 @@ class Flow(unittest.TestCase):
         self.assertIsNone(J.get_call(reel, ids[0]))
         self.assertEqual((slow["status"], slow.get("resends")), ("running", None))
 
+    def test_a_take_opens_in_comfyui_as_gobos_nodes(self):
+        """Open in ComfyUI: the take, its look as Gobo's nodes, a LUT, a shot match,
+        the grade and a save; ComfyUI fetches the files by signed links."""
+        reel = self.reel()
+        ref = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A harbour."}).json()["takes"][0]
+        self.finish(reel, ref["id"], jpeg((64, 64), (200, 120, 40)), ".jpg")
+        t = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A harbour."}).json()["takes"][0]
+        self.finish(reel, t["id"], jpeg((64, 64), (180, 130, 60)), ".jpg")
+        swap = "TITLE \"Swap\"\nLUT_3D_SIZE 2\n" + "".join(f"{b} {g} {r}\n" for b in (0, 1) for g in (0, 1) for r in (0, 1))
+        lut = self.c.post(f"/studio/reels/{reel}/luts", files={"file": ("swap.cube", swap.encode(), "text/plain")}).json()["lut"]
+        look = {"film": "portra", "grade": "teal", "amount": 0.8, "contrast": 1.2,
+                "wheels": {"lift": [0, 0, 0.02, 0], "gamma": [0, 0, 0, 0], "gain": [0, 0, 0, 0], "offset": [0, 0, 0, 0]},
+                "lut3d": {"id": lut["id"], "mix": 0.5, "first": False}}
+        r = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour",
+                        json={"look": look, "film": "portra", "grade": "teal", "reference": ref["id"]}).json()
+        flow = r["workflow"]
+        self.assertEqual([n["class_type"] for n in flow.values()],
+                         ["GoboLoadTake", "GoboLook", "GoboLUT", "GoboLoadTake", "GoboShotMatch", "GoboGrade", "SaveImage"])
+        lk = flow["2"]["inputs"]
+        self.assertEqual((lk["film"], lk["grade"], lk["amount"], lk["contrast"]), ("portra", "teal", 0.8, 1.2))
+        self.assertEqual(set(lk) - {"film", "grade", "amount", "colour"},
+                         {"exposure", "contrast", "pivot", "saturation", "warmth", "tint", "fade", "white_point", "grain", "grain_size", "halation", "vignette"})
+        colour = json.loads(lk["colour"])
+        self.assertEqual(colour["wheels"]["lift"][2], 0.02)
+        self.assertIn("highlights", colour, "the grade's split tones ride in the colour box")
+        self.assertEqual((flow["3"]["inputs"]["amount"], flow["3"]["inputs"]["where"], flow["3"]["inputs"]["name"]), (0.5, "after the look", "Swap"))
+        self.assertEqual(flow["6"]["inputs"], {"take": ["1", 0], "look": ["5", 0]})
+        self.assertTrue(r["nodes"].endswith("/comfyui/gobo-nodes.zip"))
+        # the links work without signing in, for this file only, and not once tampered with
+        outside = TestClient(APP)
+        got = outside.get(flow["1"]["inputs"]["link"].split("testserver", 1)[1])
+        t = J.get_take(reel, t["id"])
+        self.assertEqual(got.content, open(J.out_path(reel, t["file"]), "rb").read())
+        self.assertEqual(outside.get(flow["3"]["inputs"]["lut"].split("testserver", 1)[1]).text, swap)
+        token = flow["1"]["inputs"]["link"].rsplit("/", 1)[1]
+        self.assertEqual(outside.get("/t/" + token[:-2] + ("00" if not token.endswith("00") else "11")).status_code, 404)
+        from studio import comfy_colour as CC
+        stale = CC.sign(reel, t["file"], days=-1)
+        self.assertEqual(outside.get(f"/t/{stale}").status_code, 404)
+        self.assertIsNone(CC.path_of({"r": reel, "n": "../../reel.json"}))
+        # the nodes themselves, one folder for ComfyUI/custom_nodes
+        z = zipfile.ZipFile(io.BytesIO(outside.get("/comfyui/gobo-nodes.zip").content))
+        names = set(z.namelist())
+        self.assertTrue({"gobo/__init__.py", "gobo/nodes.py", "gobo/engine.py", "gobo/gobo.wasm", "gobo/web/gobo.js", "gobo/requirements.txt"} <= names, names)
+        self.assertFalse(any("__pycache__" in n for n in names))
+        self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
+
     def test_library_takes_go_on_a_board(self):
         """Clips made for a board whose page was closed, and a still from another
         reel, put on a board from the library: in film order, the stranger copied in."""

@@ -19,7 +19,7 @@ from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, Redirect
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
-from . import accounts, comfy, jobs as J, models as M, routes, settings, visitors
+from . import accounts, comfy, comfy_colour as CC, jobs as J, models as M, routes, settings, visitors
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
@@ -27,8 +27,9 @@ router = APIRouter()
 
 # Paths anyone may load: the sign-in page itself, the About page it links to,
 # the health check, the static files they are drawn with, and shared films.
-OPEN_PATHS = ("/login", "/logout", "/about", "/healthz", "/favicon.ico")
-OPEN_PREFIXES = ("/static/", "/f/")
+OPEN_PATHS = ("/login", "/logout", "/about", "/healthz", "/favicon.ico", "/comfyui/gobo-nodes.zip")
+# /t/: a take or LUT by a signed, expiring link, for a ComfyUI that can't sign in (comfy_colour.py)
+OPEN_PREFIXES = ("/static/", "/f/", "/t/")
 TOUR = "/static/tour/gobo-tour.mp4"
 
 _failures = defaultdict(deque)        # client → times of recent wrong passwords
@@ -181,6 +182,40 @@ async def home(request: Request):
         "keys": {"comfy": bool(comfy.api_key()),
                  "claude": M.claude_on(), "anthropic": bool(settings.ANTHROPIC_API_KEY) and not settings.VISITOR_KEYS,
                  "openai": bool(settings.OPENAI_API_KEY) and not settings.VISITOR_KEYS}})
+
+
+# ── ComfyUI: the nodes, and the files a workflow from Gobo fetches ──────────
+NODES_DIR = os.path.join(os.path.dirname(HERE), "comfyui")
+
+
+@router.get("/comfyui/gobo-nodes.zip")
+async def comfy_nodes():
+    """Gobo's ComfyUI nodes, one folder to put in ComfyUI/custom_nodes."""
+    import io
+    import zipfile
+
+    def pack() -> bytes:
+        buf = io.BytesIO()
+        with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
+            for root, dirs, files in os.walk(NODES_DIR):
+                dirs[:] = [d for d in dirs if d not in ("__pycache__", "cache")]
+                for f in files:
+                    full = os.path.join(root, f)
+                    z.write(full, os.path.join("gobo", os.path.relpath(full, NODES_DIR)))
+        return buf.getvalue()
+    from fastapi.responses import Response
+    return Response(await run_in_threadpool(pack), media_type="application/zip",
+                    headers={"Content-Disposition": 'attachment; filename="gobo-nodes.zip"'})
+
+
+@router.get("/t/{token}")
+async def signed_file(token: str):
+    """A take's file or a LUT, for ComfyUI: a signed link, good for a week."""
+    d = CC.opened(token)
+    path = CC.path_of(d) if d else None
+    if not path:
+        return JSONResponse({"error": "That link has expired or isn't one Gobo made."}, status_code=404)
+    return FileResponse(path, media_type="text/plain" if path.endswith(".cube") else routes._media_type(path))
 
 
 # ── Users: an admin adds people with their own name and password ────────────

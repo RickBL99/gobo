@@ -452,7 +452,7 @@ def main():
         # the viewer
         tab.js("$('#libSheet .lc').click(); 1"); time.sleep(0.4)
         check("viewer plays the clip", tab.js("!!$('#libView video') && $('#libView video').getAttribute('src')") == "/nowhere/a.mp4"
-              and "Open in its reel" in tab.js("$('#libView').textContent") and "$2.36" in tab.js("$('#libView').textContent"))
+              and "Open as a clip" in tab.js("$('#libView').textContent") and "$2.36" in tab.js("$('#libView').textContent"))
         tab.shot("14-library-viewer")
         tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'ArrowRight'})); 1"); time.sleep(0.3)
         check("→ steps to the next take", tab.js("LIB.view") == 1 and tab.js("!!$('#libView img')"))
@@ -480,11 +480,13 @@ def main():
               and tab.js("LIB.items.find(t => t.id === '1792700000001-eeeeee').owner") == "Tester" and tab.js("LIB.picked.size") == 0)
         check("a named take offers no claim", not tab.js("libView(LIB.items.findIndex(t => t.owner === 'Bob')), !!$('#lvClaim')"))
         tab.js("libClose(); 1")
+        check("each take offers As a clip, and On its board when it has a card", tab.js(
+            "$$('#libSheet .lc').every(e => !!e.querySelector('[data-o=clip]') && !!e.querySelector('[data-o=board]') === !!LIB.items[+e.dataset.i].board)"))
         # open a take in its reel
         tab.js("$$('#libSheet .lc').find(e => LIB.items[+e.dataset.i].id === '1792800000001-cccccc').click(); 1"); time.sleep(0.3)
-        tab.js("$('#lvOpen').click(); 1"); time.sleep(0.8)
-        check("open in its reel", tab.js("S.reel.id") == "rb" and tab.js("S.current") == "1792800000001-cccccc"
-              and tab.js("$('#libSheet').classList.contains('hidden')"), (tab.js("S.reel && S.reel.id"), tab.js("S.current")))
+        tab.js("setView('board'); $('#lvOpen').click(); 1"); time.sleep(0.8)
+        check("open as a clip: its reel, on the stage, even from the board", tab.js("S.reel.id") == "rb" and tab.js("S.current") == "1792800000001-cccccc"
+              and not tab.js("boardOn()") and tab.js("$('#libSheet').classList.contains('hidden')"), (tab.js("S.reel && S.reel.id"), tab.js("S.current")))
         tab.js("$('#libBtn').click(); 1"); time.sleep(0.6)
         tab.shot("15-library-phone", w=390, h=844)
         check("library: no sideways scroll on a phone", tab.js("document.documentElement.scrollWidth - window.innerWidth") <= 1)
@@ -1003,6 +1005,20 @@ def main():
         note = tab.js("$('#gMatchOut').textContent")
         check("match: the drifted take is matched to A's colour and graded like it", '"cdl":true' in made and "Matched to" in made and "→" in note, [made, note])
         tab.shot("36-match")
+        # ── Open in ComfyUI: the first time asks where it is, then hands it the workflow ──
+        tab.js("try { localStorage.removeItem('gobo.comfyui'); } catch (e) {} window._open0 = window.open; window._opened = []; window.open = u => { window._opened.push(u); return null; }; 1")
+        tab.js("$('#gComfy').click(); 1"); time.sleep(0.5)
+        check("comfyui: the first time, it asks where ComfyUI is and how to add Gobo's nodes",
+              tab.js("!!$('.comfyask') && !!$('.comfyask a[href=\\'/comfyui/gobo-nodes.zip\\']')"))
+        tab.shot("37-comfyui-ask")
+        tab.js("$('#caAddr').value = 'http://127.0.0.1:8188/'; $('#caGo').click(); 1"); time.sleep(2)
+        url = tab.js("window._opened[window._opened.length - 1] || ''")
+        sent = url.split("#gobo=")[1] if "#gobo=" in url else ""
+        flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
+        classes = [n["class_type"] for n in flow.get("workflow", {}).values()]
+        check("comfyui: it opens ComfyUI with the take and its look as Gobo's nodes", url.startswith("http://127.0.0.1:8188/#gobo=")
+              and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes, classes)
+        tab.js("window.open = window._open0; 1")
         tab.js("$('#lab .x, #labClose, #lab [data-close]') && 1"); tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1")
 
         # ── the library to a board: takes from anywhere, a card each, in film order ──
@@ -1022,8 +1038,25 @@ def main():
         tab.js("$('#libSheet .lc').click(); 1"); time.sleep(0.8)          # the newest: a card's take
         had = tab.js("!!$('#lvBoard')")
         tab.js("$('#lvBoard') && $('#lvBoard').click(); 1"); time.sleep(2)
-        check("library: Open its board goes to the board its card is on", had and tab.js("boardOn()")
-              and tab.js("$('#libSheet').classList.contains('hidden')"))
+        check("library: Open on its board goes to the board its card is on, the card showing that take", had and tab.js("boardOn()")
+              and tab.js("$('#libSheet').classList.contains('hidden')")
+              and tab.js("(() => { const t = LIB.items[0], s = B.shots.find(x => x.id === t.board); return !!s && pickOf(s, t.role).id === t.id; })()")
+              and tab.js("!!$('.bcard.found')"))
+        # the card was using another take of its own: it switches, and says what it had
+        tab.js("""window._sw = (async () => {
+            const t = LIB.items[0], s = B.shots.find(x => x.id === t.board);
+            const other = Object.assign({}, S.takes.find(x => x.id === t.id), {id: t.id + 'z', letter: 'Z'});
+            S.takes.push(other); s[t.role] = other.id; refreshBoard();
+            await libOpen(t, true);
+            return {shows: pickOf(s, t.role).id === t.id, said: $('#toast').textContent};
+          })(); 1"""); time.sleep(1.5)
+        tab.js("_sw.then(r => window._swr = r); 1"); time.sleep(0.3)
+        check("library: a card using another take switches to the one opened, and says which it had",
+              tab.js("_swr && _swr.shows") and "it had Z" in (tab.js("_swr && _swr.said") or ""), tab.js("_swr && _swr.said"))
+        tab.js("$('#libBtn').click(); 1"); time.sleep(2)
+        tab.js("$('#libSheet .lc [data-o=clip]').click(); 1"); time.sleep(1.5)
+        check("library: As a clip on a take in the grid puts it on the stage", not tab.js("boardOn()")
+              and tab.js("S.current") == tab.js("LIB.items[0].id") and tab.js("$('#libSheet').classList.contains('hidden')"))
         tab.js("window.prompt = window._prompt; 1")
 
         check("no script errors", not tab.errors, tab.errors[:3])

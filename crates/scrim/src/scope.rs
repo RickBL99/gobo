@@ -31,6 +31,15 @@ impl Kind {
 }
 
 const MAX_SAMPLES: usize = 160_000;
+/// How fast a trace brightens with the samples in a cell: on the waveform
+/// against a column's share of them, on the vectorscope against them all.
+const WAVE_GAIN: f32 = 35.0;
+const VECTOR_GAIN: f32 = 1600.0;
+
+/// A cell's brightness from its weight: a lone sample shows, a crowd is full.
+fn lit(x: f32) -> f32 {
+    0.22 + 0.78 * (1.0 - (-x).exp())
+}
 
 /// Draw a scope of an RGBA8 picture, `ow` × `oh`, transparent where empty.
 pub fn scope(px: &[u8], w: usize, h: usize, kind: Kind, ow: usize, oh: usize) -> Vec<u8> {
@@ -46,12 +55,15 @@ pub fn scope(px: &[u8], w: usize, h: usize, kind: Kind, ow: usize, oh: usize) ->
         [px[i] as f32 / 255.0, px[i + 1] as f32 / 255.0, px[i + 2] as f32 / 255.0]
     };
     let count = samples().count().max(1) as f32;
+    // light on black, as a scope's trace is: a lit pixel is opaque and its
+    // colour is the light, adding where traces cross. (A pixel's strength in
+    // its alpha as well as its colour showed a half-lit trace at a quarter.)
     let mut put = |i: usize, c: [f32; 3], a: f32| {
         let o = &mut out[i * 4..i * 4 + 4];
         for k in 0..3 {
             o[k] = (o[k] as f32 + c[k] * 255.0 * a).min(255.0) as u8;
         }
-        o[3] = (o[3] as f32).max(a * 255.0).min(255.0) as u8;
+        o[3] = 255;
     };
     match kind {
         Kind::Waveform | Kind::Parade => {
@@ -77,13 +89,14 @@ pub fn scope(px: &[u8], w: usize, h: usize, kind: Kind, ow: usize, oh: usize) ->
                     }
                     entries += c1 - c0;
                 }
-                // each column holds entries/bw; a fifth of them in one cell is full
-                let k = 5.0 * bw as f32 / entries.max(1) as f32;
+                // a column's entries spread over a hundred rows read bright; a lone
+                // sample still shows
+                let k = WAVE_GAIN * bw as f32 / entries.max(1) as f32;
                 for row in 0..oh {
                     for col in 0..bw {
                         let n = grid[row * bw + col];
                         if n > 0 {
-                            put(row * ow + b * bw + col, *colour, 1.0 - (-(n as f32) * k).exp() * 0.92);
+                            put(row * ow + b * bw + col, *colour, lit(n as f32 * k));
                         }
                     }
                 }
@@ -114,7 +127,7 @@ pub fn scope(px: &[u8], w: usize, h: usize, kind: Kind, ow: usize, oh: usize) ->
                     }
                 }
             }
-            let k = 400.0 / count;
+            let k = VECTOR_GAIN / count;
             for (i, (n, sum)) in grid.iter().enumerate() {
                 if *n == 0 {
                     continue;
@@ -123,25 +136,28 @@ pub fn scope(px: &[u8], w: usize, h: usize, kind: Kind, ow: usize, oh: usize) ->
                 let avg = sum.map(|s| s / *n as f32);
                 let peak = avg[0].max(avg[1]).max(avg[2]).max(0.05);
                 let colour = avg.map(|v| 0.35 + 0.65 * v / peak);
-                put(i, colour, 1.0 - (-(*n as f32) * k).exp() * 0.9);
+                put(i, colour, lit(*n as f32 * k));
             }
         }
         Kind::Histogram => {
-            let mut bins = vec![[0u32; 3]; ow];
+            // a bin per level the picture can hold, each as wide as its share of
+            // the scope (more columns than levels left every other column empty)
+            let mut bins = [[0u32; 3]; 256];
             for (x, y) in samples() {
                 let c = at(x, y);
                 for k in 0..3 {
-                    bins[((c[k] * (ow - 1) as f32).round() as usize).min(ow - 1)][k] += 1;
+                    bins[(c[k] * 255.0).round() as usize][k] += 1;
                 }
             }
             // scaled to the tallest bar away from the clipped ends, which would flatten the rest
-            let tallest = bins[1..ow - 1].iter().flat_map(|b| b.iter()).copied().max().unwrap_or(1).max(1) as f32;
+            let tallest = bins[1..255].iter().flat_map(|b| b.iter()).copied().max().unwrap_or(1).max(1) as f32;
             let colours = [[1.0, 0.3, 0.3], [0.3, 1.0, 0.4], [0.3, 0.5, 1.0]];
-            for (x, b) in bins.iter().enumerate() {
+            for x in 0..ow {
+                let b = bins[(x * 255 + (ow - 1) / 2) / (ow - 1)];
                 for k in 0..3 {
                     let top = ((b[k] as f32 / tallest).min(1.0) * (oh - 1) as f32).round() as usize;
                     for row in (oh - top)..oh {
-                        put(row * ow + x, colours[k], 0.55);
+                        put(row * ow + x, colours[k], 0.6);
                     }
                 }
             }
@@ -173,6 +189,20 @@ mod tests {
         let vs = scope(&px, 80, 45, Kind::Vector, 101, 101);
         assert!(lit(&vs, 101, 50, 50), "grey sits in the middle");
         assert_eq!(vs.chunks(4).filter(|p| p[3] > 0).count(), 9, "one spot");
+    }
+
+    #[test]
+    fn a_trace_spread_over_every_level_still_reads() {
+        // each column holds every level once, so each cell gets a 200th of it
+        let (w, h, ow, oh) = (64, 256, 64, 200);
+        let px: Vec<u8> = (0..h).flat_map(|y| (0..w).flat_map(move |_| [y as u8, y as u8, y as u8, 255])).collect();
+        let wf = scope(&px, w, h, Kind::Waveform, ow, oh);
+        // as the page shows it: the colour weighed by its alpha over black
+        let shown = |x: usize, y: usize| {
+            let p = &wf[(y * ow + x) * 4..(y * ow + x) * 4 + 4];
+            p[1] as f32 * p[3] as f32 / 255.0
+        };
+        assert!((10..190).all(|y| shown(32, y) >= 80.0), "a spread trace at {} of 255", shown(32, 100));
     }
 
     #[test]

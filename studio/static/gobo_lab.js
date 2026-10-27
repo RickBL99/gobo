@@ -116,6 +116,14 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
 #lab .cut ul { margin: 4px 0 0; padding-left: 16px; font-size: .76rem; color: var(--muted); }
 #lab .cut .fix { color: var(--text); }
 #lab .odd { margin: 10px 0; padding: 10px; border-radius: 10px; background: #3a301455; font-size: .8rem; }
+.comfyask { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
+.comfyask .box { width: min(560px, 100%); background: var(--panel, #131316); border: 1px solid var(--line, #2a2a31); border-radius: 14px; padding: 18px; color: var(--text, #ecebe8); }
+.comfyask h4 { margin: 0 0 8px; font-size: 1.05rem; }
+.comfyask p, .comfyask li { font-size: .88rem; color: #c9c7cf; line-height: 1.5; }
+.comfyask ol { padding-left: 18px; margin: 10px 0 14px; } .comfyask li { margin-bottom: 8px; }
+.comfyask input { width: 100%; margin: 6px 0 2px; }
+.comfyask code { font-size: .82rem; }
+.comfyask a { color: var(--accent, #f2c14e); }
 #lab .matchbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 6px 0; }
 #lab .mlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 8px 0; }
 #lab .mt { display: flex; flex-direction: column; gap: 4px; font-size: .74rem; color: var(--muted); cursor: pointer; position: relative; }
@@ -169,6 +177,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       <div id="gMatchBox" class="matchbox hidden"></div>
       <div class="row"><button class="btn small primary" id="gBake" title="Every frame through this look, in Rust, as a new take beside the original">Grade the take</button>
         <button class="btn small" id="gStill">Download graded still</button><button class="btn small" id="gCube">Download .cube</button>
+        <button class="btn small" id="gComfy" title="Your ComfyUI, with this take and its look as Gobo's own nodes">Open in ComfyUI</button>
         <button class="btn small" id="gReset">Reset</button></div>
       <p class="hint">The .cube is the same table the preview uses: load it in Resolve, Premiere or Final Cut and the colour matches. Grain, halation and the vignette need the whole picture, so they stay out of the LUT.</p>
     </section>
@@ -726,6 +735,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       out.textContent = `Matching take ${takeName(t)} (${i + 1} of ${targets.length}) to ${takeName(pic)}…`;
       const look = JSON.parse(JSON.stringify(gradeLook));
       if (colour) {
+        look.match_to = pic.id;
         const m = g.matchShot(await framesOf(t), ref);
         if (m.error) { how.push(`${takeName(t)}: ${m.error}`); continue; }
         look.cdl = m.cdl;
@@ -738,6 +748,52 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     if (made.length) say(`${made.length} take${made.length > 1 ? "s" : ""} grading in the background, each beside its original. Stitch them when they're done and the cut keeps one look.`);
   }
   q("#gMatch", lab).onclick = matchOpen;
+
+  // ── open in ComfyUI ────────────────────────────────────────────────────
+  // Your own ComfyUI opens with this take and its look as Gobo's nodes
+  // (comfyui/ in Gobo's code: the same Rust grades it there). The workflow
+  // rides in the address (#gobo=…), and ComfyUI fetches the take from here by
+  // a link that works for a week.
+  const COMFY = "gobo.comfyui";
+  const comfyAddress = () => { try { return localStorage.getItem(COMFY) || ""; } catch (e) { return ""; } };
+  function comfyAsk(then) {
+    const d = document.createElement("div");
+    d.className = "comfyask";
+    d.innerHTML = `<div class="box"><h4>Open in ComfyUI</h4>
+      <p>Gobo opens your ComfyUI with this take and its look, laid out as Gobo's own nodes: the stock and grade with every slider, any LUT, a shot match, then Gobo Grade (the same Rust as here) and a save. Change anything and queue it.</p>
+      <ol><li><a href="/comfyui/gobo-nodes.zip">Get the Gobo nodes</a> and unzip them into <code>ComfyUI/custom_nodes</code> (a <code>gobo</code> folder), run <code>pip install wasmtime</code> in ComfyUI's Python, and restart ComfyUI. Once.</li>
+      <li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8188")}"> <span class="hint">ComfyUI Desktop is usually http://127.0.0.1:8000</span></li></ol>
+      <div class="row"><button class="btn small primary" id="caGo">Open in ComfyUI</button><button class="btn small" id="caX">Cancel</button></div></div>`;
+    document.body.appendChild(d);
+    const go = () => {
+      const a = q("#caAddr", d).value.trim().replace(/\/+$/, "");
+      if (!/^https?:\/\//.test(a)) return q("#caAddr", d).focus();
+      try { localStorage.setItem(COMFY, a); } catch (e) { /* asked again next time */ }
+      d.remove(); then();
+    };
+    q("#caGo", d).onclick = go;
+    q("#caAddr", d).onkeydown = e => { if (e.key === "Enter") go(); };
+    q("#caX", d).onclick = () => d.remove();
+    d.onclick = e => { if (e.target === d) d.remove(); };
+  }
+  async function openInComfy(ask) {
+    const { pic } = gradeSource();
+    if (!pic || pic.status !== "done" || !gradeLook) return say("Pick a finished take first.", true);
+    if (ask || !comfyAddress()) return comfyAsk(() => openInComfy(false));
+    // a window now, while the click still counts, so no pop-up blocker stops it
+    const win = window.open("about:blank", "_blank");
+    const look = JSON.parse(JSON.stringify(gradeLook));
+    const ref = look.match_to && ST().takes().find(t => t.id === look.match_to && t.status === "done");
+    const r = await ST().api(`/reels/${ST().reel()}/takes/${pic.id}/comfyui/colour`, { method: "POST",
+      json: { look, film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value, reference: ref ? ref.id : "" } });
+    if (r.error) { if (win) win.close(); return say(r.error, true); }
+    let bin = "";
+    new TextEncoder().encode(JSON.stringify({ workflow: r.workflow, title: r.title })).forEach(c => { bin += String.fromCharCode(c); });
+    const url = `${comfyAddress()}/#gobo=${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+    if (win) { win.opener = null; win.location.href = url; } else window.open(url, "_blank");
+    say("ComfyUI is opening with the take and its look as Gobo's nodes. Queue it to grade there. (If ComfyUI opens empty, the Gobo nodes aren't installed yet: shift-click Open in ComfyUI for how.)");
+  }
+  q("#gComfy", lab).onclick = e => openInComfy(e.shiftKey || e.altKey);
 
   // the Colour page (gobo_colour.js) works on this same look
   q("#gAdv", lab).onclick = async () => {
@@ -756,7 +812,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     },
     preset: () => ({ film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value }),
     reset: fromShot, ensureLut, listLuts, importGrade, useLut, lutNote, lutAction, bake, saveCube, saveStill, name: gradeName,
-    source: () => gradeSource().pic, matchOpen,
+    source: () => gradeSource().pic, matchOpen, openInComfy,
     reopen() { open("grade"); },
   };
 

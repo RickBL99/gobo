@@ -217,9 +217,17 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <p>The order is the one a colourist uses: a camera LUT, the CDL, the wheels, the curves, the stock and grade, a creative LUT, then grain, halation and the vignette. <span class="ui">Download .cube</span> carries all of it except those last three, which need the whole picture.</p>
     <div class="tip">Grade by the scopes, not your screen: on the waveform, keep the blacks just above 0 and the brightest whites just under 100; a neutral grey should sit in the middle of the vectorscope.</div>
   </section>
-  <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes">
+  <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes gobo nodes custom node pack grade colour">
     <h3>Open in ComfyUI</h3>
     <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>
+      <p><b>A take's colour, in your own ComfyUI.</b> <span class="ui">Open in ComfyUI</span> in the Lab's <span class="ui">Grade</span> (and on the Colour page) opens your ComfyUI with the take on screen and its look laid out as Gobo's own nodes:</p>
+    <ul>
+      <li><span class="ui">Gobo Load Take</span> fetches the take from Gobo by a link that works for a week, without signing in.</li>
+      <li><span class="ui">Gobo Look</span>: the film stock and grade with every slider set as in the Lab (picking another stock fills the sliders with its numbers, as the Lab does); wheels, curves and a CDL ride in its colour box.</li>
+      <li><span class="ui">Gobo LUT</span> for a LUT on the look, and <span class="ui">Gobo Shot Match</span> with the reference take, for a take matched to another.</li>
+      <li><span class="ui">Gobo Grade</span> puts every frame through the look with the same Rust as Gobo (the grain moving, the sound kept), then <span class="ui">Save Video</span>.</li>
+    </ul>
+    <p>Change anything there and queue it. The nodes are part of Gobo: the first time, <span class="ui">Open in ComfyUI</span> asks where your ComfyUI is (the desktop app is usually <code>http://127.0.0.1:8000</code>) and offers <span class="ui">Get the Gobo nodes</span>: unzip them into <code>ComfyUI/custom_nodes</code>, run <code>pip install wasmtime</code> in ComfyUI's Python and restart it. Shift-click <span class="ui">Open in ComfyUI</span> to change the address. There are more nodes to build with: <span class="ui">Gobo Steal Look</span>, <span class="ui">Gobo Grade Images</span> and <span class="ui">Gobo Continuity</span>.</p>
   </section>
   <section class="topic" id="users" data-keys="users people accounts add user password admin sign in team access remove">
     <h3>Who can sign in</h3>
@@ -434,10 +442,11 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li>Hover over a clip to play it. Click any take to open the viewer; <kbd>←</kbd> <kbd>→</kbd> move through the library, <kbd>S</kbd> stars, <kbd>Esc</kbd> goes back.</li>
     </ul>
   </section>
-  <section class="topic" id="library-actions" data-keys="viewer open in reel open its board download star copy prompt delete use as reference add to kit select several zip mark as mine claim put on a board autopilot rescue cut">
+  <section class="topic" id="library-actions" data-keys="viewer open in reel open its board open on its board open as a clip as a still context download star copy prompt delete use as reference add to kit select several zip mark as mine claim put on a board autopilot rescue cut">
     <h3>What the Library can do</h3>
     <ul>
-      <li><b>In the viewer</b>: <span class="ui">Open its board</span> (for a take made for a card on a board: it opens that board, so a film whose page was closed can still be cut), <span class="ui">Open in its reel</span>, <span class="ui">Download</span>, <span class="ui">Star</span>, <span class="ui">Copy prompt</span>, <span class="ui">Delete</span>, and for stills <span class="ui">Use as reference</span> (or <span class="ui">Add to kit</span> when the Board is open), which brings the picture into the reel you're working in.</li>
+      <li><b>On each take</b>, under the pointer: <span class="ui">On its board</span> and <span class="ui">As a clip</span>, the same two ways in as the viewer's, without opening it first.</li>
+      <li><b>In the viewer</b>: <span class="ui">Open on its board</span> (for a take made for a card on a board: it opens that board with the card using this take, so a film whose page was closed can still be cut; if the card was using another take, it says which, and clicking that letter on the card puts it back), <span class="ui">Open as a clip</span> (or a still: its reel, in the Shot view, with the take on the stage to play, grade or upscale), <span class="ui">Download</span>, <span class="ui">Star</span>, <span class="ui">Copy prompt</span>, <span class="ui">Delete</span>, and for stills <span class="ui">Use as reference</span> (or <span class="ui">Add to kit</span> when the Board is open), which brings the picture into the reel you're working in.</li>
       <li><b>Several at once</b>: tick takes (or <kbd>⌘</kbd>-click). <span class="ui">Download</span> makes one zip with a folder per reel; <span class="ui">Delete</span> removes them.</li>
       <li><span class="ui">Put on a board</span>: the ticked takes become cards on a board, <span class="ui">a new board</span> or the one on screen, a clip as the card's clip and a still as its keyframe. They go in film order (the order of the board they were made for, else the order they were made), and a take from another reel is copied in, so the board has everything its cut needs. From there, <span class="ui">Cut the spot</span>, reorder, re-animate or extend them.</li>
       <li>You can delete your own takes and ones with no name on them, not someone else's.</li>

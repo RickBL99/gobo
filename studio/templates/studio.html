@@ -456,6 +456,12 @@ main.boardview #inspector { display: none !important; }
 .lc .star { position: absolute; right: 8px; bottom: 6px; color: var(--accent); text-shadow: 0 0 3px #000; }
 .lc .pick { position: absolute; left: 8px; top: 8px; width: 20px; height: 20px; accent-color: var(--accent); opacity: 0; transition: opacity .12s; cursor: pointer; }
 .lc:hover .pick, .lc.picked .pick, #libSheet.picking .lc .pick { opacity: 1; }
+.lc .lo { position: absolute; left: 7px; bottom: 7px; display: flex; gap: 4px; opacity: 0; transition: opacity .12s; }
+.lc:hover .lo, .lc:focus-within .lo { opacity: 1; }
+#libSheet.picking .lc .lo { display: none; }
+.lc .lo button { font: inherit; font-size: .68rem; font-weight: 600; color: var(--text); background: rgba(0,0,0,.72); border: 1px solid rgba(255,255,255,.18);
+  border-radius: 6px; padding: 2px 7px; cursor: pointer; }
+.lc .lo button:hover { border-color: var(--accent); color: var(--accent); }
 .lc .ll { padding: 8px 10px 9px; }
 .lc .ll b { display: block; font-size: .82rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .lc .ll small { display: block; color: var(--dim); font-size: .7rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -501,6 +507,8 @@ main.boardview #inspector { display: none !important; }
 #fails .fail .x:hover { color: var(--text); }
 #fails .fail.flash, .bcard.flash { animation: failflash 1.6s ease-out; }
 @keyframes failflash { 0%, 40% { box-shadow: 0 0 0 3px var(--bad); } 100% { box-shadow: 0 0 0 0 transparent; } }
+.bcard.found { animation: foundflash 2.2s ease-out; }
+@keyframes foundflash { 0%, 50% { box-shadow: 0 0 0 3px var(--accent); } 100% { box-shadow: 0 0 0 0 transparent; } }
 .bframe .st.fail { background: rgba(42,23,21,.9); place-items: center; }
 .bframe .st.fail b { color: #ffcdc5; }
 .bframe .st.fail p { margin: 4px 0 8px; color: var(--text); font-size: .74rem; line-height: 1.35; }

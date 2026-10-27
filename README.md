@@ -36,6 +36,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.
+- **Gobo's own ComfyUI nodes.** In the Lab, **Open in ComfyUI** opens your ComfyUI with the take and its look laid out as Gobo's nodes (Load Take, Look with every slider, LUT, Shot Match, Grade), graded there by the same Rust. The nodes live in [`comfyui/`](comfyui) and Gobo serves them as a download. See [Gobo in ComfyUI](comfyui/README.md).
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
 - **And:** a public share link for any take, a model shootout, a library (pick takes from any reel and put them on a board, in film order, to cut them), accounts an admin adds with their own passwords, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 

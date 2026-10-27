@@ -901,6 +901,7 @@ function renderStrip() {
   $$("#strip .tk").forEach(el => {
     el.onclick = e => {
       if (e.target.classList.contains("pick")) return;
+      const o = e.target.closest("[data-o]"); if (o) return libOpen(t, o.dataset.o === "board");
       // selecting: a click toggles; takes still rendering sit it out. ⌘/Shift-click starts selecting.
       if (!S.picking && (e.metaKey || e.ctrlKey || e.shiftKey) && el.classList.contains("can")) { S.picking = true; S.picked.clear(); }
       if (S.picking) { if (el.classList.contains("can")) togglePick(el.dataset.t); return; }
@@ -1092,7 +1093,8 @@ function libCard(t, i) {
   const when = new Date(t.created * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   return `<div class="lc ${on ? "picked" : ""}" data-i="${i}" tabindex="0" title="${esc((t.prompt || "").slice(0, 300))}">
     <div class="lm">${media}${vid ? `<span class="badge">▶${t.seconds ? " " + Math.round(t.seconds) + "s" : ""}</span>` : ""}
-      ${t.starred ? `<span class="star">★</span>` : ""}<input type="checkbox" class="pick" ${on ? "checked" : ""} aria-label="Select"></div>
+      ${t.starred ? `<span class="star">★</span>` : ""}<input type="checkbox" class="pick" ${on ? "checked" : ""} aria-label="Select">
+      ${STILLS ? "" : `<span class="lo">${t.board ? `<button data-o="board" title="Its board, its card showing this ${vid ? "clip" : "keyframe"}">On its board</button>` : ""}<button data-o="clip" title="In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage">${vid ? "As a clip" : "As a still"}</button></span>`}</div>
     <div class="ll"><b>${esc(t.label)}</b><small>${size}${when} · ${esc(t.reel_name)}</small>
       ${LIB.who === "all" ? `<small>${esc(t.owner || "no name")}</small>` : ""}</div></div>`;
 }
@@ -1118,6 +1120,7 @@ function renderLib() {
     const t = LIB.items[+el.dataset.i];
     el.onclick = e => {
       if (e.target.classList.contains("pick")) return;
+      const o = e.target.closest("[data-o]"); if (o) return libOpen(t, o.dataset.o === "board");
       if (LIB.picked.size || e.metaKey || e.ctrlKey || e.shiftKey) return libPick(el, t);
       libView(+el.dataset.i);
     };
@@ -1246,8 +1249,8 @@ function libView(i) {
       </dl>
       ${t.prompt ? `<div><p class="sectitle">Prompt</p><div class="prompt">${esc(t.prompt)}</div></div>` : ""}
       <div class="vacts">
-        ${t.board && !STILLS ? `<button class="btn small primary" id="lvBoard" title="The board this was made for, with its card">Open its board</button>` : ""}
-        <button class="btn small ${t.board && !STILLS ? "" : "primary"}" id="lvOpen">Open in its ${REELWORD}</button>
+        ${t.board && !STILLS ? `<button class="btn small primary" id="lvBoard" title="The board this was made for, its card showing this ${vid ? "clip" : "keyframe"}">Open on its board</button>` : ""}
+        <button class="btn small ${t.board && !STILLS ? "" : "primary"}" id="lvOpen" title="${STILLS ? "" : `In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage: play it, grade it, upscale it, grab a frame`}">${STILLS ? `Open in its ${REELWORD}` : `Open as a ${vid ? "clip" : "still"}`}</button>
         <a class="btn small" href="${esc(t.url)}?download=1">Download${STILLS ? " original" : ""}</a>
         <button class="btn small" id="lvStar">${t.starred ? "★ Starred" : "☆ Star"}</button>
         ${t.prompt ? `<button class="btn small" id="lvCopy">Copy prompt</button>` : ""}
@@ -1259,18 +1262,8 @@ function libView(i) {
     </div>`;
   $$("[data-nav]", v).forEach(b => b.onclick = () => libStep(+b.dataset.nav));
   $("#lvBack", v).onclick = libClose;
-  $("#lvOpen", v).onclick = async () => {
-    closePop();
-    if (!S.reel || S.reel.id !== t.reel) { if (!await loadReel(t.reel)) return toast(`That ${REELWORD} is gone.`, true); }
-    if (S.takes.some(x => x.id === t.id)) select(t.id);
-  };
-  const ob = $("#lvBoard", v); if (ob) ob.onclick = async () => {
-    closePop();
-    if (!S.reel || S.reel.id !== t.reel) { if (!await loadReel(t.reel)) return toast(`That ${REELWORD} is gone.`, true); }
-    if (!B || !B.shots.some(x => x.id === t.board)) { if (S.takes.some(x => x.id === t.id)) select(t.id); return toast("Its card isn't on the board any more, so here's the take."); }
-    setView("board");
-    const c = $(`.bcard[data-s="${t.board}"]`); if (c) c.scrollIntoView({ behavior: "smooth", block: "center" });
-  };
+  $("#lvOpen", v).onclick = () => libOpen(t, false);
+  const ob = $("#lvBoard", v); if (ob) ob.onclick = () => libOpen(t, true);
   $("#lvStar", v).onclick = () => libStar(t);
   const cm = $("#lvClaim", v); if (cm) cm.onclick = async () => { if (await libClaim([t])) libView(i); };
   const use = $("#lvUse", v); if (use) use.onclick = () => libUse(t);
@@ -1279,6 +1272,27 @@ function libView(i) {
     if (!await libDelete([t])) return;
     LIB.items.length ? libView(Math.min(i, LIB.items.length - 1)) : libClose();
   };
+}
+// a take from the library, where you can see it: on the stage of its reel
+// (the Shot view, whichever view was up), or on its card on the board, the
+// card switched to this take so it's the one you see and the one the cut uses
+async function libOpen(t, onBoard) {
+  closePop();
+  if (!S.reel || S.reel.id !== t.reel) { if (!await loadReel(t.reel)) return toast(`That ${REELWORD} is gone.`, true); }
+  if (!S.takes.some(x => x.id === t.id)) return toast("That take isn't in its reel any more.", true);
+  const s = onBoard && B && B.shots.find(x => x.id === t.board);
+  if (!s) {
+    setView("shot"); select(t.id);
+    if (onBoard) toast("Its card isn't on the board any more, so here's the take.");
+    return;
+  }
+  const was = pickOf(s, t.role);
+  setView("board");
+  pickTake(s, t.id);
+  const c = $(`.bcard[data-s="${s.id}"]`);
+  if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); c.classList.add("found"); setTimeout(() => c.classList.remove("found"), 2300); }
+  const what = t.role === "key" ? "keyframe" : "clip", n = B.shots.indexOf(s) + 1;
+  if (was && was.id !== t.id) toast(`Card ${n} now uses ${what} ${t.letter}; it had ${was.letter}. Click ${was.letter} on the card to go back.`);
 }
 async function libStep(d) {
   const i = LIB.view + d;

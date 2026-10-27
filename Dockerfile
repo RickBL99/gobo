@@ -18,6 +18,8 @@ WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 COPY studio ./studio
+# Gobo's ComfyUI nodes, served as a download (/comfyui/gobo-nodes.zip)
+COPY comfyui ./comfyui
 
 RUN useradd --create-home --uid 10001 studio && mkdir -p /data && chown studio /data
 USER studio

@@ -14,6 +14,7 @@ cd "$(dirname "$0")/.."
 cargo build --release -p cinematic-direction -p gobo-wasm --target wasm32-unknown-unknown
 cp target/wasm32-unknown-unknown/release/cinematic_direction.wasm studio/static/direction.wasm
 cp target/wasm32-unknown-unknown/release/gobo_wasm.wasm studio/static/gobo.wasm
+cp studio/static/gobo.wasm comfyui/gobo.wasm      # the ComfyUI nodes run the same build
 # which source each was built from, so the tests can tell a stale .wasm
 cat crates/direction/Cargo.toml crates/direction/src/*.rs | shasum -a 256 | cut -d' ' -f1 > studio/static/direction.wasm.src
 cat crates/{scrim,flag,dingle,gobo-wasm}/Cargo.toml crates/{scrim,flag,dingle,gobo-wasm}/src/*.rs | shasum -a 256 | cut -d' ' -f1 > studio/static/gobo.wasm.src

@@ -1393,6 +1393,49 @@ async def grade_take(reel: str, tid: str, request: Request):
     return {"take": _public_take(nt)}
 
 
+# ── open in ComfyUI: the take and its look as Gobo's nodes (comfyui/) ───────
+@router.post("/reels/{reel}/takes/{tid}/comfyui/colour", response_class=JSONResponse)
+async def comfy_colour(reel: str, tid: str, request: Request):
+    """The workflow ComfyUI opens: this take, its look ({look, film, grade}) as
+    nodes, a shot match to `reference` when there is one, the grade and a save.
+    The take and any LUT are fetched by signed links (/t/…)."""
+    from . import comfy_colour as CC
+    try:
+        t = J.get_take(reel, tid)
+    except ValueError:
+        t = None
+    if not t or t.get("status") != "done" or not t.get("file") or t.get("kind") not in ("video", "image"):
+        return _err("Only a finished take opens in ComfyUI.")
+    b = await request.json()
+    look = b.get("look")
+    if not isinstance(look, dict):
+        return _err("Send the look.")
+    # every number the look comes to (presets resolved), so each slider gets one
+    luts, lut = {}, look.get("lut3d")
+    if isinstance(lut, dict) and lut.get("id"):
+        text = J.lut_text(reel, str(lut["id"]))
+        if text is None:
+            return _err("That LUT isn't in this reel any more: import it again.")
+        luts[lut["id"]] = text
+    try:
+        full = await run_in_threadpool(R.look, look, luts)
+    except ValueError as e:
+        return _err(f"That look doesn't work: {e}")
+    if isinstance(lut, dict):
+        full["lut3d"] = {**full.get("lut3d", {}), **lut}       # its own id, and whose rest it is
+    look = full
+    ref = None
+    if b.get("reference"):
+        try:
+            ref = J.get_take(reel, str(b["reference"]))
+        except ValueError:
+            ref = None
+    h = request.headers
+    site = f"{h.get('x-forwarded-proto') or request.url.scheme}://{h.get('x-forwarded-host') or h.get('host') or request.url.netloc}"
+    flow = CC.workflow(site, reel, t, look, str(b.get("film") or ""), str(b.get("grade") or ""), ref)
+    return {"workflow": flow, "title": f"Gobo · Shot {t.get('shot') or ''}{t.get('letter') or ''}", "nodes": f"{site}/comfyui/gobo-nodes.zip"}
+
+
 # ── LUTs ────────────────────────────────────────────────────────────────────
 # A .cube from Resolve, Premiere, a LUT pack or a camera maker, kept with the
 # reel so Grade the take can use it on the server: the page loads the same
