@@ -31,6 +31,53 @@ def engine():
     return m
 
 
+def installer():
+    spec = importlib.util.spec_from_file_location("gobo_nodes_install", os.path.join(NODES, "install.py"))
+    m = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(m)
+    return m
+
+
+class Install(unittest.TestCase):
+    """Nobody runs pip by hand: the pack installs wasmtime into ComfyUI's own Python on its first start."""
+
+    def test_it_asks_for_what_requirements_txt_lists(self):
+        with open(os.path.join(NODES, "requirements.txt")) as f:
+            listed = [ln.strip() for ln in f if ln.strip() and not ln.startswith("#")]
+        self.assertEqual([spec for _, spec in installer().NEEDS], listed)
+
+    def test_nothing_to_do_when_it_imports(self):
+        calls = []
+        self.assertEqual(installer().ensure((("json", "json"),), run=calls.append), [])
+        self.assertEqual(calls, [])
+
+    def test_a_missing_module_is_pip_installed_into_this_python(self):
+        calls = []
+        got = installer().ensure((("gobo_not_a_module", "gobo-not-a-module>=1"),), run=calls.append)
+        self.assertEqual(got, ["gobo-not-a-module>=1"])
+        self.assertEqual(calls, [[sys.executable, "-m", "pip", "install", "gobo-not-a-module>=1"]])
+
+    def test_no_pip_gets_ensurepip_first(self):
+        import subprocess
+        calls = []
+
+        def run(cmd):
+            calls.append(cmd[1:3])
+            if len(calls) == 1:
+                raise subprocess.CalledProcessError(1, cmd)
+        installer().ensure((("gobo_not_a_module", "x"),), run=run)
+        self.assertEqual(calls, [["-m", "pip"], ["-m", "ensurepip"], ["-m", "pip"]])
+
+    def test_when_it_cant_it_says_the_one_command(self):
+        import subprocess
+
+        def run(cmd):
+            raise subprocess.CalledProcessError(1, cmd)
+        with self.assertRaises(ImportError) as e:
+            installer().ensure((("gobo_not_a_module", "wasmtime>=30"),), run=run)
+        self.assertIn(f'"{sys.executable}" -m pip install "wasmtime>=30"', str(e.exception))
+
+
 class Pack(unittest.TestCase):
     def test_the_nodes_run_the_apps_own_build(self):
         sha = lambda p: hashlib.sha256(open(p, "rb").read()).hexdigest()

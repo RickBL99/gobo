@@ -190,7 +190,12 @@ NODES_DIR = os.path.join(os.path.dirname(HERE), "comfyui")
 
 @router.get("/comfyui/gobo-nodes.zip")
 async def comfy_nodes():
-    """Gobo's ComfyUI nodes, one folder to put in ComfyUI/custom_nodes."""
+    """Gobo's ComfyUI nodes, one folder to put in ComfyUI/custom_nodes.
+
+    The files sit at the top of gobo.zip rather than in a folder inside it:
+    opening it then makes one folder called gobo everywhere (Finder, Safari,
+    Windows' Extract All), where a folder inside would land as
+    gobo-nodes/gobo on Windows, one level too deep for ComfyUI to load."""
     import io
     import zipfile
 
@@ -201,11 +206,11 @@ async def comfy_nodes():
                 dirs[:] = [d for d in dirs if d not in ("__pycache__", "cache")]
                 for f in files:
                     full = os.path.join(root, f)
-                    z.write(full, os.path.join("gobo", os.path.relpath(full, NODES_DIR)))
+                    z.write(full, os.path.relpath(full, NODES_DIR))
         return buf.getvalue()
     from fastapi.responses import Response
     return Response(await run_in_threadpool(pack), media_type="application/zip",
-                    headers={"Content-Disposition": 'attachment; filename="gobo-nodes.zip"'})
+                    headers={"Content-Disposition": 'attachment; filename="gobo.zip"'})
 
 
 @router.get("/comfyui/open", response_class=HTMLResponse)

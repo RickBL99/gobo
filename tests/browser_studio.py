@@ -125,8 +125,9 @@ def main():
         check("catalogue loaded", n_img > 50 and n_vid > 40, f"{n_img} image, {n_vid} video")
         bar = json.loads(tab.js("""JSON.stringify((() => { const b = [...document.body.children].find(e => !/^(STYLE|SCRIPT)$/.test(e.tagName)), r = $('.ssbar') && $('.ssbar').getBoundingClientRect();
           return {first: !!b && b.classList.contains('ssbar'), href: $('.ssbar') && $('.ssbar').href, text: $('.ssbar') && $('.ssbar').textContent.replace(/\\s+/g, ' ').trim(), top: r && r.top, h: r && r.height}; })())"""))
-        check("the top strip: Need real video? Visit SuperStock", bar["first"] and bar["top"] == 0 and bar["h"] >= 26
-              and "superstock.com" in (bar["href"] or "") and bar["text"] == "Need real video? Visit SuperStock →", bar)
+        check("the top strip: Need real clips? Request your Gobo discount at SuperStock", bar["first"] and bar["top"] == 0 and bar["h"] >= 26
+              and bar["href"] == "https://www.superstock.com/footage"
+              and bar["text"] == "Need real clips? Request your Gobo discount at SuperStock →", bar)
         check("opens in video", tab.js("S.mode") == "video" and tab.js("$('#modeVideo').classList.contains('on') && model().kind === 'video'"))
         # a mode saved before video became the default is overridden once, then a choice sticks
         tab.js("localStorage.setItem('studio.shot', JSON.stringify({mode: 'image'})); localStorage.removeItem('studio.videoDefault'); 1")
@@ -1112,6 +1113,10 @@ def main():
         tab.js("$('#gComfy').click(); 1"); time.sleep(0.5)
         check("comfyui: the first time, it asks where ComfyUI is and how to add Gobo's nodes",
               tab.js("!!$('.comfyask') && !!$('.comfyask a[href=\\'/comfyui/gobo-nodes.zip\\']')"))
+        ask = tab.js("$('.comfyask .box').textContent.replace(/\\s+/g, ' ')")
+        check("comfyui: adding the nodes is three plain steps, no terminal (the pack installs what it needs)",
+              "Open Custom Nodes Folder" in ask and "a folder called gobo" in ask and "pip" not in ask
+              and tab.js("$('#caAddr').value") == "http://127.0.0.1:8000", ask)
         tab.shot("37-comfyui-ask")
         tab.js("$('#caAddr').value = 'http://127.0.0.1:8188/'; $('#caGo').click(); 1"); time.sleep(2)
         url = tab.js("window._opened[window._opened.length - 1] || ''")

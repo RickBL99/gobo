@@ -452,10 +452,12 @@ class Flow(unittest.TestCase):
         stale = CC.sign(reel, t["file"], days=-1)
         self.assertEqual(outside.get(f"/t/{stale}").status_code, 404)
         self.assertIsNone(CC.path_of({"r": reel, "n": "../../reel.json"}))
-        # the nodes themselves, one folder for ComfyUI/custom_nodes
-        z = zipfile.ZipFile(io.BytesIO(outside.get("/comfyui/gobo-nodes.zip").content))
+        # the nodes themselves: gobo.zip opens as one folder called gobo, for ComfyUI/custom_nodes
+        got = outside.get("/comfyui/gobo-nodes.zip")
+        self.assertIn('filename="gobo.zip"', got.headers["content-disposition"])
+        z = zipfile.ZipFile(io.BytesIO(got.content))
         names = set(z.namelist())
-        self.assertTrue({"gobo/__init__.py", "gobo/nodes.py", "gobo/engine.py", "gobo/gobo.wasm", "gobo/web/gobo.js", "gobo/requirements.txt"} <= names, names)
+        self.assertTrue({"__init__.py", "install.py", "nodes.py", "engine.py", "gobo.wasm", "web/gobo.js", "requirements.txt"} <= names, names)
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
         # the tab Open in ComfyUI opens, which waits for ComfyUI (the workflow stays after the #, never sent here)

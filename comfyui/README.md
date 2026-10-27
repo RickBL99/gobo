@@ -13,12 +13,19 @@ nodes. Change anything and queue it.
 
 ## Install (once)
 
-1. Get the nodes: the `comfyui/` folder of this repo, or **Get the Gobo nodes**
-   in Gobo (`/comfyui/gobo-nodes.zip`, which unzips as `gobo/`).
-2. Put it in `ComfyUI/custom_nodes/` as `gobo`.
-3. In ComfyUI's Python: `pip install -r custom_nodes/gobo/requirements.txt`
-   (it adds `wasmtime`; ComfyUI already has torch, numpy, PyAV and Pillow).
-4. Restart ComfyUI. The nodes are under **Gobo** in the node library.
+1. Get the nodes: **Download the Gobo nodes** in Gobo (`gobo.zip`; open it
+   and you have a folder called `gobo`), or the `comfyui/` folder of this repo.
+2. Put the `gobo` folder in ComfyUI's `custom_nodes` folder. In the ComfyUI
+   desktop app, **Help › Open Folder › Open Custom Nodes Folder** opens it;
+   otherwise it's `ComfyUI/custom_nodes/`.
+3. Quit ComfyUI and start it again. The first start installs the one thing
+   Gobo adds, `wasmtime`, into ComfyUI's own Python (`install.py`; ComfyUI
+   already has torch, numpy, PyAV and Pillow), so it takes a little longer.
+   The nodes are under **Gobo** in the node library.
+
+Offline, or a Python that won't let it install? The console says so and gives
+the one command to run: `pip install -r custom_nodes/gobo/requirements.txt` in
+ComfyUI's Python.
 
 Gobo needs to know where your ComfyUI is: it asks the first time (the desktop
 app is usually `http://127.0.0.1:8000`, a ComfyUI you run yourself

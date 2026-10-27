@@ -119,6 +119,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
 .comfyask { position: fixed; inset: 0; z-index: 90; background: rgba(0,0,0,.6); display: grid; place-items: center; padding: 16px; }
 .comfyask .box { width: min(560px, 100%); background: var(--panel, #131316); border: 1px solid var(--line, #2a2a31); border-radius: 14px; padding: 18px; color: var(--text, #ecebe8); }
 .comfyask h4 { margin: 0 0 8px; font-size: 1.05rem; }
+.comfyask h5 { margin: 14px 0 0; font-size: .8rem; text-transform: uppercase; letter-spacing: .06em; color: var(--accent, #f2c14e); }
+.comfyask b { color: var(--text, #ecebe8); }
 .comfyask p, .comfyask li { font-size: .88rem; color: #c9c7cf; line-height: 1.5; }
 .comfyask ol { padding-left: 18px; margin: 10px 0 14px; } .comfyask li { margin-bottom: 8px; }
 .comfyask input { width: 100%; margin: 6px 0 2px; }
@@ -800,9 +802,13 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     d.className = "comfyask";
     d.innerHTML = `<div class="box"><h4>Open in ComfyUI</h4>
       <p>${h(blurb)}</p>
-      <ol><li><a href="/comfyui/gobo-nodes.zip">Get the Gobo nodes</a> and unzip them into <code>ComfyUI/custom_nodes</code> (a <code>gobo</code> folder), run <code>pip install wasmtime</code> in ComfyUI's Python, and restart ComfyUI. Once.</li>
-      <li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8188")}"> <span class="hint">ComfyUI Desktop is usually http://127.0.0.1:8000</span></li>
-      <li>Not running yet? The tab waits for it: start ComfyUI and it opens there. (Your browser may ask whether Gobo may look for apps on your device: allow it.)</li></ol>
+      <h5>The first time: add Gobo to your ComfyUI</h5>
+      <ol><li><a href="/comfyui/gobo-nodes.zip" download>Download the Gobo nodes</a> and open the file. You get a folder called <b>gobo</b>.</li>
+      <li>Move the <b>gobo</b> folder into ComfyUI's <b>custom_nodes</b> folder. In the ComfyUI app, <b>Help › Open Folder › Open Custom Nodes Folder</b> opens it. (Run ComfyUI from a folder yourself? It's <code>ComfyUI/custom_nodes</code>.)</li>
+      <li>Quit ComfyUI and open it again. Its first start takes a minute longer while Gobo sets itself up.</li></ol>
+      <h5>Then open it</h5>
+      <ol start="4"><li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8000")}"> <span class="hint">The ComfyUI app is usually http://127.0.0.1:8000; a ComfyUI you start yourself, http://127.0.0.1:8188.</span></li>
+      <li>Click <b>Open in ComfyUI</b>. ComfyUI not running yet? Start it: the tab waits and opens there. If your browser asks whether Gobo may look for apps on your device, allow it.</li></ol>
       <div class="row"><button class="btn small primary" id="caGo">Open in ComfyUI</button><button class="btn small" id="caX">Cancel</button></div></div>`;
     document.body.appendChild(d);
     const go = () => {

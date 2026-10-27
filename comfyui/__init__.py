@@ -3,11 +3,16 @@ prompt for any model), steal a look, grade, match and check continuity, with
 the same Rust the Gobo app runs (direction.wasm, gobo.wasm), and open a take
 from Gobo straight into a workflow.
 
-Install: put this folder in ComfyUI/custom_nodes (as gobo), then
-`pip install -r requirements.txt` in ComfyUI's Python. Gobo's "Open in
-ComfyUI" then opens ComfyUI with the take and its look already wired up.
+Install: put this folder in ComfyUI/custom_nodes (as gobo) and restart
+ComfyUI; the first start installs wasmtime into ComfyUI's Python (install.py).
+Gobo's "Open in ComfyUI" then opens ComfyUI with the take and its look
+already wired up.
 """
-from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS, preset
+from . import install
+
+install.ensure()
+
+from .nodes import NODE_CLASS_MAPPINGS, NODE_DISPLAY_NAME_MAPPINGS, preset  # noqa: E402  (needs wasmtime)
 from . import engine
 
 # the page side: a workflow Gobo hands over (#gobo=…), and the Look node's sliders

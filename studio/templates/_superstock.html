@@ -1,5 +1,6 @@
 {# The strip across the top of every Gobo page: generated video is one thing,
-   real footage another. Rick, 2026-10-26: "Need real video? Visit SuperStock". #}
+   real footage another. Rick, 2026-10-27: "Need real clips? Request your Gobo discount at
+   SuperStock", linking the footage page. #}
 <style>
 .ssbar { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 30px; padding: 5px 16px;
   background: linear-gradient(90deg, #120f08 0%, #231c0c 50%, #120f08 100%); border-bottom: 1px solid #3a2f12;
@@ -7,14 +8,16 @@
   text-decoration: none; position: relative; z-index: 31; }
 .ssbar svg { width: 15px; height: 15px; flex: none; }
 .ssbar b { color: #f2c14e; font-weight: 700; }
-.ssbar .arr { color: #f2c14e; transition: transform .15s; }
+.ssbar .arr { display: inline-block; color: #f2c14e; transition: transform .15s; }
 .ssbar:hover { color: #ecebe8; background: linear-gradient(90deg, #15110a 0%, #2b2310 50%, #15110a 100%); }
 .ssbar:hover .arr { transform: translateX(3px); }
-@media (max-width: 520px) { .ssbar { font-size: 12px; } }
+/* narrow screens: one centred line that wraps like a sentence, not two squeezed columns */
+@media (max-width: 620px) { .ssbar { display: block; text-align: center; font-size: 12px; line-height: 1.45; }
+  .ssbar svg { display: inline-block; vertical-align: -3px; margin-right: 2px; } }
 @media print { .ssbar { display: none; } }
 </style>
-<a class="ssbar" href="https://www.superstock.com/" target="_blank" rel="noopener" title="SuperStock: real footage and photography, licensed for your production">
+<a class="ssbar" href="https://www.superstock.com/footage" target="_blank" rel="noopener" title="SuperStock footage: real clips, licensed for your production">
   <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="none" stroke="#f2c14e" stroke-width="1.8"/>
     <path d="M10 9.2v5.6l4.8-2.8z" fill="#ecebe8"/><path d="M2.5 9h2M2.5 15h2M19.5 9h2M19.5 15h2" stroke="#f2c14e" stroke-width="1.6"/></svg>
-  <span>Need real video?</span> <b>Visit SuperStock</b> <span class="arr" aria-hidden="true">→</span>
+  <span>Need real clips?</span> <b>Request your Gobo discount at SuperStock</b> <span class="arr" aria-hidden="true">→</span>
 </a>

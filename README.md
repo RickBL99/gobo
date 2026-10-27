@@ -2,7 +2,7 @@
 
 **Say the film. Gobo shoots it.**
 
-> 🎬 **Need real video?** [Visit SuperStock →](https://www.superstock.com)
+> 🎬 **Need real clips?** [Request your Gobo discount at SuperStock →](https://www.superstock.com/footage)
 
 ![The Last Watch: a ten-second film Autopilot made from one line](docs/media/the-last-watch.gif)
 
