@@ -458,6 +458,11 @@ class Flow(unittest.TestCase):
         self.assertTrue({"gobo/__init__.py", "gobo/nodes.py", "gobo/engine.py", "gobo/gobo.wasm", "gobo/web/gobo.js", "gobo/requirements.txt"} <= names, names)
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
+        # the tab Open in ComfyUI opens, which waits for ComfyUI (the workflow stays after the #, never sent here)
+        page = self.c.get("/comfyui/open")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Opening ComfyUI", page.text)
+        self.assertIn('class="ssbar"', page.text)
 
     def test_a_clip_lands_silent_unless_sound_was_asked_for_and_no_bigger_than_uhd(self):
         """A model's soundtrack nobody asked for is taken off (MiniMax H3 adds one
@@ -873,6 +878,20 @@ class Flow(unittest.TestCase):
     def test_upscale_asks_where_to(self):
         """A clip to 1080p, 1440p or 4K, a still ×2 or ×4: the scale that lands
         there, or the resolution an upscaler renders to that reaches it."""
+        # resolutions by any name an upscaler gives them (ESRGAN's says FHD), and a
+        # factor list gives the smallest that gets there, not the nearest (×2.25 for ×3 falls short)
+        self.assertEqual([M.tier_px(x, True) for x in ("FHD", "1080p", "2k", "4K", "720")], [1080, 1080, 1440, 2160, 720])
+        self.assertEqual([M.tier_px(x, False) for x in ("2k", "4k")], [2048, 4096])
+        real = M._registry_build()
+        fake = {**M.MODELS["bfl/video-upscale-v1"], "label": "Factors", "slugs": {"t": "x/factors"}}
+        rec = {**real["recs"][M.MODELS["bfl/video-upscale-v1"]["slugs"]["t"]]}
+        rec["inputs"] = {**rec["inputs"], fake["roles"]["t"]["scale"]: {"o": [2, 2.25, 4]}}
+        reg = {**real, "models": {**real["models"], "x/factors": fake}, "recs": {**real["recs"], "x/factors": rec}}
+        sc = fake["roles"]["t"]["scale"]
+        with mock.patch.object(M, "_registry_build", lambda: reg):
+            self.assertEqual(M.upscale_reach("x/factors"), {"scale": {"options": [2, 2.25, 4], "max": 4}})
+            self.assertEqual(M.build("x/factors", {"source": "s.mp4", "scale": 3.0}, lambda n: "/x/" + n)["payload"][sc], 4)
+            self.assertEqual(M.build("x/factors", {"source": "s.mp4", "scale": 6.0}, lambda n: "/x/" + n)["payload"][sc], 4)
         reel = self.reel()
         src = os.path.join(TMP, "up-src.mp4"); clip(src, 0.5, "navy", size="640x360")
         with open(src, "rb") as f:

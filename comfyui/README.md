@@ -23,6 +23,9 @@ nodes. Change anything and queue it.
 Gobo needs to know where your ComfyUI is: it asks the first time (the desktop
 app is usually `http://127.0.0.1:8000`, a ComfyUI you run yourself
 `http://127.0.0.1:8188`); shift-click **Open in ComfyUI** to change it.
+ComfyUI doesn't have to be running when you click: the tab Gobo opens waits for
+it and goes there as soon as it answers. The first time, Chrome may ask whether
+the site may look for apps on your device; allow it.
 
 ## A workflow to start from
 

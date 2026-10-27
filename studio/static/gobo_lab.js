@@ -801,7 +801,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     d.innerHTML = `<div class="box"><h4>Open in ComfyUI</h4>
       <p>${h(blurb)}</p>
       <ol><li><a href="/comfyui/gobo-nodes.zip">Get the Gobo nodes</a> and unzip them into <code>ComfyUI/custom_nodes</code> (a <code>gobo</code> folder), run <code>pip install wasmtime</code> in ComfyUI's Python, and restart ComfyUI. Once.</li>
-      <li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8188")}"> <span class="hint">ComfyUI Desktop is usually http://127.0.0.1:8000</span></li></ol>
+      <li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8188")}"> <span class="hint">ComfyUI Desktop is usually http://127.0.0.1:8000</span></li>
+      <li>Not running yet? The tab waits for it: start ComfyUI and it opens there. (Your browser may ask whether Gobo may look for apps on your device: allow it.)</li></ol>
       <div class="row"><button class="btn small primary" id="caGo">Open in ComfyUI</button><button class="btn small" id="caX">Cancel</button></div></div>`;
     document.body.appendChild(d);
     const go = () => {
@@ -816,7 +817,9 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     d.onclick = e => { if (e.target === d) d.remove(); };
   }
   // a workflow handed to the colourist's own ComfyUI in its address (#gobo=…):
-  // where it is is asked once (and again on shift-click); `get` asks Gobo for it
+  // where it is is asked once (and again on shift-click); `get` asks Gobo for it.
+  // The tab opens on /comfyui/open, which waits for ComfyUI to be running and
+  // then goes there, so starting ComfyUI after the click still works
   async function comfyOpen(get, ask, blurb, done) {
     if (ask || !comfyAddress()) return comfyAsk(() => comfyOpen(get, false, blurb, done), blurb);
     // a window now, while the click still counts, so no pop-up blocker stops it
@@ -825,7 +828,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     if (r.error) { if (win) win.close(); return done(r.error); }
     let bin = "";
     new TextEncoder().encode(JSON.stringify({ workflow: r.workflow, title: r.title })).forEach(c => { bin += String.fromCharCode(c); });
-    const url = `${comfyAddress()}/#gobo=${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
+    const url = `/comfyui/open#to=${encodeURIComponent(comfyAddress())}&gobo=${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
     if (win) { win.opener = null; win.location.href = url; } else window.open(url, "_blank");
     done(null, r);
   }

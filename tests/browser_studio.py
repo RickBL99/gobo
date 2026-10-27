@@ -1115,17 +1115,19 @@ def main():
         tab.shot("37-comfyui-ask")
         tab.js("$('#caAddr').value = 'http://127.0.0.1:8188/'; $('#caGo').click(); 1"); time.sleep(2)
         url = tab.js("window._opened[window._opened.length - 1] || ''")
-        sent = url.split("#gobo=")[1] if "#gobo=" in url else ""
+        sent = url.split("gobo=")[1] if "gobo=" in url else ""
         flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
         classes = [n["class_type"] for n in flow.get("workflow", {}).values()]
-        check("comfyui: it opens ComfyUI with the take and its look as Gobo's nodes", url.startswith("http://127.0.0.1:8188/#gobo=")
-              and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes, classes)
+        check("comfyui: it opens a tab that hands ComfyUI the take and its look as Gobo's nodes",
+              url.startswith("/comfyui/open#to=http%3A%2F%2F127.0.0.1%3A8188&gobo=")
+              and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes, [url[:60], classes])
+        comfy_url = url
         tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1"); time.sleep(0.3)
         # the shot on the panel: the Gobo Director with its scene and choices, wired to the model's own node
         tab.js("setView('shot'); setMode('video', true); S.scene = 'A ferry leaves a foggy pier.'; S.direction.shot = 'wide'; S.direction.move = 'push'; "
                "S.model.video = 'kling/kling-v3-omni'; onShotChange(); $('#shotComfy').click(); 1"); time.sleep(2)
         url = tab.js("window._opened[window._opened.length - 1] || ''")
-        sent = url.split("#gobo=")[1] if "#gobo=" in url else ""
+        sent = url.split("gobo=")[1] if "gobo=" in url else ""
         flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
         nodes = flow.get("workflow", {})
         d = next((n for n in nodes.values() if n["class_type"] == "GoboDirector"), {})
@@ -1173,6 +1175,31 @@ def main():
         check("library: As a clip on a take in the grid puts it on the stage", not tab.js("boardOn()")
               and tab.js("S.current") == tab.js("LIB.items[0].id") and tab.js("$('#libSheet').classList.contains('hidden')"))
         tab.js("window.prompt = window._prompt; 1")
+
+        # ── Open in ComfyUI's tab waits for ComfyUI: nothing at the address yet, then it starts ──
+        import http.server, socket, threading
+        sock = socket.socket(); sock.bind(("127.0.0.1", 0)); port = sock.getsockname()[1]; sock.close()
+        tab.call("Page.navigate", url=BASE + comfy_url.replace("to=http%3A%2F%2F127.0.0.1%3A8188", f"to=http%3A%2F%2F127.0.0.1%3A{port}")); time.sleep(4.5)
+        w = json.loads(tab.js("""JSON.stringify({say: $('#say').textContent, where: $('#where').textContent, what: $('#what').textContent,
+          now: $('#now').classList.contains('go'), help: $('#help').textContent, strip: !!$('.ssbar')})"""))
+        check("comfyui tab: with nothing at the address, it waits and says how to start ComfyUI",
+              w["say"] == "Waiting for ComfyUI to start…" and w["where"] == f"http://127.0.0.1:{port}" and w["now"] and w["strip"]
+              and w["what"] and "python main.py" in w["help"], w)
+        tab.shot("38-comfyui-waiting")
+
+        class Comfy(http.server.BaseHTTPRequestHandler):
+            def do_GET(self):
+                self.send_response(200); self.send_header("Content-Type", "text/html"); self.end_headers(); self.wfile.write(b"<title>ComfyUI</title>up")
+
+            def log_message(self, *a):
+                pass
+        srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), Comfy)
+        threading.Thread(target=srv.serve_forever, daemon=True).start()
+        time.sleep(3)
+        href = tab.js("location.href") or ""
+        check("comfyui tab: once ComfyUI answers, it opens there with the workflow",
+              href.startswith(f"http://127.0.0.1:{port}/#gobo=") and href.split("gobo=")[1] == comfy_url.split("gobo=")[1], href[:90])
+        srv.shutdown()
 
         check("no script errors", not tab.errors, tab.errors[:3])
     finally:

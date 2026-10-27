@@ -763,13 +763,11 @@ function upTargets(t) {
 }
 function upNote(t, m, to) {
   if (!m || !to) return "";
-  const r = m.reach || {}, vid = t.kind === "video", now = vid ? Math.min(+t.w || 0, +t.h || 0) : Math.max(+t.w || 0, +t.h || 0);
+  const r = m.reach || {}, now = t.kind === "video" ? Math.min(+t.w || 0, +t.h || 0) : Math.max(+t.w || 0, +t.h || 0);
   if (r.scale && r.scale.max && now && to.px / now > r.scale.max + 1e-6)
     return `${m.label} goes up to ×${r.scale.max}, so this lands smaller than ${to.label}.`;
-  if ((r.tiers || []).length) {
-    const px = x => { const s = String(x).toLowerCase(), k = parseFloat(s); return s.endsWith("k") ? (vid ? { 2: 1440, 4: 2160, 8: 4320 }[k] || k * 540 : k * 1024) : k; };
-    if (!r.tiers.some(x => px(x) >= to.px)) return `${m.label} goes up to ${r.tiers[r.tiers.length - 1]}, so this lands smaller than ${to.label}.`;
-  }
+  if ((r.tiers_px || []).length && !r.tiers_px.some(px => px >= to.px))
+    return `${m.label} goes up to ${r.tiers[r.tiers.length - 1]}, so this lands smaller than ${to.label}.`;
   return "";
 }
 function upAskHtml(t) {

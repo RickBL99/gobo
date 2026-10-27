@@ -435,18 +435,23 @@ def upscale_reach(mid: str) -> Dict:
     if R.get("scale"):
         p = inp.get(R["scale"], {})
         if p.get("o"):
-            out["scale"] = {"options": sorted(v for v in (_num(str(o).lower().rstrip("x")) for o in p["o"]) if v)}
+            opts = sorted(v for v in (_num(str(o).lower().rstrip("x")) for o in p["o"]) if v)
+            out["scale"] = {"options": opts, "max": opts[-1] if opts else None}
         else:
             out["scale"] = {"min": p.get("mn", 1), "max": p.get("mx", 4)}
     if R.get("tier_field") and R.get("tiers"):
         out["tiers"] = list(R["tiers"])
+        out["tiers_px"] = [tier_px(o, m["kind"] == "vupscale") for o in R["tiers"]]
     return out
 
 
 def tier_px(tier, video: bool) -> int:
     """A resolution an upscaler names, in pixels: the short side for a clip
-    (720p, 1080p, 2K = 1440, 4K = 2160), the long side for a still (2K = 2048, 4K = 4096)."""
+    (720p, FHD = 1080, 2K = 1440, 4K = 2160), the long side for a still (2K = 2048, 4K = 4096)."""
     s = str(tier or "").strip().lower()
+    known = (VID_TIER if video else IMG_TIER).get(s)
+    if known:
+        return known
     if s.endswith("k") and _num(s[:-1]):
         k = _num(s[:-1])
         return int({2: 1440, 4: 2160, 8: 4320}.get(k, k * 540) if video else k * 1024)
@@ -773,7 +778,11 @@ def build(model_id: str, req: Dict, find: Callable[[str], Optional[str]]) -> Dic
             p = inp.get(sc, {})
             want = float(req.get("scale") or 2)
             if p.get("o"):
-                P[sc] = _snap(p["o"], want, lambda o: _num(str(o).lower().rstrip("x")))
+                # the smallest factor it offers that gets there (the nearest could fall short), else its biggest
+                f = lambda o: _num(str(o).lower().rstrip("x")) or 0
+                opts = [o for o in p["o"] if f(o)]
+                there = sorted((o for o in opts if f(o) >= want - 1e-6), key=f)
+                P[sc] = there[0] if there else max(opts, key=f)
             else:
                 P[sc] = _typed(p, max(p.get("mn", want), min(p.get("mx", want), want)))
         if R.get("tier_field") and R.get("tiers"):

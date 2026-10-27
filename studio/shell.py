@@ -208,6 +208,13 @@ async def comfy_nodes():
                     headers={"Content-Disposition": 'attachment; filename="gobo-nodes.zip"'})
 
 
+@router.get("/comfyui/open", response_class=HTMLResponse)
+async def comfy_open(request: Request):
+    """The tab "Open in ComfyUI" opens: it waits for your ComfyUI to answer,
+    then hands it the workflow (in the address, after the #, never sent here)."""
+    return templates.TemplateResponse(request, "comfy_open.html", _page(request))
+
+
 @router.get("/t/{token}")
 async def signed_file(token: str):
     """A take's file or a LUT, for ComfyUI: a signed link, good for a week."""
