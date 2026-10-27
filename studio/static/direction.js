@@ -39,10 +39,13 @@
   const engine = root.__direction = { ready: false, served: 0, fallbacks: 0 };
   let compile = null;
   const url = (typeof API === "string" ? API : "/studio") + "/compile";
+  // the wasm is fetched with its script's ?v= (the release), so a new release
+  // isn't run from an old copy the browser kept
+  const v = document.currentScript ? new URL(document.currentScript.src).search : "";
 
   (async () => {
     try {
-      const wasm = await WebAssembly.instantiateStreaming(fetch("/static/direction.wasm"));
+      const wasm = await WebAssembly.instantiateStreaming(fetch("/static/direction.wasm" + v));
       compile = makeCompiler(wasm.instance, CAT);       // CAT: the page's own catalogue
       engine.ready = true;
       const segs = document.getElementById("segs");

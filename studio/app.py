@@ -83,7 +83,17 @@ app.add_middleware(SessionMiddleware, secret_key=settings.session_secret(), sess
 app.include_router(shell.router)
 app.include_router(prompts.router)
 app.include_router(router)
-app.mount("/static", StaticFiles(directory=os.path.join(HERE, "static")), name="static")
+class _Static(StaticFiles):
+    """The page's scripts and Gobo's Rust, checked with the server on every load
+    (a 304 when nothing changed), so a release is seen at once, not when the
+    browser's guess at how long its copy stays fresh runs out."""
+    def file_response(self, *args, **kwargs):
+        r = super().file_response(*args, **kwargs)
+        r.headers["Cache-Control"] = "no-cache"
+        return r
+
+
+app.mount("/static", _Static(directory=os.path.join(HERE, "static")), name="static")
 
 
 @app.get("/favicon.ico", include_in_schema=False)

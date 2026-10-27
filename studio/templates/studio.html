@@ -376,7 +376,17 @@ main.boardview #inspector { display: none !important; }
 .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding-bottom: 30px; }
 .bcard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
 .bcard.cont { border-left: 3px solid var(--blue); }
-.bct { display: flex; align-items: center; gap: 6px; padding: 7px 8px 6px 10px; }
+.bct { display: flex; align-items: center; gap: 6px; padding: 7px 8px 6px 10px; cursor: grab; user-select: none; touch-action: none; }
+.bct .grip { color: var(--dim); font-size: .85rem; margin-right: -2px; }
+.bct:hover .grip { color: var(--muted); }
+.bcard.dragging { opacity: .35; }
+body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
+.bcard.dropb { box-shadow: -8px 0 0 -3px var(--accent); }
+.bcard.dropa { box-shadow: 8px 0 0 -3px var(--accent); }
+.bgrid.onecol .bcard.dropb { box-shadow: 0 -8px 0 -3px var(--accent); }
+.bgrid.onecol .bcard.dropa { box-shadow: 0 8px 0 -3px var(--accent); }
+.bghost { position: fixed; left: 0; top: 0; z-index: 1000; pointer-events: none; background: var(--accent); color: var(--accent-ink);
+  font-weight: 700; font-size: .78rem; padding: 4px 11px; border-radius: 999px; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
 .bct .no { font-weight: 800; font-size: .9rem; }
 .bct .dur { font-size: .72rem; color: var(--muted); }
 .bct .grow { flex: 1; }

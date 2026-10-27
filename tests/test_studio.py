@@ -459,6 +459,13 @@ class Flow(unittest.TestCase):
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
 
+    def test_a_release_reaches_the_browser_at_once(self):
+        """The page's scripts and Gobo's Rust are checked with the server on every
+        load, so nobody grades with last release's scopes from a kept copy."""
+        for f in ("gobo.wasm", "gobo.js", "gobo_colour.js"):
+            r = self.c.get(f"/static/{f}")
+            self.assertEqual((r.status_code, r.headers.get("cache-control")), (200, "no-cache"), f)
+
     def test_library_takes_go_on_a_board(self):
         """Clips made for a board whose page was closed, and a still from another
         reel, put on a board from the library: in film order, the stranger copied in."""
@@ -502,6 +509,24 @@ class Flow(unittest.TestCase):
         again = self.c.post("/studio/library/board", json={"items": [f"{a}:{made[0]}", f"{new}:{cards[0]['clip']}"], "reel": new}).json()
         self.assertEqual((again["added"], again["left"]), (1, [f"{new}:{cards[0]['clip']}"]))
         self.assertEqual(len(self.c.get(f"/studio/reels/{new}/board").json()["board"]["shots"]), 5)
+        # a take made from a starting frame brings the frame with it, so it can be shot again
+        up = self.c.post(f"/studio/reels/{a}/refs", files={"file": ("start.jpg", jpeg(), "image/jpeg")}).json()
+        fr = self.c.post(f"/studio/reels/{a}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628", "scene": "From a frame.",
+                                                         "duration": 5, "first_frame": up["name"]}).json()["takes"][0]
+        self.finish(a, fr["id"], mp4, ".mp4")
+        moved = self.c.post("/studio/library/board", json={"items": [f"{a}:{fr['id']}"], "name": "Framed"}).json()["reel"]["id"]
+        self.assertTrue(os.path.exists(J.ref_path(moved, up["name"])), "the starting frame came with it")
+        # a copy made before frames came along finds its frame in the reel it was copied from
+        os.remove(J.ref_path(moved, up["name"]))
+        self.assertEqual(self.c.get(f"/studio/reels/{moved}/file/{up['name']}").status_code, 200)
+        self.assertTrue(os.path.exists(J.ref_path(moved, up["name"])))
+        self.assertEqual(self.c.get(f"/studio/reels/{moved}/file/nosuch.jpg").status_code, 404)
+        # takes already copied onto a board, onto another one: a copy of a copy
+        third = self.c.post("/studio/library/board", json={"items": [f"{new}:{c['clip'] or c['key']}" for c in cards], "name": "Recut"})
+        self.assertEqual(third.status_code, 200, third.text)
+        recut = third.json()["reel"]["id"]
+        self.assertEqual(sorted(t.get("copied_from") for t in self.c.get(f"/studio/reels/{recut}").json()["takes"]),
+                         sorted(f"{new}:{c['clip'] or c['key']}" for c in cards))
         self.assertEqual(self.c.post("/studio/library/board", json={"items": [f"{other}:{busy['id']}"]}).status_code, 400)
         self.assertEqual(self.c.post("/studio/library/board", json={"items": items, "reel": "nosuchreel1"}).status_code, 404)
 

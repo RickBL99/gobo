@@ -505,10 +505,39 @@ def _media_type(name: str) -> str:
             ".zip": "application/zip"}.get(ext, "application/octet-stream")
 
 
-def _find_file(reel: str, name: str) -> Optional[str]:
+def _find_file(reel: str, name: str, depth: int = 3) -> Optional[str]:
     for p in (J.out_path(reel, name), J.ref_path(reel, name)):
         if os.path.exists(p):
             return p
+    return _from_source(reel, name, depth)
+
+
+def _ref_names(t: Dict) -> List[str]:
+    """The files a take was made from: its references, frames and source clip."""
+    s = t.get("settings") or {}
+    return [os.path.basename(str(n)) for n in [*(s.get("refs") or []), s.get("first_frame"), s.get("last_frame"),
+                                               s.get("source_video")] if n]
+
+
+def _from_source(reel: str, name: str, depth: int) -> Optional[str]:
+    """A file a copied take was made from, brought over from the reel it was
+    copied from. Copies made before Take 17 left their frames behind, so
+    shooting one again said a reference was missing."""
+    name = os.path.basename(name or "")
+    if not name or depth <= 0:
+        return None
+    for t in J.list_takes(reel):
+        src = str(t.get("copied_from") or "").partition(":")[0]
+        if not src or src == reel or name not in _ref_names(t):
+            continue
+        try:
+            p = _find_file(J.safe_id(src), name, depth - 1)
+        except ValueError:
+            continue
+        if p:
+            dst = J.ref_path(reel, name)
+            shutil.copyfile(p, dst)
+            return dst
     return None
 
 
@@ -1797,10 +1826,11 @@ async def library_claim(request: Request):
 
 
 # what a take copied to another reel leaves behind: where and when it was, how
-# it was run, and anything only its own reel's board or bill can mean
+# it was run, and anything only its own reel's board or bill can mean (a copy of
+# a copy says where it came from last)
 _NOT_COPIED = {"id", "reel", "shot", "letter", "created", "beat", "status", "file", "poster", "board", "role",
                "poll_url", "payload", "request", "share", "cost", "started", "finished", "by", "parent",
-               "resends", "progress", "starred"}
+               "resends", "progress", "starred", "copied_from"}
 
 
 def _copy_take(src_reel: str, t: Dict, reel: str, shot: int, by: str, **fields) -> Dict:
@@ -1810,6 +1840,11 @@ def _copy_take(src_reel: str, t: Dict, reel: str, shot: int, by: str, **fields) 
         shutil.copyfile(J.out_path(src_reel, name), J.out_path(reel, new))
         return new
     keep = {k: v for k, v in t.items() if k not in _NOT_COPIED}
+    # the frames and references it was made from come too, so it can be shot again
+    for name in _ref_names(t):
+        p = _find_file(src_reel, name)
+        if p and not os.path.exists(J.ref_path(reel, name)):
+            shutil.copyfile(p, J.ref_path(reel, name))
     nt = J.new_take(reel, shot, 0, **keep, copied_from=f"{src_reel}:{t['id']}", by=by, request={}, **fields)
     extra = {}
     if t.get("poster") and os.path.exists(J.out_path(src_reel, t["poster"])):

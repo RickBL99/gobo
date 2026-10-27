@@ -156,7 +156,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
         <button class="btn small" id="drawUndo">Undo</button><button class="btn small" id="drawClear">Clear</button></div>
       <div class="drawwrap"><canvas id="drawCv"></canvas></div>
       <div class="read" id="drawRead"><span class="hint">Nothing drawn yet.</span></div>
-      <div class="row"><button class="btn primary small" id="drawShoot" disabled title="Shoot the take on screen again with this move (a still is animated from)">Shoot it</button>
+      <div class="row"><button class="btn primary small" id="drawShoot" disabled title="Shoot the take on screen again with this move, on the clip model picked on the left (a still is animated from)">Shoot it</button>
         <button class="btn small" id="drawApply" disabled title="Put the move and the action on the shot, and shoot it yourself later">Just set it</button><span class="hint" id="drawWhy"></span></div>
     </section>
     <section data-pane="grade" class="hidden">
@@ -378,7 +378,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     if (!d.move && !text) return say("Nothing in this drawing changes the shot, so nothing was shot. Draw a camera or a subject stroke.", true);
     close();
     await ST().redo(t, d.move, text);
-    ST().toast(`Shooting it again${d.move ? ` with a ${optLabel("move", d.move).toLowerCase()}` : ""}${d.words ? ", and the drawn move in the scene" : ""}. The new take lands beside the old one.`);
+    const on = ST().clipModel ? ST().clipModel() : "";
+    ST().toast(`Shooting it again${on ? ` on ${on}` : ""}${d.move ? ` with a ${optLabel("move", d.move).toLowerCase()}` : ""}${d.words ? ", and the drawn move in the scene" : ""}. The new take lands beside the old one.`);
   };
 
   // ── Grade ───────────────────────────────────────────────────────────────

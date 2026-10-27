@@ -1829,7 +1829,7 @@ function cardHtml(s, i) {
   const durs = clipDurations();
   const opts = (g, v) => CAT.groups[g].options.map(o => `<option value="${o.id}" ${o.id === v ? "selected" : ""}>${esc(o.id === "auto" ? (g === "shot" ? "Framing · auto" : "Move · auto") : o.label)}</option>`).join("");
   return `<div class="bcard ${s.start === "continue" ? "cont" : ""}" data-s="${s.id}">
-    <div class="bct"><span class="no">${i + 1}</span><span class="dur" data-dur></span>
+    <div class="bct" title="Drag to move this shot"><span class="grip" aria-hidden="true">⠿</span><span class="no">${i + 1}</span><span class="dur" data-dur></span>
       ${i ? `<span class="seg" data-start><button data-v="cut" class="${s.start !== "continue" ? "on" : ""}" title="A new setup, from its own keyframe">Cut</button><button data-v="continue" class="${s.start === "continue" ? "on" : ""}" title="Starts on the last frame of the shot before">Continue</button></span>` : ""}
       <span class="grow"></span>
       <button class="ib" data-mv="-1" title="Earlier" ${i ? "" : "disabled"}>←</button><button class="ib" data-mv="1" title="Later" ${i < B.shots.length - 1 ? "" : "disabled"}>→</button>
@@ -1849,7 +1849,7 @@ function footageCardHtml(s, i) {
   const m = toolOf(s), ext = m && m.category === "video-extend", durs = ext ? (m.durations || []) : [];
   const opt = x => `<option value="${x.id}" ${m && x.id === m.id ? "selected" : ""}>${esc(x.label)}${x.price != null ? ` · ≈${fmtUSD(x.price)}` : ""}${x.refs ? ` · ${x.refs} refs` : ""}${isGoogle(x) ? " · no real people" : ""}</option>`;
   return `<div class="bcard real" data-s="${s.id}">
-    <div class="bct"><span class="no">${i + 1}</span><span class="tag">Footage</span><span class="dur" data-dur></span><span class="grow"></span>
+    <div class="bct" title="Drag to move this shot"><span class="grip" aria-hidden="true">⠿</span><span class="no">${i + 1}</span><span class="tag">Footage</span><span class="dur" data-dur></span><span class="grow"></span>
       <button class="ib" data-mv="-1" title="Earlier" ${i ? "" : "disabled"}>←</button><button class="ib" data-mv="1" title="Later" ${i < B.shots.length - 1 ? "" : "disabled"}>→</button>
       <button class="ib" data-del title="Take the card off the board (the footage stays in the reel)">✕</button></div>
     <div class="bframe" data-frame></div>
@@ -1977,6 +1977,70 @@ function wireBoard() {
   };
   $$("#board .bcard").forEach(wireCard);
 }
+// a card dragged by its top bar to another place in the film: pointer events,
+// so a finger works as well as a mouse (the ← → buttons still move it one step)
+function dragCard(card, e) {
+  const s = B.shots.find(x => x.id === card.dataset.s), bar = e.currentTarget, grid = card.parentElement;
+  if (!s || e.button !== 0 || e.target.closest("button, select, input, textarea")) return;
+  e.preventDefault();
+  const x0 = e.clientX, y0 = e.clientY;
+  let moving = false, ghost = null, at = null, py = y0, scrollT = null;
+  const scroller = (() => {
+    for (let p = grid; p && p !== document.body; p = p.parentElement) {
+      const o = getComputedStyle(p).overflowY;
+      if ((o === "auto" || o === "scroll") && p.scrollHeight > p.clientHeight) return p;
+    }
+    return document.scrollingElement;
+  })();
+  const clear = () => $$(".bcard.dropb, .bcard.dropa", grid).forEach(c => c.classList.remove("dropb", "dropa"));
+  // the card under the pointer, and which side of it: left or right, or above or below in one column
+  const target = (x, y) => {
+    const one = card.offsetWidth > grid.clientWidth * 0.66;
+    grid.classList.toggle("onecol", one);
+    for (const c of $$(".bcard", grid)) {
+      if (c === card) continue;
+      const r = c.getBoundingClientRect();
+      if (x >= r.left - 8 && x <= r.right + 8 && y >= r.top - 8 && y <= r.bottom + 8)
+        return { c, after: one ? y > r.top + r.height / 2 : x > r.left + r.width / 2 };
+    }
+    return null;
+  };
+  const start = () => {
+    moving = true;
+    card.classList.add("dragging"); document.body.classList.add("cardmoving");
+    ghost = document.createElement("div"); ghost.className = "bghost"; ghost.textContent = `Shot ${B.shots.indexOf(s) + 1}`;
+    document.body.appendChild(ghost);
+    // held near the top or bottom of the view, the board scrolls
+    scrollT = setInterval(() => {
+      const r = scroller === document.scrollingElement ? { top: 0, bottom: innerHeight } : scroller.getBoundingClientRect();
+      if (py < r.top + 60) scroller.scrollBy(0, -14); else if (py > r.bottom - 60) scroller.scrollBy(0, 14);
+    }, 16);
+  };
+  const move = ev => {
+    if (!moving) { if (Math.hypot(ev.clientX - x0, ev.clientY - y0) < 6) return; start(); }
+    py = ev.clientY;
+    ghost.style.transform = `translate(${ev.clientX + 14}px, ${ev.clientY + 10}px)`;
+    at = target(ev.clientX, ev.clientY);
+    clear(); if (at) at.c.classList.add(at.after ? "dropa" : "dropb");
+  };
+  const end = drop => {
+    bar.removeEventListener("pointermove", move); bar.removeEventListener("pointerup", up);
+    bar.removeEventListener("pointercancel", cancel); document.removeEventListener("keydown", esc);
+    clearInterval(scrollT); clear(); grid.classList.remove("onecol");
+    card.classList.remove("dragging"); document.body.classList.remove("cardmoving"); if (ghost) ghost.remove();
+    if (!moving || !drop || !at) return;
+    const from = B.shots.indexOf(s);
+    B.shots.splice(from, 1);
+    B.shots.splice(B.shots.findIndex(x => x.id === at.c.dataset.s) + (at.after ? 1 : 0), 0, s);
+    if (B.shots.indexOf(s) === from) return;
+    if (B.shots[0].start === "continue") B.shots[0].start = "cut";        // nothing before the first shot to continue
+    saveBoard(); renderBoard();
+  };
+  const up = () => end(true), cancel = () => end(false), esc = ev => { if (ev.key === "Escape") end(false); };
+  try { bar.setPointerCapture(e.pointerId); } catch (err) { /* a pointer the page didn't start */ }
+  bar.addEventListener("pointermove", move); bar.addEventListener("pointerup", up);
+  bar.addEventListener("pointercancel", cancel); document.addEventListener("keydown", esc);
+}
 function wireCard(card) {
   const s = B.shots.find(x => x.id === card.dataset.s);
   if (!s) return;
@@ -2002,6 +2066,7 @@ function wireCard(card) {
     if (B.shots[0].start === "continue") B.shots[0].start = "cut";        // nothing before the first shot to continue
     saveBoard(); renderBoard();
   });
+  $(".bct", card).onpointerdown = e => dragCard(card, e);
   const dup = $("[data-dup]", card);
   if (dup) dup.onclick = () => {
     B.shots.splice(B.shots.indexOf(s) + 1, 0, Object.assign(newShot(), { scene: s.scene, shot: s.shot, move: s.move, duration: s.duration,
@@ -2263,13 +2328,17 @@ function setView(v) {
 window.STUDIO = {
   direction: () => S.direction, aspect: () => S.aspect, mode: () => S.mode,
   current: () => cur(), takes: () => S.takes.slice(), toast, api, apiBase: API,
+  clipModel: () => (modelById(S.model.video) || {}).label || "",
   reel: () => S.reel && S.reel.id,
   addTakes(ts) { mergeTakes(ts); poll(); },
   show(id) { setView("shot"); select(id); },
   // Draw the move's "Shoot it": the take on screen again with the drawn move
-  // and action (a still is animated from), and nothing else changed
+  // and action (a still is animated from), on the clip model picked on the
+  // left, and nothing else changed
   async redo(t, move, action) {
+    const picked = S.model.video;
     if (t && t.status === "done") { if (t.kind === "image") animateFrom(t, "first"); else reuseSettings(t); }
+    if (modelById(picked)) S.model.video = picked;     // not the model the take was made with
     setOverride(null);                                   // a hand-edited prompt would ignore the new move
     if (S.pmode === "director") S.pmode = "cinematic";
     if (move) S.direction.move = move;

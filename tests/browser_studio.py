@@ -566,6 +566,23 @@ def main():
         tab.js("B = null; loadReel('bdtest00'); 1"); time.sleep(0.8)
         check("board: it comes back with the reel", tab.js("B && B.shots.length") == 3 and tab.js("B.elements[0].name") == "Maya" and tab.js("B.target") == 15
               and tab.js("B.shots[0].trim") == [1, 6])
+        # drag a card by its top bar: the first shot to after the last
+        tab.js("""window._order = B.shots.map(s => s.id); window._shots = JSON.stringify(B.shots);
+          const cards = $$('#board .bcard'), bar = cards[0].querySelector('.bct'), a = bar.getBoundingClientRect(), z = cards[2].getBoundingClientRect();
+          const ev = (t, x, y) => bar.dispatchEvent(new PointerEvent(t, {bubbles: true, button: 0, pointerId: 7, clientX: x, clientY: y}));
+          ev('pointerdown', a.left + 30, a.top + 10); ev('pointermove', a.left + 60, a.top + 30);
+          ev('pointermove', z.right - 20, z.top + z.height / 2);
+          window._mid = {line: !!$('.bcard.dropa'), ghost: !!$('.bghost'), dim: cards[0].classList.contains('dragging')};
+          ev('pointerup', z.right - 20, z.top + z.height / 2); 1"""); time.sleep(0.4)
+        check("board: dragging a card shows where it lands", tab.js("_mid") == {"line": True, "ghost": True, "dim": True}, tab.js("_mid"))
+        check("board: and drops it there, the film reordered", tab.js("B.shots.map(s => s.id)") == [tab.js("_order[1]"), tab.js("_order[2]"), tab.js("_order[0]")]
+              and tab.js("B.shots[0].start") == "cut" and not tab.js("!!$('.bghost')") and tab.js("$$('#board .bcard')[2].dataset.s") == tab.js("_order[0]"))
+        tab.js("""const bar = $$('#board .bcard')[0].querySelector('.bct'), a = bar.getBoundingClientRect();
+          const ev = (t, x, y) => bar.dispatchEvent(new PointerEvent(t, {bubbles: true, button: 0, pointerId: 8, clientX: x, clientY: y}));
+          ev('pointerdown', a.left + 30, a.top + 10); ev('pointermove', a.left + 400, a.top + 40);
+          document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); ev('pointerup', a.left + 400, a.top + 40); 1"""); time.sleep(0.3)
+        check("board: Esc puts a dragged card back", tab.js("B.shots.map(s => s.id)") == [tab.js("_order[1]"), tab.js("_order[2]"), tab.js("_order[0]")])
+        tab.js("B.shots = JSON.parse(_shots); saveBoard(); renderBoard(); 1"); time.sleep(0.3)
         tab.shot("18-board-phone", w=390, h=844)
         check("board: no sideways scroll on a phone", tab.js("document.documentElement.scrollWidth - window.innerWidth") <= 1)
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
@@ -695,6 +712,18 @@ def main():
               and "Stop grading" in stage and "Rendering" not in stage, stage)
         tab.js("S.takes.find(t => t.id === _gid).progress = 'frame 30 of 48'; tickStage(); 1")
         check("grade: the frame count moves without redrawing the stage", tab.js("$('#gradeprog').textContent") == "frame 30 of 48")
+        # Draw the move's Shoot it: the take again, on the clip model picked on the left, not the one it was made with
+        tab.js("""window._keep = JSON.stringify({scene: S.scene, direction: S.direction, model: S.model, mode: S.mode});
+          window._gen = generate; window._gens = [];
+          generate = o => { _gens.push({o, model: S.model.video, move: S.direction.move}); return Promise.resolve(); };
+          const made = byKind('video')[0], picked = byKind('video').find(m => m.id !== made.id);
+          window._want = picked.id; S.model.video = picked.id;
+          STUDIO.redo({id: '17950000000000-redo00', kind: 'video', status: 'done', model: made.id, settings: {mode: 'video', scene: 'A wave.'}}, 'orbit', ''); 1""")
+        time.sleep(0.3)
+        check("draw: Shoot it shoots on the model picked on the left", tab.js("_gens.length") == 1 and tab.js("_gens[0].model") == tab.js("_want")
+              and tab.js("_gens[0].move") == "orbit" and tab.js("_gens[0].o.parent") == "17950000000000-redo00", tab.js("_gens"))
+        tab.js("""generate = _gen; const k = JSON.parse(_keep); S.scene = k.scene; $('#scene').value = k.scene;
+          S.direction = k.direction; S.model = k.model; setMode(k.mode, true); onShotChange(); 1""")
         tab.js("S.takes = S.takes.filter(t => t.id !== _gid); setView('board'); refreshBoard(); 1"); time.sleep(0.3)
         tab.js("S.takes = S.takes.filter(t => t.id !== _fid); _ft.refuse = 'The server said no.'; refreshBoard(); 1")
         tab.js(f"{card}.querySelector('[data-act=tool]').click(); 1"); time.sleep(0.5)
@@ -859,6 +888,9 @@ def main():
         c1 = tab.js("$('#dCost').textContent")
         check("director: Best and 30 seconds cost more", float(c1.split("$")[1].split()[0]) > float(c0.split("$")[1].split()[0]), f"{c0} → {c1}")
         tab.js("window._runs = []; window.autopilot.run = (o, ui) => { _runs.push(o); window._ui = ui; return new Promise(r => { window._fin = r; }); }; 1")
+        # Roll camera won't start a film the balance can't pay for: the test's balance, not the real account's
+        tab.js("""window._cf = window.fetch; window.fetch = (u, o) => String(u).endsWith('/credits')
+          ? Promise.resolve(new Response(JSON.stringify({credits: 1000}), {headers: {'Content-Type': 'application/json'}})) : _cf(u, o); 1""")
         tab.js("$('#dLine').value = ''; $('#dRoll').click(); 1"); time.sleep(0.5)
         check("director: no line, no run", not tab.js("$('#dWarn').hidden") and tab.js("_runs.length") == 0)
         tab.js("$('#director .ideas button').click(); $('#dRoll').click(); 1"); time.sleep(1.2)
@@ -888,6 +920,7 @@ def main():
         check("director: Make another goes back to the line", not tab.js("$('#dCompose').hidden"))
         tab.shot("32-director-phone", w=390, h=844)
         check("director: no sideways scroll on a phone", tab.js("$('#director').scrollWidth <= innerWidth + 1"))
+        tab.js("window.fetch = window._cf; 1")
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
 
         # ── Colour: the Lab's Grade, advanced, on a real clip the server keeps ──

@@ -79,10 +79,13 @@
     return;
   }
 
+  // the wasm is fetched with its script's ?v= (the release), so a new release
+  // isn't run from an old copy the browser kept
+  const v = document.currentScript ? new URL(document.currentScript.src).search : "";
   root.gobo = null;
   root.goboReady = (async () => {
     try {
-      const wasm = await WebAssembly.instantiateStreaming(fetch("/static/gobo.wasm"));
+      const wasm = await WebAssembly.instantiateStreaming(fetch("/static/gobo.wasm" + v));
       root.gobo = makeGobo(wasm.instance);
       return root.gobo;
     } catch (e) {
