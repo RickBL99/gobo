@@ -412,6 +412,52 @@ class Flow(unittest.TestCase):
         self.assertIsNone(J.get_call(reel, ids[0]))
         self.assertEqual((slow["status"], slow.get("resends")), ("running", None))
 
+    def test_library_takes_go_on_a_board(self):
+        """Clips made for a board whose page was closed, and a still from another
+        reel, put on a board from the library: in film order, the stranger copied in."""
+        a = self.reel()
+        self.c.put(f"/studio/reels/{a}/board", json={"shots": [{"id": f"c{i}", "n": i + 1, "scene": f"Shot {i + 1}"} for i in range(3)]})
+        src = os.path.join(TMP, "lib-board.mp4"); clip(src, 1.0, "blue")
+        with open(src, "rb") as f:
+            mp4 = f.read()
+        made = {}
+        for i in (2, 0, 1):                     # Autopilot runs them side by side: they finish in any order
+            t = self.c.post(f"/studio/reels/{a}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628",
+                                                            "scene": f"Shot {i + 1}.", "duration": 5, "board": f"c{i}", "role": "clip"}).json()["takes"][0]
+            self.finish(a, t["id"], mp4, ".mp4")
+            made[i] = t["id"]
+        other = self.reel()
+        still = self.c.post(f"/studio/reels/{other}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128",
+                                                                "scene": "A lighthouse."}).json()["takes"][0]
+        self.finish(other, still["id"], jpeg(), ".jpg")
+        busy = self.c.post(f"/studio/reels/{other}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128",
+                                                               "scene": "Still rendering."}).json()["takes"][0]
+        items = [f"{other}:{still['id']}", f"{a}:{made[1]}", f"{a}:{made[0]}", f"{a}:{made[2]}", f"{other}:{busy['id']}"]
+        r = self.c.post("/studio/library/board", json={"items": items, "name": "The rescue"}).json()
+        new = r["reel"]["id"]
+        self.assertEqual((r["reel"]["name"], r["added"], r["left"]), ("The rescue", 4, [f"{other}:{busy['id']}"]))
+        board = self.c.get(f"/studio/reels/{new}/board").json()["board"]
+        takes = {t["id"]: t for t in self.c.get(f"/studio/reels/{new}").json()["takes"]}
+        cards = board["shots"]
+        # the board's own order (shots 1, 2, 3), then the still, which was made after them
+        self.assertEqual([takes[c["clip"] or c["key"]].get("copied_from") for c in cards],
+                         [f"{a}:{made[0]}", f"{a}:{made[1]}", f"{a}:{made[2]}", f"{other}:{still['id']}"])
+        self.assertEqual([c["scene"] for c in cards[:3]], ["Shot 1.", "Shot 2.", "Shot 3."])
+        self.assertEqual([c["n"] for c in cards], [1, 2, 3, 4])
+        for c in cards:
+            t = takes[c["clip"] or c["key"]]
+            self.assertEqual((t["board"], t["role"], t["status"]), (c["id"], "clip" if c["clip"] else "key", "done"))
+            self.assertTrue(os.path.exists(J.out_path(new, t["file"])))
+        self.assertTrue(cards[3]["key"] and not cards[3]["clip"], "a still is the card's keyframe")
+        # the originals stay where they were
+        self.assertEqual(J.get_take(a, made[0])["board"], "c0")
+        # onto an existing board: the one already on it is left out, the rest added after its cards
+        again = self.c.post("/studio/library/board", json={"items": [f"{a}:{made[0]}", f"{new}:{cards[0]['clip']}"], "reel": new}).json()
+        self.assertEqual((again["added"], again["left"]), (1, [f"{new}:{cards[0]['clip']}"]))
+        self.assertEqual(len(self.c.get(f"/studio/reels/{new}/board").json()["board"]["shots"]), 5)
+        self.assertEqual(self.c.post("/studio/library/board", json={"items": [f"{other}:{busy['id']}"]}).status_code, 400)
+        self.assertEqual(self.c.post("/studio/library/board", json={"items": items, "reel": "nosuchreel1"}).status_code, 404)
+
     def test_a_lut_from_elsewhere_grades_the_take(self):
         """A .cube kept with the reel, named by a look, used by the server's grader."""
         reel = self.reel()

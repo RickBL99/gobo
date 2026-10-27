@@ -32,11 +32,12 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Steal the Look:** drop in any frame. In about 9 ms it reads the tone curve, colour, palette, grain, letterbox, focus and light, names the nearest film stock and grade, and sets them for you.
   - **Grade:** film stocks (Portra, 500T, bleach bypass, slide, VHS and more) and grades, with halation, moving grain and a vignette, live on video at 10 to 16 ms a frame. An Amount control sets the strength, and the look exports as a `.cube` file for Resolve, Premiere or Final Cut.
   - **Colour:** the advanced grade, full screen and in the spirit of DaVinci Resolve's Color page: lift, gamma, gain and offset wheels, custom curves, a waveform, RGB parade, vectorscope and histogram, and `.cube` LUTs (3D or 1D) and ASC CDLs imported from any editor. An imported LUT is read back into the sliders (fitted to its table), with what they can't show kept as a small LUT before them, so the picture is still exactly the LUT's; a CDL lands on the wheels exactly. All of it folds into the look's one 3D LUT, so the live preview, the exported `.cube` and the server's grade match.
+  - **Match:** grade other takes like this one. An extension, another angle or a retake is matched to its colour first (a CDL worked out in Rust from frames of both, lining up blacks, mid-tones, whites and saturation), then given the same grade, so they cut together.
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
-- **And:** a public share link for any take, a model shootout, a library, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
+- **And:** a public share link for any take, a model shootout, a library (pick takes from any reel and put them on a board, in film order, to cut them), accounts an admin adds with their own passwords, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 
 ---
 
@@ -96,6 +97,7 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 |---|---|
 | `COMFY_API_KEY` | Required. Every model, the Director and the planner run on it. |
 | `STUDIO_PASSWORD` | One shared password; people sign in with their own name. Or use `STUDIO_USERS=ana:pw1,ben:pw2` for separate logins. |
+| `STUDIO_ADMINS` | Names (comma-separated) who get the **Users** page: add people with their own username and password, reset or remove them. Passwords are kept as scrypt hashes in the data folder; a name with an account can't sign in with the shared password. |
 | `STUDIO_KEYS=visitor` | Public-demo mode: see below. |
 | `STUDIO_DIR` | Where reels live (`/data` in Docker). Reels untouched for `STUDIO_REEL_TTL_DAYS` (60) are cleared. |
 | `ANTHROPIC_API_KEY` | Optional: the Director and the planner straight from Anthropic, instead of through Comfy Router. |

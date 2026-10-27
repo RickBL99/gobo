@@ -1753,6 +1753,99 @@ async def library_claim(request: Request):
     return {"claimed": done, "me": me}
 
 
+# what a take copied to another reel leaves behind: where and when it was, how
+# it was run, and anything only its own reel's board or bill can mean
+_NOT_COPIED = {"id", "reel", "shot", "letter", "created", "beat", "status", "file", "poster", "board", "role",
+               "poll_url", "payload", "request", "share", "cost", "started", "finished", "by", "parent",
+               "resends", "progress", "starred"}
+
+
+def _copy_take(src_reel: str, t: Dict, reel: str, shot: int, by: str, **fields) -> Dict:
+    """A finished take, file and all, as a new take in another reel."""
+    def copy(name: str) -> str:
+        new = f"{os.path.splitext(name)[0].split('-')[0] or 'take'}-{uuid.uuid4().hex[:10]}{os.path.splitext(name)[1].lower()}"
+        shutil.copyfile(J.out_path(src_reel, name), J.out_path(reel, new))
+        return new
+    keep = {k: v for k, v in t.items() if k not in _NOT_COPIED}
+    nt = J.new_take(reel, shot, 0, **keep, copied_from=f"{src_reel}:{t['id']}", by=by, request={}, **fields)
+    extra = {}
+    if t.get("poster") and os.path.exists(J.out_path(src_reel, t["poster"])):
+        extra["poster"] = copy(t["poster"])
+    return J.update_take(reel, nt["id"], status="done", file=copy(t["file"]), finished=time.time(), **extra)
+
+
+@router.post("/library/board", response_class=JSONResponse)
+async def library_to_board(request: Request):
+    """Takes from the library onto a board, a card each: the board of `reel`,
+    or a new reel's (called `name`). A take from another reel is copied in,
+    file and all, so the board's reel holds everything its cut needs. They go
+    in film order: the order of the board they were made for, where there was
+    one, else the order they were made. A clip is the card's clip and a still
+    its keyframe. A take still rendering, or one already on this board, is
+    left out."""
+    me = _who(request)
+    b = await request.json()
+    target = str(b.get("reel") or "")
+    if target:
+        tr = _reel_or_404(target)
+        if not tr or not V.owns(tr):
+            return _err("No such reel.", 404)
+    else:
+        tr = None
+    picked, left, boards, first = [], [], {}, {}
+    for reel, tid in _lib_pairs((b.get("items") or [])[:BOARD_SHOTS]):
+        r, t = J.get_reel(reel), J.get_take(reel, tid)
+        if not r or not t or not V.owns(r) or t.get("status") != "done" or not t.get("file") \
+                or t.get("kind") not in ("video", "image") or not os.path.exists(J.out_path(reel, t["file"])):
+            left.append(f"{reel}:{tid}")
+            continue
+        if reel not in boards:
+            boards[reel] = [x.get("id") for x in ((J.get_board(reel, known=bool(r.get("board"))) or {}).get("shots") or [])]
+        at = boards[reel].index(t["board"]) if t.get("board") in boards[reel] else len(boards[reel])
+        first[reel] = min(first.get(reel, t.get("created", 0)), t.get("created", 0))
+        picked.append((reel, at, t))
+    if not picked:
+        return _err("Nothing finished to put on a board.")
+    picked.sort(key=lambda p: (first[p[0]], p[0], p[1], p[2].get("created", 0)))
+    if tr is None:
+        tr = J.new_reel(str(b.get("name") or "").strip()[:80] or "From the library", app="studio", owner=me)
+    rid = tr["id"]
+    board = J.get_board(rid, known=bool(tr.get("board")))
+    if board is None:
+        return _err("The board couldn't be read just now — try again.", 503)
+    board = dict(board or {})
+    shots = list(board.get("shots") or [])
+    on_board = {x.get("id") for x in shots}
+    n = J.next_shot(rid)
+    added = 0
+    for reel, _, t in picked:
+        if len(shots) >= BOARD_SHOTS:
+            left.append(f"{reel}:{t['id']}")
+            continue
+        role = "clip" if t["kind"] == "video" else "key"
+        if reel == rid and t.get("board") in on_board:
+            left.append(f"{reel}:{t['id']}")         # it's on this board already
+            continue
+        card = uuid.uuid4().hex[:10]
+        try:
+            if reel == rid:
+                nt = J.update_take(rid, t["id"], board=card, role=role)
+            else:
+                nt = await run_in_threadpool(_copy_take, reel, t, rid, n, me, board=card, role=role)
+        except (OSError, RuntimeError):
+            left.append(f"{reel}:{t['id']}")
+            continue
+        scene = ((t.get("settings") or {}).get("scene") or t.get("prompt") or t.get("label") or "").strip()
+        shots.append({"id": card, "n": n, "type": "shot", "scene": scene[:2000], "shot": "auto", "move": "auto",
+                      "duration": float(t.get("seconds") or 5), "elements": [], "start": "cut", "land": False,
+                      "vo": "", "super": "", "key": nt["id"] if role == "key" else "",
+                      "clip": nt["id"] if role == "clip" else "", "trim": None, "trim_for": ""})
+        n += 1
+        added += 1
+    J.put_board(rid, _clean_board({**board, "shots": shots}))
+    return {"reel": J.get_reel(rid), "added": added, "left": left}
+
+
 @router.get("/library/download")
 async def library_download(items: str = "", size: int = 0):
     """Takes from any reels as one zip, a folder per reel."""

@@ -187,12 +187,13 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     </ul>
     <p>The dialog shows what the run should cost before you start. A shot that fails is tried once more, then left out of the cut rather than stopping the film. A clip model that can't start from a frame runs every shot from its words, as straight cuts.</p>
   </section>
-  <section class="topic" id="lab" data-keys="lab rust webassembly steal look grade film stock lut cube cdl import advanced colour continuity draw move">
+  <section class="topic" id="lab" data-keys="lab rust webassembly steal look grade film stock lut cube cdl import advanced colour continuity draw move match extension same grade other takes">
     <h3>The Lab</h3>
     <p>Click <span class="ui">Lab</span> in the header. Everything in it runs in your browser, in Rust compiled to WebAssembly, so nothing is uploaded and nothing is charged.</p>
     <ul>
       <li><span class="ui">Steal the look</span>: drop in any frame. It reads the tone, colour, palette, grain, letterbox, focus and light, names the nearest film stock and grade, and sets them on the shot.</li>
       <li><span class="ui">Grade</span>: the selected take through a film stock and a grade, live, with the grain moving on video. <span class="ui">Amount</span> sets the strength; the other sliders adjust grain, halation, vignette, fade, contrast, colour and warmth. Drag the bar under the picture to compare with the original. <span class="ui">Import LUT or CDL</span> reads a .cube or a colourist's CDL into the sliders (see <a href="#colour">Colour</a>), and <span class="ui">Advanced</span> opens Colour for wheels, curves and scopes. <span class="ui">Grade the take</span> grades every frame on the server and keeps the sound. The Lab closes on the new take, which says which frame it's on while it works (a clip takes a minute or two) and then plays the result; the original stays beside it in the strip. You can keep working meanwhile, or press <span class="ui">Stop grading</span>. <span class="ui">Download .cube</span> gives the same colour to Resolve, Premiere or Final Cut.</li>
+      <li><span class="ui">Grade other takes to match</span>: an extension, another angle or a retake, graded so it cuts with this take. Tick the takes; each is first matched to this take's colour (Gobo reads frames of both and works out a CDL that lines up their blacks, mid-tones, whites and saturation, in Rust), then given this grade, as a new take beside its original. It says how far apart each was before and after. Open a graded take in the Lab and it regrades from the take it came from, with its grade loaded, so a grade you've made can be matched to the rest later.</li>
       <li><span class="ui">Continuity</span>: how each take ends against how the next begins, with the take whose look sits furthest from the rest called out.</li>
       <li><span class="ui">Draw the move</span>: draw on the frame with the camera pen and the subject pen. A loop reads as an orbit and a line toward the subject as a push-in; the subject's path becomes the action. <span class="ui">Shoot it</span> re-renders the take on screen with that move (a still is animated from), as a new take beside the old one; <span class="ui">Just set it</span> only puts the move and the action on the shot, for you to generate later.</li>
     </ul>
@@ -219,6 +220,14 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes">
     <h3>Open in ComfyUI</h3>
     <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>
+  </section>
+  <section class="topic" id="users" data-keys="users people accounts add user password admin sign in team access remove">
+    <h3>Who can sign in</h3>
+    <p>An admin (set on the server with <code>STUDIO_ADMINS</code>) has <span class="ui">Users</span> on the home page. There you add someone with a username and a password (<span class="ui">Make one up</span> writes a strong one), give someone a new password, or remove them. Send them the address, their username and their password: the password is shown once and kept only as a hash.</p>
+    <ul>
+      <li>A new password, or removing someone, signs them out wherever they were. Their takes stay in the Library under their name.</li>
+      <li>A name with an account signs in only with its own password, never the studio's shared one. If you signed in with the shared password, <span class="ui">Set my password</span> gives you an account of your own.</li>
+    </ul>
   </section>
   <section class="topic" id="byok" data-keys="key api key comfy demo bring your own visitor privacy sign out">
     <h3>Your Comfy key on the public demo</h3>
@@ -425,11 +434,12 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li>Hover over a clip to play it. Click any take to open the viewer; <kbd>←</kbd> <kbd>→</kbd> move through the library, <kbd>S</kbd> stars, <kbd>Esc</kbd> goes back.</li>
     </ul>
   </section>
-  <section class="topic" id="library-actions" data-keys="viewer open in reel download star copy prompt delete use as reference add to kit select several zip mark as mine claim">
+  <section class="topic" id="library-actions" data-keys="viewer open in reel open its board download star copy prompt delete use as reference add to kit select several zip mark as mine claim put on a board autopilot rescue cut">
     <h3>What the Library can do</h3>
     <ul>
-      <li><b>In the viewer</b>: <span class="ui">Open in its reel</span>, <span class="ui">Download</span>, <span class="ui">Star</span>, <span class="ui">Copy prompt</span>, <span class="ui">Delete</span>, and for stills <span class="ui">Use as reference</span> (or <span class="ui">Add to kit</span> when the Board is open), which brings the picture into the reel you're working in.</li>
+      <li><b>In the viewer</b>: <span class="ui">Open its board</span> (for a take made for a card on a board: it opens that board, so a film whose page was closed can still be cut), <span class="ui">Open in its reel</span>, <span class="ui">Download</span>, <span class="ui">Star</span>, <span class="ui">Copy prompt</span>, <span class="ui">Delete</span>, and for stills <span class="ui">Use as reference</span> (or <span class="ui">Add to kit</span> when the Board is open), which brings the picture into the reel you're working in.</li>
       <li><b>Several at once</b>: tick takes (or <kbd>⌘</kbd>-click). <span class="ui">Download</span> makes one zip with a folder per reel; <span class="ui">Delete</span> removes them.</li>
+      <li><span class="ui">Put on a board</span>: the ticked takes become cards on a board, <span class="ui">a new board</span> or the one on screen, a clip as the card's clip and a still as its keyframe. They go in film order (the order of the board they were made for, else the order they were made), and a take from another reel is copied in, so the board has everything its cut needs. From there, <span class="ui">Cut the spot</span>, reorder, re-animate or extend them.</li>
       <li>You can delete your own takes and ones with no name on them, not someone else's.</li>
     </ul>
   </section>

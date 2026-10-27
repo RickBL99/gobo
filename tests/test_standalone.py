@@ -24,7 +24,7 @@ os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OP
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from studio import jobs as J, prompts, settings, shell  # noqa: E402
+from studio import accounts, jobs as J, prompts, settings, shell  # noqa: E402
 from studio.app import app as APP  # noqa: E402
 
 
@@ -32,6 +32,91 @@ def png() -> bytes:
     buf = io.BytesIO()
     Image.new("RGB", (64, 48), (200, 120, 40)).save(buf, "PNG")
     return buf.getvalue()
+
+
+class Accounts(unittest.TestCase):
+    """An admin adds people with their own username and password (/users)."""
+    def setUp(self):
+        shell._failures.clear()
+        self.ps = [mock.patch.object(settings, "PASSWORD", "s3cret"),
+                   mock.patch.object(settings, "ADMINS", {"rick@example.com"})]
+        for p in self.ps:
+            p.start()
+        if os.path.exists(accounts._path()):
+            os.remove(accounts._path())
+        self.c = TestClient(APP)
+
+    def tearDown(self):
+        for p in self.ps:
+            p.stop()
+        if os.path.exists(accounts._path()):
+            os.remove(accounts._path())
+
+    def login(self, c, name, pw):
+        return c.post("/login", data={"name": name, "password": pw, "next": "/home"}, follow_redirects=False)
+
+    def test_an_admin_adds_resets_and_removes_people(self):
+        ana = TestClient(APP)
+        self.login(ana, "ana", "s3cret")
+        self.assertEqual(ana.get("/users", follow_redirects=False).headers["location"], "/home")
+        self.assertEqual(ana.post("/users/add", json={"name": "x", "password": "12345678"}).status_code, 403)
+        self.assertNotIn('href="/users"', ana.get("/home").text)
+
+        self.login(self.c, "Rick@example.com", "s3cret")
+        self.assertIn('href="/users"', self.c.get("/home").text)
+        page = self.c.get("/users")
+        self.assertEqual(page.status_code, 200)
+        self.assertIn("Your own password", page.text)
+        self.assertIn("8 characters", self.c.post("/users/add", json={"name": "ben", "password": "short"}).json()["error"])
+        u = self.c.post("/users/add", json={"name": " Ben   Ng ", "password": "correct horse"}).json()["user"]
+        self.assertEqual((u["name"], u["by"]), ("Ben Ng", "Rick@example.com"))
+        self.assertIn("already has an account", self.c.post("/users/add", json={"name": "ben ng", "password": "12345678"}).json()["error"])
+        self.assertEqual([x["name"] for x in self.c.get("/users/list").json()["users"]], ["Ben Ng"])
+        with open(accounts._path()) as f:
+            raw = f.read()
+        self.assertNotIn("correct horse", raw)
+        self.assertIn("scrypt$", raw)
+
+        # Ben signs in with his own password, and only that: the shared one isn't his
+        ben = TestClient(APP)
+        self.assertEqual(self.login(ben, "ben ng", "s3cret").status_code, 401)
+        self.assertEqual(self.login(ben, "ben ng", "correct horse").status_code, 303)
+        self.assertEqual(ben.get("/studio/library").json()["me"], "Ben Ng")
+        self.assertEqual(ben.post("/users/add", json={"name": "y", "password": "12345678"}).status_code, 403)
+        self.assertTrue(self.c.get("/users/list").json()["users"][0]["last"])
+
+        # a new password signs him out everywhere; the old one is no good
+        self.assertIn("user", self.c.post("/users/password", json={"name": "Ben Ng", "password": "another one"}).json())
+        self.assertEqual(ben.get("/studio/reels").status_code, 401)
+        self.assertEqual(self.login(ben, "Ben Ng", "correct horse").status_code, 401)
+        self.assertEqual(self.login(ben, "Ben Ng", "another one").status_code, 303)
+
+        # removed: signed out, and his password is gone with him
+        self.assertEqual(self.c.post("/users/remove", json={"name": "ben ng"}).json(), {"removed": "ben ng"})
+        self.assertEqual(ben.get("/studio/reels").status_code, 401)
+        self.assertEqual(self.login(ben, "Ben Ng", "another one").status_code, 401)
+        self.assertEqual(self.c.post("/users/remove", json={"name": "nobody"}).status_code, 404)
+
+    def test_an_admin_gives_themself_their_own_password(self):
+        self.login(self.c, "rick@example.com", "s3cret")
+        self.c.post("/users/add", json={"name": "rick@example.com", "password": "rick's own pw"})
+        # the shared-password session ends: that name has an account now
+        self.assertEqual(self.c.get("/studio/reels").status_code, 401)
+        self.assertEqual(self.login(self.c, "rick@example.com", "s3cret").status_code, 401)
+        self.assertEqual(self.login(self.c, "RICK@example.com", "rick's own pw").status_code, 303)
+        self.assertNotIn("Your own password", self.c.get("/users").text)
+        # a new password of your own keeps you signed in here
+        self.c.post("/users/password", json={"name": "rick@example.com", "password": "newer password"})
+        self.assertEqual(self.c.get("/studio/reels").status_code, 200)
+        self.assertIn("can't remove yourself", self.c.post("/users/remove", json={"name": "Rick@Example.com"}).json()["error"])
+
+    def test_accounts_alone_turn_sign_in_on(self):
+        with mock.patch.object(settings, "PASSWORD", ""):
+            accounts.add("ana", "12345678", "test")
+            c = TestClient(APP)
+            self.assertEqual(c.get("/studio/reels").status_code, 401)
+            self.assertEqual(self.login(c, "ANA", "12345678").status_code, 303)
+            self.assertEqual(c.get("/studio/library").json()["me"], "ana")
 
 
 class SignIn(unittest.TestCase):
@@ -140,7 +225,7 @@ class SignIn(unittest.TestCase):
     def test_named_users(self):
         with mock.patch.object(settings, "USERS", {"Rick": "a1", "Kelly": "b2"}):
             self.assertIsNone(shell.check_login("Rick", "b2"))
-            self.assertEqual(shell.check_login("rick", "a1"), "Rick")       # the account's spelling wins
+            self.assertEqual(shell.check_login("rick", "a1"), ("Rick", None))   # the spelling it was set with wins
             self.assertIsNone(shell.check_login("Stranger", "s3cret"))      # the shared password no longer works
 
 

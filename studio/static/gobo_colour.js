@@ -123,6 +123,7 @@ body.colouropen { overflow: hidden; }
   <footer class="cfoot"><button class="btn primary small" id="cBake" title="Every frame through this grade, in Rust on the server, as a new take beside the original">Grade the take</button>
     <button class="btn small" id="cCube" title="Everything here but grain, halation and the vignette, as one LUT for Resolve, Premiere or Final Cut">Download .cube</button>
     <button class="btn small" id="cStill">Download graded still</button><span style="flex:1"></span>
+    <button class="btn small" id="cMatch" title="An extension, another angle, a retake: matched to this take's colour, then given this grade">Grade others to match</button>
     <span class="hint" id="cNote"></span><button class="btn small" id="cDone">Done</button></footer>`;
   document.body.appendChild(el);
 
@@ -177,7 +178,7 @@ body.colouropen { overflow: hidden; }
   function stop() { cancelAnimationFrame(raf); raf = 0; if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid = null; } src = null; }
   async function loadSource() {
     stop();
-    const t = ST().current(), stage = q("#cStage", el);
+    const t = GG().source(), stage = q("#cStage", el);
     q("#cWhat", el).textContent = t ? `Shot ${t.shot}, take ${t.letter || ""} · ${t.label || ""}` : "";
     qa(".msg", stage).forEach(m => m.remove());
     if (!t || t.status !== "done" || !t.url) {
@@ -431,9 +432,11 @@ body.colouropen { overflow: hidden; }
 
   // ── out ─────────────────────────────────────────────────────────────────
   q("#cBake", el).onclick = () => GG().bake(q("#cBake", el));
+  // matching is picked in the Lab's Grade, where the takes are
+  q("#cMatch", el).onclick = () => { close(true); GG().matchOpen(); };
   q("#cCube", el).onclick = () => GG().saveCube();
   q("#cStill", el).onclick = async () => {
-    const g = await window.goboReady, t = ST().current();
+    const g = await window.goboReady, t = GG().source();
     if (!g || !src) return;
     const s = src, w0 = s.naturalWidth || s.videoWidth, h0 = s.naturalHeight || s.videoHeight, k = Math.min(1, 4096 / w0);
     const c = document.createElement("canvas"); c.width = Math.round(w0 * k); c.height = Math.round(h0 * k);

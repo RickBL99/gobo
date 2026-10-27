@@ -146,6 +146,7 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
   <div class="me">
     <div class="avatar" aria-hidden="true">{{ (user or "?")[:1] | upper }}</div>
     <span class="nm">{{ user }}</span>
+    {% if admin %}<a href="/users" title="Who can sign in">Users</a>{% endif %}
     {% if sign_in %}<a href="/logout">Sign out</a>{% endif %}
   </div>
 </header>

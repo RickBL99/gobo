@@ -1,0 +1,184 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Users · Gobo</title>
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root { --bg: #0b0b0d; --panel: #131316; --panel2: #1a1a1f; --line: #2a2a31; --line2: #3a3a44;
+  --text: #ecebe8; --muted: #9a98a0; --dim: #6c6a73; --accent: #f2c14e; --accent-ink: #1b1505; --bad: #ff7a6b; --ok: #7bd88f; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 15px/1.55 Inter, system-ui, sans-serif; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+header { display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid var(--line); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.02rem; color: var(--text); }
+.logo svg { width: 28px; height: 28px; }
+.grow { flex: 1; }
+.pill { display: inline-flex; align-items: center; gap: 7px; border: 1px solid var(--line2); background: var(--panel);
+  border-radius: 99px; padding: 6px 14px; font-size: .84rem; font-weight: 600; color: var(--text); white-space: nowrap; }
+.pill:hover { background: var(--panel2); text-decoration: none; }
+main { max-width: 860px; margin: 0 auto; padding: 28px 20px 60px; }
+h1 { font-size: 1.7rem; letter-spacing: -.02em; margin: 0 0 4px; }
+.lede { color: var(--muted); margin: 0 0 22px; }
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px; margin-bottom: 18px; }
+.card h2 { font-size: 1rem; margin: 0 0 12px; }
+.note { border-color: rgba(242,193,78,.45); }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: flex-end; }
+label { display: flex; flex-direction: column; gap: 5px; font-size: .78rem; color: var(--muted); font-weight: 600; flex: 1; min-width: 180px; }
+input { font: inherit; color: var(--text); background: #0f0f12; border: 1px solid var(--line2); border-radius: 9px; padding: 9px 11px; }
+input:focus { outline: none; border-color: var(--accent); }
+.btn { font: 600 .86rem/1 Inter, system-ui, sans-serif; color: var(--text); background: var(--panel2); border: 1px solid var(--line2);
+  border-radius: 9px; padding: 10px 14px; cursor: pointer; white-space: nowrap; }
+.btn:hover { border-color: #55555f; }
+.btn.go { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+.btn.bad { color: var(--bad); }
+.btn.small { padding: 7px 10px; font-size: .8rem; }
+.msg { margin-top: 10px; font-size: .88rem; min-height: 1.2em; }
+.msg.bad { color: var(--bad); }
+.send { margin-top: 12px; background: #0f0f12; border: 1px dashed var(--line2); border-radius: 10px; padding: 12px; font-size: .9rem; }
+.send pre { margin: 6px 0 10px; font: 500 .9rem/1.6 ui-monospace, Menlo, monospace; white-space: pre-wrap; }
+table { width: 100%; border-collapse: collapse; }
+th, td { text-align: left; padding: 10px 8px; border-bottom: 1px solid var(--line); vertical-align: middle; }
+th { font-size: .74rem; color: var(--dim); text-transform: uppercase; letter-spacing: .08em; font-weight: 700; }
+td.when { color: var(--muted); font-size: .86rem; }
+td.acts { text-align: right; white-space: nowrap; }
+.tag { font-size: .7rem; font-weight: 700; color: var(--accent); border: 1px solid rgba(242,193,78,.5); border-radius: 99px; padding: 1px 7px; margin-left: 6px; }
+.empty { color: var(--muted); padding: 14px 8px; }
+.hint { color: var(--dim); font-size: .82rem; margin: 10px 0 0; }
+@media (max-width: 620px) {
+  thead { display: none; }
+  tr { display: grid; grid-template-columns: 1fr auto; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  td { border: 0; padding: 4px 8px; }
+  td.when { grid-column: 1 / -1; }
+  td.acts { grid-column: 1 / -1; text-align: left; }
+}
+</style>
+</head>
+<body>
+<header>
+  <a class="logo" href="/home">
+    <svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
+      <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>
+      <rect x="8" y="13" width="5" height="3" rx="1" fill="#ecebe8"/></svg>Gobo</a>
+  <span class="grow"></span>
+  <a class="pill" href="/home">Home</a>
+</header>
+<main>
+  <h1>Users</h1>
+  <p class="lede">Who can sign in to this Gobo, each with their own username and password. Their takes go in the Library under their name.</p>
+
+  {% if shared and not my_account %}
+  <div class="card note" id="mine">
+    <h2>Your own password</h2>
+    <p style="margin:0 0 12px">You're signed in as <b>{{ me }}</b> with the studio's shared password, which anyone who knows it could use to sign in as you. Give yourself an account and only your own password will.</p>
+    <div class="row">
+      <label>Your new password<input type="password" id="myPw" autocomplete="new-password" minlength="{{ min_password }}"></label>
+      <button class="btn go" id="myAdd">Set my password</button>
+    </div>
+    <div class="msg" id="myMsg"></div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <h2>Add someone</h2>
+    <form class="row" id="add" autocomplete="off">
+      <label>Username<input id="name" required maxlength="60" placeholder="ana@example.com"></label>
+      <label>Password<input id="pw" required minlength="{{ min_password }}" placeholder="{{ min_password }} characters at least"></label>
+      <button class="btn" type="button" id="gen" title="Make up a password">Make one up</button>
+      <button class="btn go" type="submit">Add</button>
+    </form>
+    <div class="msg" id="addMsg"></div>
+    <div class="send" id="send" hidden></div>
+  </div>
+
+  <div class="card">
+    <h2>People</h2>
+    <table>
+      <thead><tr><th>Username</th><th>Added</th><th>Last signed in</th><th></th></tr></thead>
+      <tbody id="list"><tr><td class="empty" colspan="4">Loading…</td></tr></tbody>
+    </table>
+    <p class="hint">A new password or removing someone signs them out wherever they were. Their takes stay in the Library.{% if shared %} The shared password still lets anyone who knows it in under any other name; take STUDIO_PASSWORD off the server when everyone has an account.{% endif %}</p>
+  </div>
+</main>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+const when = t => t ? new Date(t * 1000).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" }) : "Never";
+const SITE = location.origin, MIN = {{ min_password }};
+async function call(path, body) {
+  const r = await fetch(path, body ? { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) } : {});
+  let d = {}; try { d = await r.json(); } catch (e) { d = { error: `The server answered ${r.status}.` }; }
+  if (!r.ok && !d.error) d.error = `The server answered ${r.status}.`;
+  return d;
+}
+function madeUp() {
+  // 14 characters with no look-alikes (0/O, 1/l/I), from the browser's own random source
+  const abc = "abcdefghijkmnpqrstuvwxyzABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  const n = new Uint32Array(14); crypto.getRandomValues(n);
+  return Array.from(n, v => abc[v % abc.length]).join("");
+}
+function sendBox(name, pw, verb) {
+  const s = $("#send");
+  s.hidden = false;
+  const text = `Gobo: ${SITE}\nUsername: ${name}\nPassword: ${pw}`;
+  s.innerHTML = `${verb} Send them this (it's the only time the password is shown):<pre>${esc(text)}</pre><button class="btn small" id="copy">Copy</button>`;
+  $("#copy").onclick = () => navigator.clipboard.writeText(text).then(() => { $("#copy").textContent = "Copied"; });
+}
+async function load() {
+  const d = await call("/users/list");
+  const tb = $("#list");
+  if (d.error) { tb.innerHTML = `<tr><td class="empty" colspan="4">${esc(d.error)}</td></tr>`; return; }
+  if (!d.users.length) { tb.innerHTML = `<tr><td class="empty" colspan="4">No one yet. Add someone above.</td></tr>`; return; }
+  tb.innerHTML = d.users.map(u => `<tr data-name="${esc(u.name)}">
+      <td><b>${esc(u.name)}</b>${u.admin ? '<span class="tag">admin</span>' : ""}</td>
+      <td class="when">${when(u.added)}${u.by ? ` · by ${esc(u.by)}` : ""}</td>
+      <td class="when">${when(u.last)}</td>
+      <td class="acts"><button class="btn small" data-act="pw">New password</button>
+        ${u.name.toLowerCase() === (d.me || "").toLowerCase() ? "" : '<button class="btn small bad" data-act="rm">Remove</button>'}</td></tr>`).join("");
+}
+$("#list").onclick = async e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const name = b.closest("tr").dataset.name;
+  if (b.dataset.act === "rm") {
+    if (!confirm(`Remove ${name}? They can't sign in any more, and they're signed out now. Their takes stay.`)) return;
+    const d = await call("/users/remove", { name });
+    if (d.error) return alert(d.error);
+    return load();
+  }
+  const pw = prompt(`A new password for ${name} (${MIN} characters at least). Leave it as it is to use this one:`, madeUp());
+  if (!pw) return;
+  const d = await call("/users/password", { name, password: pw });
+  if (d.error) return alert(d.error);
+  sendBox(name, pw, `${name} has a new password and is signed out everywhere.`);
+  load();
+};
+$("#gen").onclick = () => { $("#pw").value = madeUp(); $("#pw").type = "text"; };
+$("#add").onsubmit = async e => {
+  e.preventDefault();
+  const name = $("#name").value.trim(), pw = $("#pw").value;
+  const d = await call("/users/add", { name, password: pw });
+  $("#addMsg").className = d.error ? "msg bad" : "msg";
+  $("#addMsg").textContent = d.error || "";
+  if (d.error) return;
+  sendBox(d.user.name, pw, `${d.user.name} can sign in now.`);
+  $("#name").value = ""; $("#pw").value = "";
+  load();
+};
+const my = $("#myAdd");
+if (my) my.onclick = async () => {
+  const d = await call("/users/add", { name: {{ me | tojson }}, password: $("#myPw").value });
+  $("#myMsg").className = d.error ? "msg bad" : "msg";
+  if (d.error) return ($("#myMsg").textContent = d.error);
+  // the gate signs the shared-password session out: sign in again with the new one
+  location.href = "/login?next=/users";
+};
+load();
+</script>
+</body>
+</html>

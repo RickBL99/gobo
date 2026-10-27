@@ -2,8 +2,9 @@
 Director, or the home page), sign-in, the About page, shared films, and the
 Content Generator's own address.
 
-Sign-in is deliberately small for now: one shared password (people type their
-own name with it) or a short name:password list, and a signed session cookie.
+Sign-in is deliberately small: accounts an admin adds on the Users page, each
+with its own password (accounts.py); one shared password (people type their
+own name with it) or a short name:password list; and a signed session cookie.
 The name is what the Library files work under. A public demo signs visitors
 in with their own Comfy key instead (STUDIO_KEYS=visitor, visitors.py).
 """
@@ -14,11 +15,11 @@ from collections import defaultdict, deque
 from urllib.parse import quote
 
 from fastapi import APIRouter, Depends, Form, Request
-from fastapi.responses import FileResponse, HTMLResponse, RedirectResponse
+from fastapi.responses import FileResponse, HTMLResponse, JSONResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from starlette.concurrency import run_in_threadpool
 
-from . import comfy, jobs as J, models as M, routes, settings, visitors
+from . import accounts, comfy, jobs as J, models as M, routes, settings, visitors
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
@@ -68,15 +69,18 @@ def _page(request: Request, **extra) -> dict:
 
 
 def check_login(name: str, password: str):
-    """The name to file work under, or None."""
-    name = " ".join((name or "").split())[:60]
+    """(the name to file work under, the account's version or None), or None."""
+    name = accounts.norm(name)
+    if accounts.has(name):
+        # an account signs in with its own password, never the shared one
+        return accounts.check(name, password)
     if settings.USERS:
         for user, pw in settings.USERS.items():
             if user.lower() == name.lower() and hmac.compare_digest(password.encode(), pw.encode()):
-                return user
+                return user, None
         return None
     if settings.PASSWORD and name and hmac.compare_digest(password.encode(), settings.PASSWORD.encode()):
-        return name
+        return name, None
     return None
 
 
@@ -111,13 +115,17 @@ async def login(request: Request, name: str = Form(""), password: str = Form("")
             return RedirectResponse(_safe_next(next), status_code=303)
         recent.append(now)
     else:
-        user = check_login(name, password)
-        if user:
+        found = check_login(name, password)
+        if found:
+            user, rev = found
             request.session.clear()
             request.session["user_name"] = user
+            if rev is not None:
+                request.session["account"] = rev
+                await run_in_threadpool(accounts.signed_in, user)
             return RedirectResponse(_safe_next(next), status_code=303)
         recent.append(now)
-        error = ("That name and password don't match." if settings.USERS
+        error = ("That name and password don't match." if settings.USERS or accounts.has(name)
                  else "Type your name, and the studio's password." if not name.strip()
                  else "That password isn't right.")
     return templates.TemplateResponse(request, "login.html", _page(
@@ -166,13 +174,86 @@ async def home(request: Request):
     return templates.TemplateResponse(request, "home.html", {
         "api": settings.PREFIX, "visitor": settings.VISITOR_KEYS,
         "user": "Your Comfy key" if settings.VISITOR_KEYS else request.session.get("user_name", ""),
-        "sign_in": settings.sign_in_on(), "samples": _samples(), "release": settings.RELEASE,
+        "admin": _admin(request), "sign_in": settings.sign_in_on(), "samples": _samples(), "release": settings.RELEASE,
         "front": settings.FRONT, "contact": settings.CONTACT,
         "release_date": settings.RELEASE_DATE,
         "model_count": len(M.MODELS),
         "keys": {"comfy": bool(comfy.api_key()),
                  "claude": M.claude_on(), "anthropic": bool(settings.ANTHROPIC_API_KEY) and not settings.VISITOR_KEYS,
                  "openai": bool(settings.OPENAI_API_KEY) and not settings.VISITOR_KEYS}})
+
+
+# ── Users: an admin adds people with their own name and password ────────────
+def _admin(request: Request) -> bool:
+    return not settings.VISITOR_KEYS and accounts.is_admin(request.session.get("user_name", ""))
+
+
+def _not_admin() -> JSONResponse:
+    return JSONResponse({"error": "Only an admin can manage who signs in."}, status_code=403)
+
+
+@router.get("/users", response_class=HTMLResponse)
+async def users_page(request: Request):
+    if not _admin(request):
+        return RedirectResponse("/home", status_code=303)
+    me = request.session.get("user_name", "")
+    return templates.TemplateResponse(request, "users.html", _page(
+        request, me=me, my_account=accounts.has(me), min_password=accounts.MIN_PASSWORD,
+        shared=bool(settings.PASSWORD)))
+
+
+@router.get("/users/list", response_class=JSONResponse)
+async def users_list(request: Request):
+    if not _admin(request):
+        return _not_admin()
+    return {"users": accounts.listing(), "me": request.session.get("user_name", "")}
+
+
+@router.post("/users/add", response_class=JSONResponse)
+async def users_add(request: Request):
+    if not _admin(request):
+        return _not_admin()
+    b = await request.json()
+    try:
+        u = await run_in_threadpool(accounts.add, str(b.get("name") or ""), str(b.get("password") or ""),
+                                    request.session.get("user_name", ""))
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    return {"user": u}
+
+
+@router.post("/users/password", response_class=JSONResponse)
+async def users_password(request: Request):
+    """A new password for someone; they're signed out wherever they were."""
+    if not _admin(request):
+        return _not_admin()
+    b = await request.json()
+    name = str(b.get("name") or "")
+    try:
+        u = await run_in_threadpool(accounts.set_password, name, str(b.get("password") or ""),
+                                    request.session.get("user_name", ""))
+    except KeyError:
+        return JSONResponse({"error": "No such user."}, status_code=404)
+    except ValueError as e:
+        return JSONResponse({"error": str(e)}, status_code=400)
+    if accounts.norm(name).lower() == accounts.norm(request.session.get("user_name", "")).lower():
+        request.session["account"] = accounts.version(name)      # your own: you stay signed in here
+    return {"user": u}
+
+
+@router.post("/users/remove", response_class=JSONResponse)
+async def users_remove(request: Request):
+    """Someone can't sign in any more; their takes stay in the Library under their name."""
+    if not _admin(request):
+        return _not_admin()
+    name = str((await request.json()).get("name") or "")
+    if accounts.norm(name).lower() == accounts.norm(request.session.get("user_name", "")).lower():
+        return JSONResponse({"error": "You can't remove yourself."}, status_code=400)
+    try:
+        await run_in_threadpool(accounts.remove, name)
+    except KeyError:
+        return JSONResponse({"error": "No such user."}, status_code=404)
+    return {"removed": accounts.norm(name)}
 
 
 # The Content Generator: the studio limited to stills, with the batch tools.

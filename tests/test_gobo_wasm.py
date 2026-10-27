@@ -77,6 +77,10 @@ out.unpack = { whole: wu.whole, temp: wu.look.temp, contrast: wu.look.contrast, 
 out.unpack_rest = g.loadLut("lut-warm-rest", wu.rest);
 out.unpack_swap = g.unpackLut("lut-swap").whole;
 out.unpack_missing = g.unpackLut("lut-nope").error;
+// a take brought to a reference's colour: the same scene, cooler and darker, comes back
+const drift = scene(0); for (let i = 0; i < drift.data.length; i += 4) { drift.data[i] *= 0.8; drift.data[i + 1] *= 0.9; drift.data[i + 2] = Math.min(255, drift.data[i + 2] * 1.1 + 8); }
+out.match = g.matchShot([drift], [scene(0), scene(0)]);
+out.match_none = g.matchShot([{ data: new Uint8ClampedArray(0) }], [scene(0)]);
 const wf = g.scope(scene(0), "waveform", 256, 128), vs = g.scope(scene(0), "vector", 160, 160);
 out.scope = [wf.width, wf.height, wf.data.length, Array.from(wf.data).filter((v, i) => i % 4 === 3 && v > 0).length,
              vs.data.length, Array.from(vs.data).filter((v, i) => i % 4 === 3 && v > 0).length];
@@ -167,6 +171,14 @@ class GoboWasm(unittest.TestCase):
         self.assertEqual((self.out["unpack_rest"]["kind"], self.out["unpack_rest"]["size"]), ("3D", 33))
         self.assertEqual(self.out["unpack_swap"], "beyond", "no slider swaps red and blue: it stays whole")
         self.assertIn("isn't loaded", self.out["unpack_missing"])
+
+    def test_a_take_is_matched_to_another(self):
+        m = self.out["match"]
+        self.assertGreater(m["before"], 3)
+        self.assertLess(m["after"], m["before"] / 3, m)
+        c = m["cdl"]
+        self.assertTrue(c["slope"][0] > 1.1 and c["slope"][2] < 1.0, c)
+        self.assertIn("no pixels", self.out["match_none"]["error"])
 
     def test_continuity(self):
         self.assertEqual(self.out["same"]["verdict"], "match")

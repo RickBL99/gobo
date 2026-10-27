@@ -78,11 +78,12 @@ class Tab:
 RESULTS = []
 
 
-def _bars_clip() -> str:
-    """Two seconds of colour bars as an MP4, base64, for the Colour checks."""
+def _bars_clip(vf: str = "") -> str:
+    """Two seconds of colour bars as an MP4, base64, for the Colour checks (`vf`: an
+    ffmpeg filter that puts the bars off, as an extension drifts)."""
     out = os.path.join(tempfile.mkdtemp(prefix="bars-"), "bars.mp4")
     subprocess.run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-f", "lavfi", "-i", "testsrc2=size=320x180:rate=24:duration=2",
-                    "-pix_fmt", "yuv420p", "-c:v", "libx264", "-movflags", "+faststart", out], check=True)
+                    *(["-vf", vf] if vf else []), "-pix_fmt", "yuv420p", "-c:v", "libx264", "-movflags", "+faststart", out], check=True)
     with open(out, "rb") as f:
         return base64.b64encode(f.read()).decode()
 
@@ -979,6 +980,51 @@ def main():
         check("colour: no sideways scroll on a phone", tab.js("$('#colour').scrollWidth <= innerWidth + 1"))
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
         tab.js("$('#cDone').click(); 1")
+
+        # ── several takes, one grade: a drifted take matched to take A, then graded alike ──
+        tab.js(f"""(async () => {{
+          const bin = Uint8Array.from(atob('{_bars_clip("eq=brightness=-0.07:saturation=0.7,colorbalance=bs=0.25:rs=-0.15")}'), c => c.charCodeAt(0));
+          const fd = new FormData(); fd.append('file', new Blob([bin], {{type: 'video/mp4'}}), 'drift.mp4');
+          const t = await api(`/reels/${{S.reel.id}}/footage`, {{method: 'POST', body: fd}});
+          await loadReel(S.reel.id); window._drift = t.take.id;
+          select(S.takes.find(x => x.action !== 'grade' && x.id !== t.take.id && x.kind === 'video').id); return 1; }})()""")
+        time.sleep(1)
+        tab.js("setView('shot'); $('#labBtn').click(); $('#lab [data-tab=grade]').click(); 1"); time.sleep(2)
+        tab.js("$('#gMatch').click(); 1"); time.sleep(0.5)
+        listed = tab.js("$$('#gMatchBox .mt input').map(i => i.value)")
+        check("match: the other takes are offered, not the graded ones", tab.js("window._drift") in listed
+              and not any(t for t in tab.js("S.takes.filter(t => t.action === 'grade').map(t => t.id)") if t in listed), listed)
+        tab.js("$$('#gMatchBox .mt input').forEach(i => { i.checked = i.value === window._drift; }); $('#gMatchGo').click(); 1")
+        for _ in range(40):
+            time.sleep(0.5)
+            if "→" in (tab.js("$('#gMatchOut').textContent") or ""):
+                break
+        made = tab.js("JSON.stringify(S.takes.filter(t => t.action === 'grade' && t.parent === window._drift).map(t => ({label: t.label, cdl: !!(t.look || {}).cdl})))")
+        note = tab.js("$('#gMatchOut').textContent")
+        check("match: the drifted take is matched to A's colour and graded like it", '"cdl":true' in made and "Matched to" in made and "→" in note, [made, note])
+        tab.shot("36-match")
+        tab.js("$('#lab .x, #labClose, #lab [data-close]') && 1"); tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1")
+
+        # ── the library to a board: takes from anywhere, a card each, in film order ──
+        tab.js("window._prompt = window.prompt; window.prompt = () => 'Library check'; LIB.kind = ''; LIB.starred = false; LIB.q = ''; 1")
+        tab.js("$('#libBtn').click(); 1"); time.sleep(2)
+        tab.js("$$('#libSheet .lc .pick').slice(0, 2).forEach(p => { p.checked = true; p.dispatchEvent(new Event('change')); }); 1")
+        check("library: Put on a board, for a selection", tab.js("!!$('#libBoard')"))
+        tab.js("$('#libBoard').click(); 1"); time.sleep(0.3)
+        tab.js("$('#lbNew').click(); 1"); time.sleep(3)
+        got = tab.js("JSON.stringify({board: boardOn(), name: S.reel && S.reel.name, cards: B.shots.length, "
+                     "filled: B.shots.filter(s => pickOf(s, 'clip') || pickOf(s, 'key')).length, shown: $$('.bcard').length})")
+        gl = json.loads(got)
+        check("library: they land on a new board, a card each, ready to cut", gl["board"] and gl["name"] == "Library check"
+              and gl["cards"] == 2 and gl["filled"] == 2 and gl["shown"] >= 2, got)
+        tab.shot("35-library-board")
+        tab.js("setView('shot'); $('#libBtn').click(); 1"); time.sleep(2)
+        tab.js("$('#libSheet .lc').click(); 1"); time.sleep(0.8)          # the newest: a card's take
+        had = tab.js("!!$('#lvBoard')")
+        tab.js("$('#lvBoard') && $('#lvBoard').click(); 1"); time.sleep(2)
+        check("library: Open its board goes to the board its card is on", had and tab.js("boardOn()")
+              and tab.js("$('#libSheet').classList.contains('hidden')"))
+        tab.js("window.prompt = window._prompt; 1")
 
         check("no script errors", not tab.errors, tab.errors[:3])
     finally:

@@ -163,6 +163,20 @@ pub extern "C" fn scrim_lut_unpack(body: *mut u8, len: usize) -> u64 {
     }))
 }
 
+/// One take matched to a reference's colour (RGBA bytes each, one frame or
+/// several end to end): {cdl, before, after}, the CDL that does it and how far
+/// apart they were before and after (ΔE in Oklab ×100).
+#[no_mangle]
+pub extern "C" fn scrim_match(take: *mut u8, take_len: usize, reference: *mut u8, ref_len: usize) -> u64 {
+    match scrim::match_shot(lend(take, take_len), lend(reference, ref_len)) {
+        Some(m) => {
+            let r = |v: f32| (v as f64 * 100.0).round() / 100.0;
+            reply(json!({"cdl": m.cdl.to_json(), "before": r(m.before), "after": r(m.after)}))
+        }
+        None => reply(json!({"error": "a frame had no pixels"})),
+    }
+}
+
 /// A scope of a picture as RGBA pixels, `ow` × `oh`: kind 0 waveform,
 /// 1 RGB parade, 2 vectorscope, 3 histogram. (Bytes, not JSON.)
 #[no_mangle]

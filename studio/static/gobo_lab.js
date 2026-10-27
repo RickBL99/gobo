@@ -116,6 +116,12 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
 #lab .cut ul { margin: 4px 0 0; padding-left: 16px; font-size: .76rem; color: var(--muted); }
 #lab .cut .fix { color: var(--text); }
 #lab .odd { margin: 10px 0; padding: 10px; border-radius: 10px; background: #3a301455; font-size: .8rem; }
+#lab .matchbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 6px 0; }
+#lab .mlist { display: grid; grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; margin: 8px 0; }
+#lab .mt { display: flex; flex-direction: column; gap: 4px; font-size: .74rem; color: var(--muted); cursor: pointer; position: relative; }
+#lab .mt img, #lab .mt i { width: 100%; aspect-ratio: 16/9; object-fit: cover; border-radius: 6px; border: 2px solid transparent; background: #000; display: block; }
+#lab .mt input { position: absolute; top: 4px; left: 4px; }
+#lab .mt input:checked ~ img, #lab .mt input:checked ~ i { border-color: var(--accent); }
 #lab .linkbtn, #colour .linkbtn { background: none; border: 0; padding: 0; color: var(--accent); cursor: pointer; font: inherit; text-decoration: underline; }
 `;
   document.head.appendChild(style);
@@ -159,6 +165,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       <div class="hint hidden" id="gLutNote"></div>
       <div class="hint hidden" id="gCdlNote"></div>
       <div class="row"><button class="btn small" id="gAdv" title="Lift, gamma, gain and offset wheels, curves and scopes, full screen">Advanced: wheels, curves, scopes →</button></div>
+      <div class="row"><button class="btn small" id="gMatch" title="An extension, another angle, a retake: each matched to this take's colour, then given this grade, so they cut together">Grade other takes to match →</button></div>
+      <div id="gMatchBox" class="matchbox hidden"></div>
       <div class="row"><button class="btn small primary" id="gBake" title="Every frame through this look, in Rust, as a new take beside the original">Grade the take</button>
         <button class="btn small" id="gStill">Download graded still</button><button class="btn small" id="gCube">Download .cube</button>
         <button class="btn small" id="gReset">Reset</button></div>
@@ -570,10 +578,24 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   qa("#gSliders input", lab).forEach(i => i.oninput = () => { gradeLook[i.dataset.k] = Number(i.value); gradeFrom = "lab"; i.nextElementSibling.textContent = Number(i.value).toFixed(2); render(); });
   q("#gWipe", lab).oninput = () => render();
   function stopVideo() { cancelAnimationFrame(raf); raf = 0; if (vid) { vid.pause(); vid.removeAttribute("src"); vid.load(); vid = null; } }
+  // A graded take is regraded from the take it was graded from, under its own
+  // grade: grading the graded picture again would put the look on twice.
+  let fromGraded = null;
+  function gradeSource() {
+    const t = ST() && ST().current();
+    if (t && t.action === "grade" && t.parent) {
+      const p = ST().takes().find(x => x.id === t.parent && x.status === "done");
+      if (p) return { pic: p, graded: t };
+    }
+    return { pic: t, graded: null };
+  }
   async function gradeSetup() {
     stopVideo();
-    const t = ST().current();
-    if (!gradeLook || gradeFrom === "shot") await fromShot(); else syncSliders();
+    const { pic: t, graded } = gradeSource();
+    if (graded && graded.look && fromGraded !== graded.id) {
+      gradeLook = JSON.parse(JSON.stringify(graded.look)); gradeFrom = "lab"; fromGraded = graded.id;
+      await ensureLut(gradeLook); syncSliders();
+    } else if (!gradeLook || gradeFrom === "shot") await fromShot(); else syncSliders();
     if (!t || t.status !== "done") { gsrc = null; gctx.clearRect(0, 0, gcv.width, gcv.height); q("#gPerf", lab).textContent = "Pick a finished take to grade it."; return; }
     if (t.kind === "video") {
       vid = document.createElement("video");
@@ -616,7 +638,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     } finally { gbusy = false; }
   }
   q("#gStill", lab).onclick = async () => {
-    const g = await window.goboReady, t = ST().current();
+    const g = await window.goboReady, t = gradeSource().pic;
     if (!g || !gsrc) return;
     const full = gsrc === vid ? pixels(vid, 4096) : pixels(gsrc, 4096);
     g.grade(full, gradeLook, 7);
@@ -631,7 +653,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     return parts.join(" · ");
   }
   async function bake(button) {
-    const t = ST().current(), b = button || q("#gBake", lab);
+    const t = gradeSource().pic, b = button || q("#gBake", lab);
     if (!t || t.status !== "done" || !gradeLook) return ST().toast("Pick a finished take to grade it.", true);
     const label = b.textContent;
     b.disabled = true; b.textContent = t.kind === "video" ? "Grading every frame…" : "Grading…";
@@ -656,6 +678,67 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   q("#gCube", lab).onclick = saveCube;
   async function saveStill() { q("#gStill", lab).onclick(); }
 
+  // ── several takes, one grade ───────────────────────────────────────────
+  // An extension drifts in colour from its footage; two angles of a scene
+  // were never the same. Each take ticked is matched to this one's colour (a
+  // CDL each, worked out in Rust from frames of both: scrim::matching), then
+  // given this grade, so they cut together.
+  const matchAt = t => t.kind === "video" ? ["first", Math.max(0.1, (+t.seconds || 4) / 2), "last"] : ["first"];
+  async function framesOf(t) { const out = []; for (const at of matchAt(t)) out.push(await takeFrame(t, at, 320)); return out; }
+  const matchable = pic => done().filter(t => pic && t.id !== pic.id && t.action !== "grade" && (t.kind === "video" || t.kind === "image"));
+  const kin = (a, b) => a.parent === b.id || b.parent === a.id || (a.parent && a.parent === b.parent) || (+a.shot && a.shot === b.shot);
+  const takeName = t => `${t.shot || "?"}${t.letter || ""}`;
+  function matchOpen() {
+    const { pic, graded } = gradeSource(), box = q("#gMatchBox", lab);
+    if (!pic || pic.status !== "done" || !gradeLook) return say("Pick a finished take to grade first.", true);
+    const list = matchable(pic);
+    if (!list.length) return say("There's no other finished take in this reel to match it to.", true);
+    box.innerHTML = `<p class="hint">Takes to grade like take ${h(takeName(pic))}. Each is matched to its colour first, then given this grade; the originals stay as they are.</p>
+      <div class="mlist">${list.map(t => `<label class="mt" title="${h(t.label || "")}"><input type="checkbox" value="${h(t.id)}" ${kin(t, pic) ? "checked" : ""}>
+        ${t.thumb_url ? `<img src="${h(t.thumb_url)}" alt="">` : `<i></i>`}<span>${h(takeName(t))}${t.kind === "video" && t.seconds ? ` · ${Math.round(t.seconds)}s` : ""}${t.action === "extend" ? " · extension" : ""}</span></label>`).join("")}</div>
+      <label class="hint row"><input type="checkbox" id="gMatchColour" checked> Match their colour to take ${h(takeName(pic))} first</label>
+      ${graded ? "" : `<label class="hint row"><input type="checkbox" id="gMatchSelf" checked> Grade take ${h(takeName(pic))} too</label>`}
+      <div class="row"><button class="btn small primary" id="gMatchGo">Grade them to match</button><button class="btn small" id="gMatchX">Cancel</button></div>
+      <div class="hint" id="gMatchOut"></div>`;
+    box.classList.remove("hidden");
+    q("#gMatchX", lab).onclick = () => box.classList.add("hidden");
+    q("#gMatchGo", lab).onclick = () => matchGo(pic).catch(e => { q("#gMatchOut", lab).textContent = e.message; q("#gMatchGo", lab).disabled = false; });
+    box.scrollIntoView({ behavior: "smooth", block: "nearest" });
+  }
+  async function matchGo(pic) {
+    const ids = qa("#gMatchBox .mt input:checked", lab).map(i => i.value), colour = q("#gMatchColour", lab).checked;
+    const self = q("#gMatchSelf", lab) && q("#gMatchSelf", lab).checked;
+    const targets = matchable(pic).filter(t => ids.includes(t.id));
+    if (!targets.length && !self) return say("Tick a take to grade first.", true);
+    if (colour && gradeLook.cdl) return say("This grade has a CDL of its own, which the match would replace. Remove it under the LUT list (a CDL imported now goes on the wheels), then match.", true);
+    if (!(await ensureLut(gradeLook))) return;
+    const g = await window.goboReady, out = q("#gMatchOut", lab), go = q("#gMatchGo", lab);
+    go.disabled = true;
+    const name = gradeName(), made = [], how = [];
+    const send = async (t, look, label) => {
+      const r = await ST().api(`/reels/${ST().reel()}/takes/${t.id}/grade`, { method: "POST", json: { look, label } });
+      if (r.error) { how.push(`${takeName(t)}: ${r.error}`); return; }
+      made.push(r.take); ST().addTakes([r.take]);
+    };
+    if (self) { out.textContent = `Grading take ${takeName(pic)}…`; await send(pic, gradeLook, `Graded · ${name}`); }
+    const ref = colour && targets.length ? await framesOf(pic) : null;
+    for (const [i, t] of targets.entries()) {
+      out.textContent = `Matching take ${takeName(t)} (${i + 1} of ${targets.length}) to ${takeName(pic)}…`;
+      const look = JSON.parse(JSON.stringify(gradeLook));
+      if (colour) {
+        const m = g.matchShot(await framesOf(t), ref);
+        if (m.error) { how.push(`${takeName(t)}: ${m.error}`); continue; }
+        look.cdl = m.cdl;
+        how.push(`${takeName(t)} ${m.before.toFixed(1)} → ${m.after.toFixed(1)}`);
+      }
+      await send(t, look, `Matched to ${takeName(pic)} · ${name}`);
+    }
+    go.disabled = false;
+    out.textContent = colour && targets.length ? `How far each was from ${takeName(pic)}'s colour, before and after (ΔE; under 2 is hard to see): ${how.join(" · ")}` : how.join(" · ");
+    if (made.length) say(`${made.length} take${made.length > 1 ? "s" : ""} grading in the background, each beside its original. Stitch them when they're done and the cut keeps one look.`);
+  }
+  q("#gMatch", lab).onclick = matchOpen;
+
   // the Colour page (gobo_colour.js) works on this same look
   q("#gAdv", lab).onclick = async () => {
     if (!gradeLook) await fromShot();
@@ -673,6 +756,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     },
     preset: () => ({ film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value }),
     reset: fromShot, ensureLut, listLuts, importGrade, useLut, lutNote, lutAction, bake, saveCube, saveStill, name: gradeName,
+    source: () => gradeSource().pic, matchOpen,
     reopen() { open("grade"); },
   };
 

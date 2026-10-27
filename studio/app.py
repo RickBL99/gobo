@@ -16,7 +16,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import jobs as J, prompts, settings, shell, visitors
+from . import accounts, jobs as J, prompts, settings, shell, visitors
 from .routes import router
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -33,6 +33,10 @@ async def signed_in(request: Request, call_next):
 
     With sign-in off (no STUDIO_PASSWORD or STUDIO_USERS), everyone is "local",
     so the Library still has a name to file work under."""
+    name = request.session.get("user_name")
+    if name and not settings.VISITOR_KEYS and request.session.get("account") != accounts.version(name):
+        # removed, given a new password, or a name that has an account now: sign in again
+        request.session.clear()
     if not request.session.get("user_name"):
         if not settings.sign_in_on():
             request.session["user_name"] = "local"

@@ -1152,6 +1152,7 @@ function libFoot() {
       <button class="btn small" id="libAll">Select all ${LIB.items.length < LIB.total ? `${LIB.items.length} shown` : LIB.items.length}</button>
       <button class="btn small" id="libNone">Clear</button><span class="grow"></span>${sizes}
       ${unnamed.length ? `<button class="btn small" id="libClaim" title="Put your name on takes made before names were kept">Mark ${unnamed.length} as mine</button>` : ""}
+      ${STILLS ? "" : `<button class="btn small" id="libBoard" title="A card each on a board, in film order, to cut or work on">Put on a board</button>`}
       <a class="btn small primary" id="libDl" href="${API}/library/download?items=${sel.map(libKey).join(",")}&size=${LIB.size}">Download ${sel.length} (.zip)</a>
       <button class="btn small danger" id="libDel" ${mine.length ? "" : "disabled"} title="${mine.length < sel.length ? "Only your own takes, and ones with no name on them, can be deleted here" : ""}">Delete ${mine.length}</button>`
     : `<span class="hint">Click a take to view it · tick or ⌘-click to select several · takes stay here until you delete them</span><span class="grow"></span>${sizes}`;
@@ -1161,6 +1162,30 @@ function libFoot() {
   $("#libNone", f).onclick = () => { LIB.picked.clear(); renderLib(); };
   $("#libDel", f).onclick = () => libDelete(sel);
   const cl = $("#libClaim", f); if (cl) cl.onclick = () => libClaim(unnamed);
+  const bd = $("#libBoard", f); if (bd) bd.onclick = () => libBoardAsk(sel);
+}
+// takes from anywhere onto a board: a new one, or the one on screen
+function libBoardAsk(sel) {
+  const f = $("#libFoot"), here = S.reel && S.reel.id;
+  const from = [...new Set(sel.map(t => t.reel_name).filter(Boolean))];
+  f.innerHTML = `<b>Put ${sel.length} on</b>
+    <button class="btn small primary" id="lbNew">A new board</button>
+    ${here ? `<button class="btn small" id="lbHere" title="Added after its cards">${esc(S.reel.name || "this reel")}'s board</button>` : ""}
+    <span class="grow"></span><button class="btn small" id="lbBack">Back</button>`;
+  $("#lbBack", f).onclick = libFoot;
+  $("#lbNew", f).onclick = () => {
+    const name = prompt("Name the new board:", from.length === 1 ? from[0] : "From the library");
+    if (name !== null) libToBoard(sel, "", name);
+  };
+  const hb = $("#lbHere", f); if (hb) hb.onclick = () => libToBoard(sel, here, "");
+}
+async function libToBoard(sel, reel, name) {
+  const r = await api("/library/board", { method: "POST", json: { items: sel.map(libKey), reel, name } });
+  if (r.error) return toast(r.error, true);
+  LIB.picked.clear(); closePop();
+  if (!await loadReel(r.reel.id)) return toast(`That ${REELWORD} is gone.`, true);
+  setView("board");
+  toast(`${r.added} card${r.added === 1 ? "" : "s"} on ${r.reel.name}'s board${r.left.length ? `; ${r.left.length} left out (still rendering, or already on it)` : ""}. Cut it when it's in order.`);
 }
 // takes from before names were kept: whoever made them puts their name on them
 async function libClaim(list) {
@@ -1221,7 +1246,8 @@ function libView(i) {
       </dl>
       ${t.prompt ? `<div><p class="sectitle">Prompt</p><div class="prompt">${esc(t.prompt)}</div></div>` : ""}
       <div class="vacts">
-        <button class="btn small primary" id="lvOpen">Open in its ${REELWORD}</button>
+        ${t.board && !STILLS ? `<button class="btn small primary" id="lvBoard" title="The board this was made for, with its card">Open its board</button>` : ""}
+        <button class="btn small ${t.board && !STILLS ? "" : "primary"}" id="lvOpen">Open in its ${REELWORD}</button>
         <a class="btn small" href="${esc(t.url)}?download=1">Download${STILLS ? " original" : ""}</a>
         <button class="btn small" id="lvStar">${t.starred ? "★ Starred" : "☆ Star"}</button>
         ${t.prompt ? `<button class="btn small" id="lvCopy">Copy prompt</button>` : ""}
@@ -1237,6 +1263,13 @@ function libView(i) {
     closePop();
     if (!S.reel || S.reel.id !== t.reel) { if (!await loadReel(t.reel)) return toast(`That ${REELWORD} is gone.`, true); }
     if (S.takes.some(x => x.id === t.id)) select(t.id);
+  };
+  const ob = $("#lvBoard", v); if (ob) ob.onclick = async () => {
+    closePop();
+    if (!S.reel || S.reel.id !== t.reel) { if (!await loadReel(t.reel)) return toast(`That ${REELWORD} is gone.`, true); }
+    if (!B || !B.shots.some(x => x.id === t.board)) { if (S.takes.some(x => x.id === t.id)) select(t.id); return toast("Its card isn't on the board any more, so here's the take."); }
+    setView("board");
+    const c = $(`.bcard[data-s="${t.board}"]`); if (c) c.scrollIntoView({ behavior: "smooth", block: "center" });
   };
   $("#lvStar", v).onclick = () => libStar(t);
   const cm = $("#lvClaim", v); if (cm) cm.onclick = async () => { if (await libClaim([t])) libView(i); };

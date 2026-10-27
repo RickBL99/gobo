@@ -70,6 +70,9 @@ PASSWORD = os.getenv("STUDIO_PASSWORD", "")
 USERS = {n.strip(): p.strip() for n, _, p in
          (pair.partition(":") for pair in os.getenv("STUDIO_USERS", "").split(","))
          if n.strip() and p.strip()}
+# Who may manage the people who sign in (the Users page, studio/accounts.py):
+# names, comma-separated. Accounts added there sign in with their own password.
+ADMINS = {" ".join(n.split()).lower() for n in os.getenv("STUDIO_ADMINS", "").split(",") if n.strip()}
 SESSION_DAYS = int(os.getenv("STUDIO_SESSION_DAYS", "30"))
 # Behind HTTPS (any hosted deployment) the sign-in cookie is marked Secure.
 SECURE_COOKIES = os.getenv("STUDIO_SECURE_COOKIES", "") == "1"
@@ -94,7 +97,10 @@ CONTACT = os.getenv("STUDIO_CONTACT", "help@gobo.video").strip()
 
 
 def sign_in_on() -> bool:
-    return VISITOR_KEYS or bool(PASSWORD or USERS)
+    if VISITOR_KEYS or PASSWORD or USERS:
+        return True
+    from . import accounts                       # (it reads these settings)
+    return accounts.any_accounts()
 
 
 def session_secret() -> str:
