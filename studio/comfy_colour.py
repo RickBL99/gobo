@@ -36,7 +36,7 @@ def _sig(payload: str) -> str:
 
 
 def sign(reel: str, name: str, days: int = LINK_DAYS) -> str:
-    """A token for one file of a reel (a take's file, or luts/<id>.cube)."""
+    """A token for one file of a reel (a take's file, refs/<name> or luts/<id>.cube)."""
     payload = _b64(json.dumps({"r": reel, "n": name, "e": int(time.time() + days * 86400)}, separators=(",", ":")).encode())
     return f"{payload}.{_sig(payload)}"
 
@@ -64,6 +64,8 @@ def path_of(d: Dict) -> Optional[str]:
     name = str(d.get("n") or "")
     if name.startswith("luts/"):
         p = os.path.join(J.reel_dir(reel), "luts", os.path.basename(name))
+    elif name.startswith("refs/"):
+        p = J.ref_path(reel, os.path.basename(name))
     else:
         p = J.out_path(reel, os.path.basename(name))
     return p if os.path.isfile(p) else None

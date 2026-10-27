@@ -416,8 +416,41 @@ def public_models() -> List[Dict]:
                 pm["i2v"] = {**_public_caps(I), "last_frame": bool(I.get("last"))}
             if mid in SOURCE_SECONDS:
                 pm["source_min"], pm["source_max"] = SOURCE_SECONDS[mid]
+        elif m["kind"] in ("upscale", "vupscale"):
+            pm["reach"] = upscale_reach(mid)
+            pm["default"] = mid in (DEFAULT_UPSCALER, DEFAULT_VIDEO_UPSCALER)
         out.append(pm)
     return out
+
+
+def upscale_reach(mid: str) -> Dict:
+    """How far an upscaler goes: a scale it takes ({min, max}, or the factors
+    it offers), or the resolutions it renders to. Neither: it has no say."""
+    m = MODELS.get(mid) or {}
+    if m.get("kind") not in ("upscale", "vupscale"):
+        return {}
+    R = m["roles"]["t"]
+    inp = (_registry_build()["recs"].get(m["slugs"]["t"]) or {}).get("inputs") or {}
+    out: Dict = {}
+    if R.get("scale"):
+        p = inp.get(R["scale"], {})
+        if p.get("o"):
+            out["scale"] = {"options": sorted(v for v in (_num(str(o).lower().rstrip("x")) for o in p["o"]) if v)}
+        else:
+            out["scale"] = {"min": p.get("mn", 1), "max": p.get("mx", 4)}
+    if R.get("tier_field") and R.get("tiers"):
+        out["tiers"] = list(R["tiers"])
+    return out
+
+
+def tier_px(tier, video: bool) -> int:
+    """A resolution an upscaler names, in pixels: the short side for a clip
+    (720p, 1080p, 2K = 1440, 4K = 2160), the long side for a still (2K = 2048, 4K = 4096)."""
+    s = str(tier or "").strip().lower()
+    if s.endswith("k") and _num(s[:-1]):
+        k = _num(s[:-1])
+        return int({2: 1440, 4: 2160, 8: 4320}.get(k, k * 540) if video else k * 1024)
+    return int(_num(s.rstrip("p")) or 0)
 
 
 # ── footage: how long a stretch each tool takes ─────────────────────────────
@@ -743,9 +776,13 @@ def build(model_id: str, req: Dict, find: Callable[[str], Optional[str]]) -> Dic
                 P[sc] = _snap(p["o"], want, lambda o: _num(str(o).lower().rstrip("x")))
             else:
                 P[sc] = _typed(p, max(p.get("mn", want), min(p.get("mx", want), want)))
-        if R.get("tier_field") and m["kind"] == "vupscale":
-            opts = R["tiers"]
-            P[R["tier_field"]] = next((o for o in opts if str(o).lower() in ("1080p", "1080")), opts[-1])
+        if R.get("tier_field") and R.get("tiers"):
+            # the smallest resolution it offers that reaches the target (1080p for a clip that names none)
+            opts, vid = R["tiers"], m["kind"] == "vupscale"
+            want = float(req.get("to_px") or (1080 if vid else 0))
+            if want:
+                fits = sorted((o for o in opts if tier_px(o, vid) >= want), key=lambda o: tier_px(o, vid))
+                P[R["tier_field"]] = fits[0] if fits else max(opts, key=lambda o: tier_px(o, vid))
     else:
         if R.get("prompt"):
             P[R["prompt"]] = req.get("prompt") or ""

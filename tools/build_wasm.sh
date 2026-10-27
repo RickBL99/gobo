@@ -15,6 +15,8 @@ cargo build --release -p cinematic-direction -p gobo-wasm --target wasm32-unknow
 cp target/wasm32-unknown-unknown/release/cinematic_direction.wasm studio/static/direction.wasm
 cp target/wasm32-unknown-unknown/release/gobo_wasm.wasm studio/static/gobo.wasm
 cp studio/static/gobo.wasm comfyui/gobo.wasm      # the ComfyUI nodes run the same build
+cp studio/static/direction.wasm comfyui/direction.wasm
+.venv/bin/python tools/build_comfy_vocabulary.py  # and the shot compiler's words
 # which source each was built from, so the tests can tell a stale .wasm
 cat crates/direction/Cargo.toml crates/direction/src/*.rs | shasum -a 256 | cut -d' ' -f1 > studio/static/direction.wasm.src
 cat crates/{scrim,flag,dingle,gobo-wasm}/Cargo.toml crates/{scrim,flag,dingle,gobo-wasm}/src/*.rs | shasum -a 256 | cut -d' ' -f1 > studio/static/gobo.wasm.src

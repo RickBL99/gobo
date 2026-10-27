@@ -1006,7 +1006,9 @@ def _store_result(reel: str, tid: str, res: Dict) -> None:
         except Exception:
             pass
     else:
-        name, path = _browser_playable(reel, name, path)
+        name, path, sound = _deliverable(reel, name, path, t)
+        if sound is not None:
+            extra["sound"] = sound
         poster = _poster(reel, path, name)
         if poster:
             extra.update(poster)
@@ -1024,26 +1026,66 @@ def _store_result(reel: str, tid: str, res: Dict) -> None:
     J.unmark_active(reel, tid)
 
 
-def _browser_playable(reel: str, name: str, path: str):
-    """HEVC (some Seedance and Kling outputs) won't play in Chrome or Firefox
-    on Windows; re-encode it to H.264 once, here, rather than in every viewer."""
+# the biggest picture a clip is kept at: UHD. Past it (an upscaler asked for ×2
+# on a 2.5K clip gives 5056×2844) hardware decoders give up, and a browser or
+# QuickTime falls back to software that can't keep up: the clip stutters.
+UHD = (3840, 2160)
+# where a clip's sound is the picture's own: real footage, and what's made from it
+SOUND_OF_ITS_OWN = ("footage", "change", "extend", "stitch")
+
+
+def _wants_sound(reel: str, t: Dict) -> bool:
+    """A clip keeps its sound when someone asked for it, or when it's real
+    footage (or made from it). Otherwise a model's soundtrack is unasked for:
+    some models add one with no switch to stop them (MiniMax H3), and an
+    upscaler carries over whatever it was given."""
+    if (t.get("request") or {}).get("audio") or t.get("action") in SOUND_OF_ITS_OWN:
+        return True
+    if t.get("action") in ("upscale", "grade") and t.get("parent"):
+        try:
+            p = J.get_take(reel, t["parent"])
+        except ValueError:
+            p = None
+        return bool(p) and _wants_sound(reel, p)
+    return False
+
+
+def _deliverable(reel: str, name: str, path: str, t: Dict):
+    """A clip as Gobo keeps it: H.264 (HEVC, from some Seedance and Kling
+    runs, won't play in Chrome or Firefox on Windows), no bigger than UHD, and
+    silent unless sound was wanted. Done once, here, not in every viewer.
+    → (name, path, has sound), or None for the sound when it couldn't be read."""
     try:
-        r = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries",
-                  "stream=codec_name", "-of", "csv=p=0", path], timeout=60)
-        codec = (r.stdout or "").strip().lower()
-        if codec in ("h264", "vp8", "vp9", "av1", ""):
-            return name, path
-        out_name = os.path.splitext(name)[0] + "-h264.mp4"
+        r = run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,codec_name,width,height",
+                 "-of", "json", path], timeout=60)
+        streams = json.loads(r.stdout or "{}").get("streams") or []
+        v = next((s for s in streams if s.get("codec_type") == "video"), {})
+        audio = any(s.get("codec_type") == "audio" for s in streams)
+        codec, w, h = (v.get("codec_name") or "").lower(), int(v.get("width") or 0), int(v.get("height") or 0)
+        mute = audio and not _wants_sound(reel, t)
+        long, short = max(w, h), min(w, h)
+        big = long > UHD[0] or short > UHD[1]
+        if codec not in ("h264", "vp8", "vp9", "av1", "") or big:
+            out_name = os.path.splitext(name)[0] + "-h264.mp4"
+            k = min(UHD[0] / long, UHD[1] / short) if big else 1.0
+            vf = ["-vf", f"scale={round(w * k / 2) * 2}:{round(h * k / 2) * 2}:flags=lanczos"] if big else []
+            cmd = ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path, *vf, "-c:v", "libx264", "-preset", "veryfast",
+                   "-crf", "17", "-pix_fmt", "yuv420p", *(["-an"] if mute else ["-c:a", "aac"]), "-movflags", "+faststart"]
+        elif mute:
+            out_name = os.path.splitext(name)[0] + "-silent.mp4"
+            cmd = ["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path, "-map", "0:v", "-c", "copy", "-movflags", "+faststart"]
+        else:
+            return name, path, audio
         out = J.out_path(reel, out_name)
-        r = run(["ffmpeg", "-nostdin", "-y", "-v", "error", "-i", path, "-c:v", "libx264",
-                  "-preset", "veryfast", "-crf", "18", "-pix_fmt", "yuv420p", "-c:a", "aac",
-                  "-movflags", "+faststart", out], timeout=600)
+        r = run(cmd + [out], timeout=900)
         if r.returncode == 0 and os.path.exists(out):
             os.remove(path)
-            return out_name, out
+            return out_name, out, audio and not mute
+        print(f"[studio] couldn't make {name} deliverable: {(r.stderr or '')[-300:]}")
+        return name, path, audio
     except Exception as e:
         print(f"[studio] transcode skipped: {e}")
-    return name, path
+    return name, path, None
 
 
 def _resized_still(path: str, size: int) -> bytes:
@@ -1255,17 +1297,59 @@ async def upscale(reel: str, tid: str, request: Request):
                                else M.CUTOUT if b.get("tool") == "cutout" else M.DEFAULT_UPSCALER)
     if model not in M.MODELS or M.MODELS[model]["kind"] != ("vupscale" if t["kind"] == "video" else "upscale"):
         return _err("That finishing tool can't run on this take.")
+    # where to: a clip to 1080p, 1440p or 4K (its short side); a still ×2 or ×4.
+    # The scale is worked out to land there, and an upscaler that renders to
+    # set resolutions gets the one that reaches it
+    note = ""
+    w, h = await run_in_threadpool(_dims, reel, t)
+    if t["kind"] == "video" and b.get("tool") != "cutout":
+        to = UPSCALE_TO.get(str(b.get("to") or "1080p").lower())
+        if not to:
+            return _err("Pick 1080p, 1440p or 4K.")
+        if w and h and min(w, h) >= to:
+            return _err(f"It's {w}×{h} already: pick a bigger size.")
+        scale = round(to / min(w, h), 4) if w and h else 2.0
+        to_px = to
+    else:
+        scale = float(b.get("scale") or 2)
+        if scale not in (2.0, 4.0):
+            return _err("A still goes up ×2 or ×4.")
+        to_px = round(max(w, h) * scale) if w and h else 0
+    reach = M.upscale_reach(model).get("scale") or {}
+    if reach.get("max") and scale > reach["max"]:
+        note = f"{M.MODELS[model]['label']} goes up to ×{reach['max']:g}, so it lands smaller than asked."
     short = await run_in_threadpool(_cant_afford, _price(model))
     if short:
         return _err(short, 402, reason="credits")
-    req = {"prompt": t.get("prompt", ""), "source": t["file"], "scale": b.get("scale") or 2}
+    req = {"prompt": t.get("prompt", ""), "source": t["file"], "scale": scale, "to_px": to_px}
     nt = J.new_take(reel, t["shot"], ord(t.get("letter", "A")) - 65, kind=t["kind"], model=model,
                     label=M.MODELS[model]["label"], prompt=t.get("prompt", ""),
                     aspect=t.get("aspect"), request=req, settings=t.get("settings"),
                     action="cutout" if b.get("tool") == "cutout" else "upscale", parent=tid,
                     by=_who(request))
     _enqueue(reel, nt["id"])
-    return {"take": _public_take(nt)}
+    return {"take": _public_take(nt), "note": note}
+
+
+# a clip's upscale targets: its short side, in pixels (4K is UHD's 2160)
+UPSCALE_TO = {"1080p": 1080, "1440p": 1440, "2k": 1440, "2160p": 2160, "4k": 2160}
+
+
+def _dims(reel: str, t: Dict):
+    """A finished take's width and height: from the take, else read off the file."""
+    if t.get("w") and t.get("h"):
+        return int(t["w"]), int(t["h"])
+    p = J.out_path(reel, t["file"])
+    try:
+        if t.get("kind") == "image":
+            with Image.open(p) as im:
+                return im.size
+        r = run(["ffprobe", "-v", "error", "-select_streams", "v:0", "-show_entries", "stream=width,height",
+                 "-of", "csv=p=0", p], timeout=60)
+        w, h = (int(x) for x in (r.stdout or "").strip().split(",")[:2])
+        return w, h
+    except Exception:
+        return 0, 0
 
 
 def _local_take(reel: str, src: Dict, kind: str, action: str, file: str, by: str = "",
@@ -1420,6 +1504,21 @@ async def grade_take(reel: str, tid: str, request: Request):
     nt = _local_take(reel, t, "image", "grade", name, by=_who(request), label=label, look=spec,
                      w=info["w"], h=info["h"])
     return {"take": _public_take(nt)}
+
+
+# ── open in ComfyUI: the shot on the panel, as the Gobo Director and its model ──
+@router.post("/comfyui/shot", response_class=JSONResponse)
+async def comfy_shot(request: Request):
+    """The workflow ComfyUI opens for the shot on the panel: the Gobo Director
+    with its scene and choices, wired to the model's own node, and a save."""
+    from . import comfy_shot as CS
+    b = await request.json()
+    reel = str(b.get("reel") or "") or None
+    if reel and not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    h = request.headers
+    site = f"{h.get('x-forwarded-proto') or request.url.scheme}://{h.get('x-forwarded-host') or h.get('host') or request.url.netloc}"
+    return CS.workflow(site, reel, b)
 
 
 # ── open in ComfyUI: the take and its look as Gobo's nodes (comfyui/) ───────

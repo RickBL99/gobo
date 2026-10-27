@@ -731,14 +731,66 @@ function renderActions() {
     t.share ? `<button class="btn" data-a="share" title="Copy the public link again">Copy share link</button><button class="btn" data-a="unshare" title="Take the public page down: the link stops working">Unshare</button>`
       : `<button class="btn" data-a="share" title="A public page for this take that anyone with the link can watch">Share</button>`,
     comfyNode(t.model) ? `<a class="btn" href="${API}/reels/${t.reel}/comfyui?tid=${t.id}" title="This take as a ComfyUI workflow: drop workflow_api.json on the ComfyUI canvas (keyframes included)">Open in ComfyUI</a>` : "",
-    `<button class="btn" data-a="upscale" title="${img ? "Upscale ×2" : "Upscale the clip"}">Upscale</button>`,
+    `<button class="btn ${S.upAsk === t.id ? "primary" : ""}" data-a="upscale" title="${img ? "A bigger still: ×2 or ×4" : "A bigger clip: 1080p, 1440p or 4K"}">Upscale…</button>`,
     img ? `<button class="btn" data-a="cutout" title="Cut the subject out onto transparency">Remove background</button>` : "",
     others.length ? `<select class="field" data-a="compare" style="width:auto"><option value="">Compare with…</option>${others.slice(-24).reverse().map(x => `<option value="${x.id}" ${S.compareWith === x.id ? "selected" : ""}>${x.shot}${x.letter} · ${esc(x.label)}</option>`).join("")}</select>` : "",
     img ? `<button class="btn ${S.zoom ? "primary" : ""}" data-a="zoom" title="Click the picture to zoom where you click">${S.zoom ? "Zoom out" : "Zoom"}</button>` : "",
     `<button class="btn" data-a="copy" title="Copy the exact prompt">Copy prompt</button>`,
     `<button class="btn" data-a="delete">Delete</button>`,
-  ].join("");
+  ].join("") + (S.upAsk === t.id ? upAskHtml(t) : "");
   wireActions();
+}
+// Upscale asks where to first: a clip to 1080p, 1440p or 4K (Gobo keeps clips
+// at UHD at most: past it, players stutter), a still ×2 or ×4, and which
+// upscaler, with what it costs and how far it goes. The server works out the
+// scale that lands there.
+const UP_TO = [["1080p", 1080, "1080p"], ["1440p", 1440, "1440p"], ["4k", 2160, "4K"]];
+const upModels = t => byKind(t.kind === "video" ? "vupscale" : "upscale").filter(m => m.reach && (m.reach.scale || (m.reach.tiers || []).length));
+function upPick(t) {
+  const list = upModels(t), want = $("#upModel") ? $("#upModel").value : LS.get(`up.model.${t.kind}`, "");
+  return list.find(m => m.id === want) || list.find(m => m.default) || list[0];
+}
+function upTargets(t) {
+  const w = +t.w || 0, h = +t.h || 0;
+  if (t.kind === "video") {
+    const short = Math.min(w, h);
+    return UP_TO.filter(([, px]) => !short || px > short).map(([id, px, label]) => {
+      const k = short ? px / short : 0;
+      return { id, px, label, size: k ? `${Math.round(w * k / 2) * 2}×${Math.round(h * k / 2) * 2}` : "" };
+    });
+  }
+  return [2, 4].map(s => ({ id: String(s), px: Math.max(w, h) * s, label: `×${s}`, size: w ? `${w * s}×${h * s}` : "" }));
+}
+function upNote(t, m, to) {
+  if (!m || !to) return "";
+  const r = m.reach || {}, vid = t.kind === "video", now = vid ? Math.min(+t.w || 0, +t.h || 0) : Math.max(+t.w || 0, +t.h || 0);
+  if (r.scale && r.scale.max && now && to.px / now > r.scale.max + 1e-6)
+    return `${m.label} goes up to ×${r.scale.max}, so this lands smaller than ${to.label}.`;
+  if ((r.tiers || []).length) {
+    const px = x => { const s = String(x).toLowerCase(), k = parseFloat(s); return s.endsWith("k") ? (vid ? { 2: 1440, 4: 2160, 8: 4320 }[k] || k * 540 : k * 1024) : k; };
+    if (!r.tiers.some(x => px(x) >= to.px)) return `${m.label} goes up to ${r.tiers[r.tiers.length - 1]}, so this lands smaller than ${to.label}.`;
+  }
+  return "";
+}
+function upAskHtml(t) {
+  const targets = upTargets(t), list = upModels(t), m = upPick(t);
+  if (!targets.length || !m) return `<div class="upask"><span>${!m ? "No upscaler is available right now." : `It's ${t.w}×${t.h} already: 4K is as far as Gobo takes a clip.`}</span><button class="btn small" data-up="x">OK</button></div>`;
+  const want = LS.get(`up.to.${t.kind}`, t.kind === "video" ? "4k" : "2"), sel = targets.find(x => x.id === (S.upTo || want)) || targets[targets.length - 1];
+  return `<div class="upask"><b>Upscale to</b>
+      <span class="seg" id="upTo">${targets.map(x => `<button data-to="${x.id}" class="${x.id === sel.id ? "on" : ""}">${x.label}${x.size ? ` <small>${x.size}</small>` : ""}</button>`).join("")}</span>
+      <select class="field" id="upModel" aria-label="Upscaler">${list.map(x => `<option value="${x.id}" ${x.id === m.id ? "selected" : ""}>${esc(x.label)}${x.price != null ? ` · ≈${fmtUSD(x.price)}${x.price_per === "second" ? "/s" : ""}` : ""}</option>`).join("")}</select>
+      <button class="btn small primary" data-up="go">Upscale to ${sel.label}</button><button class="btn small" data-up="x">Cancel</button>
+      <span class="hint">${t.w && t.h ? `Now ${t.w}×${t.h}.` : ""} ${esc(upNote(t, m, sel))}</span></div>`;
+}
+async function upGo(t) {
+  const sel = upTargets(t).find(x => x.id === ($("#upTo .on") || {}).dataset?.to), m = upPick(t);
+  if (!sel || !m) return;
+  LS.set(`up.to.${t.kind}`, sel.id); LS.set(`up.model.${t.kind}`, m.id);
+  S.upAsk = null; S.upTo = null;
+  const r = await api(`/reels/${S.reel.id}/takes/${t.id}/upscale`, { method: "POST", json: { model: m.id, ...(t.kind === "video" ? { to: sel.id } : { scale: +sel.id }) } });
+  if (r.error) { renderActions(); return refused(r.error, m.id); }
+  mergeTakes([r.take]); select(r.take.id); poll();
+  toast(`Upscaling to ${sel.label}${sel.size ? ` (${sel.size})` : ""} on ${m.label}.${r.note ? " " + r.note : ""}`);
 }
 function wireActions() {
   $$("#actions [data-a]").forEach(b => {
@@ -746,6 +798,10 @@ function wireActions() {
     if (b.tagName === "SELECT") b.onchange = () => { S.compareWith = b.value || null; renderStage(); };
     else b.onclick = () => takeAction(a);
   });
+  const t = cur();
+  $$("#upTo button").forEach(b => b.onclick = () => { S.upTo = b.dataset.to; renderActions(); });
+  const um = $("#upModel"); if (um) um.onchange = () => { LS.set(`up.model.${t.kind}`, um.value); renderActions(); };
+  $$("[data-up]").forEach(b => b.onclick = () => b.dataset.up === "go" ? upGo(t) : (S.upAsk = null, S.upTo = null, renderActions()));
 }
 async function takeAction(a, opts) {
   const t = cur(); if (!t) return;
@@ -804,8 +860,9 @@ async function takeAction(a, opts) {
     onShotChange(); $("#scene").focus();
     return toast("The new shot ends on this clip's first frame. Add its opening frame (upload one, or drag a keyframe onto Starting frame), then describe the move into it.");
   }
-  if (a === "upscale" || a === "cutout") {
-    const r = await api(`${R}/upscale`, { method: "POST", json: a === "cutout" ? { tool: "cutout" } : {} });
+  if (a === "upscale") { S.upAsk = S.upAsk === t.id ? null : t.id; S.upTo = null; return renderActions(); }
+  if (a === "cutout") {
+    const r = await api(`${R}/upscale`, { method: "POST", json: { tool: "cutout" } });
     if (r.error) return refused(r.error);
     mergeTakes([r.take]); select(r.take.id); poll(); return;
   }
@@ -987,6 +1044,18 @@ async function stitchGo() {
   S.picking = false; S.picked.clear(); updateStitch();
   mergeTakes([r.take]); select(r.take.id);
   toast(`${r.take.label}${r.take.seconds ? ` · ${(+r.take.seconds).toFixed(1)}s` : ""}. Download stitched is in the Sequence bar.`);
+}
+// the shot on the panel in the colourist's own ComfyUI: the Gobo Director with
+// the scene and every choice, wired to the model's own node (studio/comfy_shot.py)
+function shotToComfy(ask) {
+  if (!window.goboComfy) return toast("The Lab hasn't loaded yet: try again in a moment.", true);
+  const m = model(), name = f => f ? f.name : "";
+  const body = { reel: S.reel ? S.reel.id : "", scene: S.scene, direction: S.direction, mode: S.mode, pmode: S.pmode, model: m ? m.id : "",
+    aspect: S.aspect, resolution: S.resolution, duration: S.duration, audio: S.audio, seed: S.seed, negative_prompt: S.negative,
+    first_frame: name(S.firstFrame), last_frame: name(S.lastFrame), refs: (S.refs || []).filter(Boolean).map(name) };
+  window.goboComfy.open(() => api("/comfyui/shot", { method: "POST", json: body }), ask,
+    `Gobo opens your ComfyUI with this shot as Gobo's own nodes: the Gobo Director holding your scene and every choice, writing the prompt${m ? ` for ${m.label}'s own node` : ""}, then a save. Change anything and queue it.`,
+    (err, r) => err ? toast(err, true) : toast(`ComfyUI is opening with this shot (${r.title}). Empty? Shift-click Open in ComfyUI to add Gobo's nodes.`));
 }
 // the takes that didn't make it, out of the reel in one go
 async function clearFails() {
@@ -1436,6 +1505,7 @@ function wire() {
   $("#stitchBtn").onclick = startFilm;
   $("#selBtn").onclick = startSelect;
   $("#clearFails").onclick = clearFails;
+  $("#shotComfy").onclick = e => shotToComfy(e.shiftKey || e.altKey);
   $("#selDel").onclick = deleteSelected;
   $("#selDl").onclick = e => { if ($("#selDl").classList.contains("off")) { e.preventDefault(); toast("Select a finished take to download."); } };
   $("#stitchCancel").onclick = stopFilm;

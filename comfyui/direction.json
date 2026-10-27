@@ -1,0 +1,757 @@
+{
+ "groups": {
+  "body": {
+   "title": "Body",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "digital",
+     "label": "Digital cinema",
+     "phrase": "a digital cinema camera with wide latitude"
+    },
+    {
+     "id": "large",
+     "label": "Large format",
+     "phrase": "a large-format cinema camera"
+    },
+    {
+     "id": "super35",
+     "label": "Super 35",
+     "phrase": "a Super 35 cinema camera"
+    },
+    {
+     "id": "film35",
+     "label": "35mm film",
+     "phrase": "35mm motion picture film"
+    },
+    {
+     "id": "film16",
+     "label": "16mm film",
+     "phrase": "grainy 16mm film"
+    },
+    {
+     "id": "handheld",
+     "label": "Handheld",
+     "phrase": "a shoulder-mounted documentary camera"
+    },
+    {
+     "id": "imax",
+     "label": "IMAX 65mm",
+     "phrase": "IMAX 65mm film camera"
+    },
+    {
+     "id": "phone",
+     "label": "Phone",
+     "phrase": "smartphone camera"
+    },
+    {
+     "id": "medium",
+     "label": "Medium format stills",
+     "phrase": "medium format stills camera"
+    }
+   ]
+  },
+  "lens": {
+   "title": "Lens",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "prime",
+     "label": "Spherical",
+     "phrase": "clean spherical primes"
+    },
+    {
+     "id": "anamorphic",
+     "label": "Anamorphic",
+     "phrase": "anamorphic lenses with oval bokeh"
+    },
+    {
+     "id": "vintage",
+     "label": "Vintage",
+     "phrase": "soft vintage glass"
+    },
+    {
+     "id": "macro",
+     "label": "Macro",
+     "phrase": "a macro lens at close focus"
+    },
+    {
+     "id": "tilt",
+     "label": "Tilt-shift",
+     "phrase": "a tilt-shift lens with a thin slice in focus"
+    },
+    {
+     "id": "fisheye",
+     "label": "Fisheye",
+     "phrase": "fisheye lens"
+    },
+    {
+     "id": "zoom",
+     "label": "Long zoom",
+     "phrase": "long telephoto zoom lens"
+    }
+   ]
+  },
+  "focal": {
+   "title": "Focal length",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "14",
+     "label": "14mm",
+     "phrase": "14mm"
+    },
+    {
+     "id": "24",
+     "label": "24mm",
+     "phrase": "24mm"
+    },
+    {
+     "id": "35",
+     "label": "35mm",
+     "phrase": "35mm"
+    },
+    {
+     "id": "50",
+     "label": "50mm",
+     "phrase": "50mm"
+    },
+    {
+     "id": "85",
+     "label": "85mm",
+     "phrase": "85mm"
+    },
+    {
+     "id": "135",
+     "label": "135mm",
+     "phrase": "135mm"
+    },
+    {
+     "id": "200",
+     "label": "200mm",
+     "phrase": "200mm"
+    }
+   ]
+  },
+  "aperture": {
+   "title": "Aperture",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "1.4",
+     "label": "f/1.4",
+     "phrase": "f/1.4"
+    },
+    {
+     "id": "2",
+     "label": "f/2",
+     "phrase": "f/2"
+    },
+    {
+     "id": "2.8",
+     "label": "f/2.8",
+     "phrase": "f/2.8"
+    },
+    {
+     "id": "4",
+     "label": "f/4",
+     "phrase": "f/4"
+    },
+    {
+     "id": "8",
+     "label": "f/8",
+     "phrase": "f/8"
+    },
+    {
+     "id": "16",
+     "label": "f/16",
+     "phrase": "f/16, deep focus"
+    }
+   ]
+  },
+  "shot": {
+   "title": "Framing",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "xwide",
+     "label": "Extreme wide",
+     "phrase": "extreme wide shot, the subject small in a vast frame"
+    },
+    {
+     "id": "wide",
+     "label": "Wide",
+     "phrase": "wide shot taking in the whole scene"
+    },
+    {
+     "id": "medium",
+     "label": "Medium",
+     "phrase": "medium shot"
+    },
+    {
+     "id": "close",
+     "label": "Close-up",
+     "phrase": "close-up"
+    },
+    {
+     "id": "xclose",
+     "label": "Extreme close-up",
+     "phrase": "extreme close-up"
+    },
+    {
+     "id": "ots",
+     "label": "Over the shoulder",
+     "phrase": "over-the-shoulder shot"
+    },
+    {
+     "id": "low",
+     "label": "Low angle",
+     "phrase": "low angle looking up at the subject"
+    },
+    {
+     "id": "cowboy",
+     "label": "Cowboy",
+     "phrase": "cowboy shot, framed from mid-thigh up"
+    },
+    {
+     "id": "two",
+     "label": "Two-shot",
+     "phrase": "two-shot"
+    },
+    {
+     "id": "insert",
+     "label": "Insert",
+     "phrase": "insert shot of a detail"
+    }
+   ]
+  },
+  "angle": {
+   "title": "Angle",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "eye",
+     "label": "Eye level",
+     "phrase": "eye-level camera"
+    },
+    {
+     "id": "high",
+     "label": "High angle",
+     "phrase": "high angle looking down"
+    },
+    {
+     "id": "overhead",
+     "label": "Overhead",
+     "phrase": "overhead top-down view"
+    },
+    {
+     "id": "dutch",
+     "label": "Dutch tilt",
+     "phrase": "dutch angle"
+    },
+    {
+     "id": "worm",
+     "label": "Worm's eye",
+     "phrase": "worm's-eye view from the ground"
+    },
+    {
+     "id": "pov",
+     "label": "Point of view",
+     "phrase": "point-of-view shot"
+    },
+    {
+     "id": "aerial",
+     "label": "Aerial",
+     "phrase": "aerial view from high above"
+    }
+   ]
+  },
+  "move": {
+   "title": "Movement",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "static",
+     "label": "Locked off",
+     "phrase": "locked-off static camera"
+    },
+    {
+     "id": "push",
+     "label": "Push in",
+     "phrase": "slow push-in toward the subject"
+    },
+    {
+     "id": "pull",
+     "label": "Pull out",
+     "phrase": "slow pull-out revealing the scene"
+    },
+    {
+     "id": "track",
+     "label": "Tracking",
+     "phrase": "tracking shot moving alongside the subject"
+    },
+    {
+     "id": "dolly",
+     "label": "Dolly sideways",
+     "phrase": "lateral dolly move"
+    },
+    {
+     "id": "crane",
+     "label": "Crane up",
+     "phrase": "crane shot rising up"
+    },
+    {
+     "id": "orbit",
+     "label": "Orbit",
+     "phrase": "slow orbit around the subject"
+    },
+    {
+     "id": "handheld",
+     "label": "Handheld follow",
+     "phrase": "handheld camera following the action"
+    },
+    {
+     "id": "pan",
+     "label": "Pan",
+     "phrase": "slow pan across the scene"
+    },
+    {
+     "id": "tilt",
+     "label": "Tilt up",
+     "phrase": "tilt up from the ground to the subject"
+    },
+    {
+     "id": "whip",
+     "label": "Whip pan",
+     "phrase": "fast whip pan"
+    },
+    {
+     "id": "drone",
+     "label": "Drone flyover",
+     "phrase": "aerial drone flyover"
+    },
+    {
+     "id": "zoom",
+     "label": "Crash zoom",
+     "phrase": "sudden crash zoom"
+    },
+    {
+     "id": "vertigo",
+     "label": "Dolly zoom",
+     "phrase": "dolly zoom, vertigo effect"
+    },
+    {
+     "id": "arc",
+     "label": "Arc",
+     "phrase": "arc move curving around the subject"
+    },
+    {
+     "id": "orbit360",
+     "label": "360° orbit",
+     "phrase": "full 360-degree orbit around the subject"
+    },
+    {
+     "id": "bullet",
+     "label": "Bullet time",
+     "phrase": "bullet time, the moment frozen as the camera sweeps around the subject"
+    },
+    {
+     "id": "tiltdown",
+     "label": "Tilt down",
+     "phrase": "tilt down from the sky to the subject"
+    },
+    {
+     "id": "cranedown",
+     "label": "Crane down",
+     "phrase": "crane shot descending toward the subject"
+    },
+    {
+     "id": "fpv",
+     "label": "FPV dive",
+     "phrase": "FPV drone dive, fast and swooping low through the scene"
+    },
+    {
+     "id": "eyesin",
+     "label": "Eyes in",
+     "phrase": "rapid push-in that dives straight into the subject's eyes"
+    },
+    {
+     "id": "earth",
+     "label": "Earth zoom-out",
+     "phrase": "pull back from the subject and rise through the clouds until the curve of the earth shows"
+    },
+    {
+     "id": "snorri",
+     "label": "Snorricam",
+     "phrase": "snorricam rig, the actor's face locked in frame while the world swings around them"
+    },
+    {
+     "id": "headtrack",
+     "label": "Head tracking",
+     "phrase": "camera locked on the subject's head, close and steady as they move"
+    },
+    {
+     "id": "dutchroll",
+     "label": "Dutch roll",
+     "phrase": "camera rolls slowly into a dutch tilt"
+    },
+    {
+     "id": "rack",
+     "label": "Rack focus",
+     "phrase": "rack focus from the foreground to the subject"
+    },
+    {
+     "id": "robo",
+     "label": "Robo arm",
+     "phrase": "precise high-speed robotic arm move whipping around the subject"
+    },
+    {
+     "id": "hyperlapse",
+     "label": "Hyperlapse",
+     "phrase": "hyperlapse moving through the scene, time rushing past"
+    }
+   ]
+  },
+  "light": {
+   "title": "Light",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "golden",
+     "label": "Golden hour",
+     "phrase": "low golden-hour sun"
+    },
+    {
+     "id": "overcast",
+     "label": "Overcast",
+     "phrase": "flat soft light under an overcast sky"
+    },
+    {
+     "id": "blue",
+     "label": "Blue hour",
+     "phrase": "deep blue twilight just after sunset"
+    },
+    {
+     "id": "night",
+     "label": "Practical night",
+     "phrase": "night lit only by practical lamps and signs"
+    },
+    {
+     "id": "neon",
+     "label": "Neon",
+     "phrase": "neon signs washing the scene in colour"
+    },
+    {
+     "id": "lowkey",
+     "label": "Low key",
+     "phrase": "low-key light, most of the frame in shadow"
+    },
+    {
+     "id": "silhouette",
+     "label": "Silhouette",
+     "phrase": "hard backlight turning the subject to a silhouette"
+    },
+    {
+     "id": "noon",
+     "label": "Hard noon",
+     "phrase": "hard midday sun, crisp shadows"
+    },
+    {
+     "id": "window",
+     "label": "Window light",
+     "phrase": "soft window light from the side"
+    },
+    {
+     "id": "candle",
+     "label": "Candlelight",
+     "phrase": "warm candlelight"
+    },
+    {
+     "id": "moon",
+     "label": "Moonlight",
+     "phrase": "cool moonlight"
+    },
+    {
+     "id": "fog",
+     "label": "Fog",
+     "phrase": "diffused light through fog"
+    }
+   ]
+  },
+  "film": {
+   "title": "Film",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "clean",
+     "label": "Clean digital",
+     "phrase": "a clean digital image"
+    },
+    {
+     "id": "t500",
+     "label": "Tungsten 500T",
+     "phrase": "tungsten-balanced 500T film stock"
+    },
+    {
+     "id": "d250",
+     "label": "Daylight 250D",
+     "phrase": "daylight 250D film stock"
+    },
+    {
+     "id": "bw400",
+     "label": "Black & white 400",
+     "phrase": "black-and-white 400 film"
+    },
+    {
+     "id": "slide",
+     "label": "Slide film",
+     "phrase": "saturated reversal slide film"
+    },
+    {
+     "id": "expired",
+     "label": "Expired film",
+     "phrase": "expired film with shifted colour and lifted blacks"
+    },
+    {
+     "id": "bleach",
+     "label": "Bleach bypass",
+     "phrase": "a desaturated, contrasty bleach-bypass print"
+    },
+    {
+     "id": "portra",
+     "label": "Portra 400",
+     "phrase": "Kodak Portra 400 film"
+    },
+    {
+     "id": "instant",
+     "label": "Instant film",
+     "phrase": "instant film print"
+    },
+    {
+     "id": "vhs",
+     "label": "VHS",
+     "phrase": "VHS tape footage"
+    }
+   ]
+  },
+  "look": {
+   "title": "Look",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "neonoir",
+     "label": "Neo-noir",
+     "phrase": "neo-noir mood"
+    },
+    {
+     "id": "western",
+     "label": "Western",
+     "phrase": "classic western mood"
+    },
+    {
+     "id": "scifi",
+     "label": "Science fiction",
+     "phrase": "science-fiction mood"
+    },
+    {
+     "id": "drama",
+     "label": "Period drama",
+     "phrase": "period-drama mood"
+    },
+    {
+     "id": "thriller",
+     "label": "Thriller",
+     "phrase": "tense thriller mood"
+    },
+    {
+     "id": "doc",
+     "label": "Documentary",
+     "phrase": "observational documentary feel"
+    },
+    {
+     "id": "road",
+     "label": "Road movie",
+     "phrase": "road-movie feel"
+    },
+    {
+     "id": "editorial",
+     "label": "Editorial",
+     "phrase": "magazine editorial look, styled wardrobe, crisp fashion lighting"
+    },
+    {
+     "id": "commercial",
+     "label": "Commercial",
+     "phrase": "polished commercial advertising look, bright, clean and glossy"
+    },
+    {
+     "id": "horror",
+     "label": "Horror",
+     "phrase": "horror film look, creeping dread, deep shadows, sickly colour"
+    },
+    {
+     "id": "musical",
+     "label": "Music video",
+     "phrase": "music video look, bold saturated coloured light and haze"
+    }
+   ]
+  },
+  "grade": {
+   "title": "Grade",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "teal",
+     "label": "Teal and orange",
+     "phrase": "teal shadows against warm orange skin tones"
+    },
+    {
+     "id": "noir",
+     "label": "Noir",
+     "phrase": "a black-and-white grade"
+    },
+    {
+     "id": "kodachrome",
+     "label": "Kodachrome",
+     "phrase": "Kodachrome-style colour with deep reds and blues"
+    },
+    {
+     "id": "neon",
+     "label": "Magenta & cyan",
+     "phrase": "a magenta and cyan palette"
+    },
+    {
+     "id": "desert",
+     "label": "Desert",
+     "phrase": "a warm, dusty desert palette"
+    },
+    {
+     "id": "nordic",
+     "label": "Nordic",
+     "phrase": "a cold blue-grey palette"
+    },
+    {
+     "id": "pastel",
+     "label": "Pastel",
+     "phrase": "soft pastel palette"
+    },
+    {
+     "id": "natural",
+     "label": "Natural",
+     "phrase": "natural true-to-life colour"
+    }
+   ]
+  },
+  "compose": {
+   "title": "Composition",
+   "options": [
+    {
+     "id": "auto",
+     "label": "Auto",
+     "phrase": ""
+    },
+    {
+     "id": "thirds",
+     "label": "Rule of thirds",
+     "phrase": "subject on the rule of thirds"
+    },
+    {
+     "id": "center",
+     "label": "Centred",
+     "phrase": "centred symmetrical composition"
+    },
+    {
+     "id": "lines",
+     "label": "Leading lines",
+     "phrase": "leading lines drawing the eye to the subject"
+    },
+    {
+     "id": "space",
+     "label": "Copy space",
+     "phrase": "generous empty negative space for copy"
+    },
+    {
+     "id": "frame",
+     "label": "Frame in frame",
+     "phrase": "subject framed by a doorway or window"
+    },
+    {
+     "id": "depth",
+     "label": "Layered depth",
+     "phrase": "foreground, midground and background layers"
+    }
+   ]
+  }
+ },
+ "defaults": {
+  "body": "large",
+  "lens": "anamorphic",
+  "focal": "50",
+  "aperture": "2.8",
+  "shot": "medium",
+  "angle": "auto",
+  "move": "auto",
+  "light": "night",
+  "film": "t500",
+  "look": "neonoir",
+  "grade": "teal",
+  "compose": "auto"
+ },
+ "order": [
+  "body",
+  "lens",
+  "focal",
+  "aperture",
+  "shot",
+  "angle",
+  "move",
+  "light",
+  "film",
+  "look",
+  "grade",
+  "compose"
+ ]
+}

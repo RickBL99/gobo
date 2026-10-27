@@ -2,6 +2,8 @@
 
 **Say the film. Gobo shoots it.**
 
+> 🎬 **Need real video?** [Visit SuperStock →](https://www.superstock.com)
+
 ![The Last Watch: a ten-second film Autopilot made from one line](docs/media/the-last-watch.gif)
 
 *The Last Watch.* One line typed into Gobo: *"A lighthouse keeper's last night before the light goes automatic: he climbs the stairs in a storm, lights the lamp one final time, and watches the beam sweep the sea."* About two minutes and 80¢ of Comfy credit later, there was a film. Autopilot wrote four shots. FLUX 3 drew a keyframe for each, and Wan 3.0 animated each shot from its keyframe. Gobo's Rust checked every cut, the film was cut together, and the Lab graded it in Rust as Portra 400 printed through Kodachrome. [Watch the MP4](docs/media/the-last-watch.mp4) · [Open it in ComfyUI](workflows/the-last-watch/workflow_api.json)
@@ -36,7 +38,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.
-- **Gobo's own ComfyUI nodes.** In the Lab, **Open in ComfyUI** opens your ComfyUI with the take and its look laid out as Gobo's nodes (Load Take, Look with every slider, LUT, Shot Match, Grade), graded there by the same Rust. The nodes live in [`comfyui/`](comfyui) and Gobo serves them as a download. See [Gobo in ComfyUI](comfyui/README.md).
+- **Gobo's own ComfyUI nodes.** **Gobo Director** is Gobo's Rust shot compiler as a node: the scene in plain words and a cinematographer's choices become the prompt for any video or image model in ComfyUI, shown live as you change them; **Open in ComfyUI ↗** under the prompt opens the shot you're directing that way, wired to the model's own node. **Gobo Steal Look** reads any frame's look and the choices behind it, so new footage is shot and graded in a film's look. And in the Lab, **Open in ComfyUI** opens your ComfyUI with the take and its look laid out as Gobo's nodes (Load Take, Look with every slider, LUT, Shot Match, Grade), graded there by the same Rust. The nodes live in [`comfyui/`](comfyui) and Gobo serves them as a download. See [Gobo in ComfyUI](comfyui/README.md).
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
 - **And:** a public share link for any take, a model shootout, a library (pick takes from any reel and put them on a board, in film order, to cut them), accounts an admin adds with their own passwords, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 

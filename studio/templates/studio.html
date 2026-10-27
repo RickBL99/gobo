@@ -178,6 +178,11 @@ details.adv[open] summary { margin-bottom: 8px; }
 #actions { display: flex; flex-wrap: wrap; gap: 6px; }
 #actions .btn { font-size: .78rem; }
 #actions .sep { width: 1px; background: var(--line); margin: 0 4px; }
+#actions .upask { flex-basis: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px; padding: 10px 12px; margin-top: 2px;
+  border: 1px solid var(--line2); border-radius: 10px; background: var(--panel); }
+#actions .upask .seg button small { color: var(--muted); font-weight: 500; font-size: .7rem; }
+#actions .upask .seg button.on small { color: #333; }
+#actions .upask select { width: auto; }
 
 /* compare + zoom */
 .cmp { position: absolute; inset: 0; }
@@ -547,6 +552,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
 <link rel="apple-touch-icon" href="/static/icons/icon-180.png">
 </head>
 <body>
+{% include "_superstock.html" %}
 <header>
   <a class="homebtn" href="{{ '/home' if front == 'director' else '/' }}" title="Home: every tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
 {% if stills %}
@@ -726,6 +732,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
         <span><i style="background:var(--s-reference)"></i>Reference</span>
       </div>
       <div class="hint" id="directNotes" style="margin-top:8px"></div>
+      <div style="margin-top:10px"><button class="btn small" id="shotComfy" title="This shot in your own ComfyUI as Gobo's nodes: the Gobo Director with these choices, writing the prompt for this model's own node (shift-click to change where ComfyUI is)">Open in ComfyUI ↗</button></div>
     </section>
     <section class="card" id="takeInfo">
       <p class="sectitle">This take</p>

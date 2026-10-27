@@ -794,11 +794,12 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   // a link that works for a week.
   const COMFY = "gobo.comfyui";
   const comfyAddress = () => { try { return localStorage.getItem(COMFY) || ""; } catch (e) { return ""; } };
-  function comfyAsk(then) {
+  const COLOUR_BLURB = "Gobo opens your ComfyUI with this take and its look, laid out as Gobo's own nodes: the stock and grade with every slider, any LUT, a shot match, then Gobo Grade (the same Rust as here) and a save. Change anything and queue it.";
+  function comfyAsk(then, blurb = COLOUR_BLURB) {
     const d = document.createElement("div");
     d.className = "comfyask";
     d.innerHTML = `<div class="box"><h4>Open in ComfyUI</h4>
-      <p>Gobo opens your ComfyUI with this take and its look, laid out as Gobo's own nodes: the stock and grade with every slider, any LUT, a shot match, then Gobo Grade (the same Rust as here) and a save. Change anything and queue it.</p>
+      <p>${h(blurb)}</p>
       <ol><li><a href="/comfyui/gobo-nodes.zip">Get the Gobo nodes</a> and unzip them into <code>ComfyUI/custom_nodes</code> (a <code>gobo</code> folder), run <code>pip install wasmtime</code> in ComfyUI's Python, and restart ComfyUI. Once.</li>
       <li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8188")}"> <span class="hint">ComfyUI Desktop is usually http://127.0.0.1:8000</span></li></ol>
       <div class="row"><button class="btn small primary" id="caGo">Open in ComfyUI</button><button class="btn small" id="caX">Cancel</button></div></div>`;
@@ -814,22 +815,30 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     q("#caX", d).onclick = () => d.remove();
     d.onclick = e => { if (e.target === d) d.remove(); };
   }
-  async function openInComfy(ask) {
-    const { pic } = gradeSource();
-    if (!pic || pic.status !== "done" || !gradeLook) return say("Pick a finished take first.", true);
-    if (ask || !comfyAddress()) return comfyAsk(() => openInComfy(false));
+  // a workflow handed to the colourist's own ComfyUI in its address (#gobo=…):
+  // where it is is asked once (and again on shift-click); `get` asks Gobo for it
+  async function comfyOpen(get, ask, blurb, done) {
+    if (ask || !comfyAddress()) return comfyAsk(() => comfyOpen(get, false, blurb, done), blurb);
     // a window now, while the click still counts, so no pop-up blocker stops it
     const win = window.open("about:blank", "_blank");
-    const look = JSON.parse(JSON.stringify(gradeLook));
-    const ref = look.match_to && ST().takes().find(t => t.id === look.match_to && t.status === "done");
-    const r = await ST().api(`/reels/${ST().reel()}/takes/${pic.id}/comfyui/colour`, { method: "POST",
-      json: { look, film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value, reference: ref ? ref.id : "" } });
-    if (r.error) { if (win) win.close(); return say(r.error, true); }
+    const r = await get();
+    if (r.error) { if (win) win.close(); return done(r.error); }
     let bin = "";
     new TextEncoder().encode(JSON.stringify({ workflow: r.workflow, title: r.title })).forEach(c => { bin += String.fromCharCode(c); });
     const url = `${comfyAddress()}/#gobo=${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
     if (win) { win.opener = null; win.location.href = url; } else window.open(url, "_blank");
-    say("ComfyUI is opening with the take and its look as Gobo's nodes. Queue it to grade there. (If ComfyUI opens empty, the Gobo nodes aren't installed yet: shift-click Open in ComfyUI for how.)");
+    done(null, r);
+  }
+  window.goboComfy = { open: comfyOpen };
+  async function openInComfy(ask) {
+    const { pic } = gradeSource();
+    if (!pic || pic.status !== "done" || !gradeLook) return say("Pick a finished take first.", true);
+    const look = JSON.parse(JSON.stringify(gradeLook));
+    const ref = look.match_to && ST().takes().find(t => t.id === look.match_to && t.status === "done");
+    comfyOpen(() => ST().api(`/reels/${ST().reel()}/takes/${pic.id}/comfyui/colour`, { method: "POST",
+      json: { look, film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value, reference: ref ? ref.id : "" } }), ask, COLOUR_BLURB,
+      err => err ? say(err, true)
+        : say("ComfyUI is opening with the take and its look as Gobo's nodes. Queue it to grade there. (If ComfyUI opens empty, the Gobo nodes aren't installed yet: shift-click Open in ComfyUI for how.)"));
   }
   q("#gComfy", lab).onclick = e => openInComfy(e.shiftKey || e.altKey);
 

@@ -184,7 +184,7 @@
   // home is wherever the studio's own Home button goes: "/" on a studio-first
   // Gobo, /home where this screen is the front door
   const HOME = (document.querySelector(".homebtn") || { getAttribute: () => "/home" }).getAttribute("href") || "/home";
-  D.innerHTML = `
+  D.innerHTML = `${(document.querySelector(".ssbar") || {}).outerHTML || ""}
   <header class="dtop">
     <a class="dlogo" href="${HOME}" title="Home: every tool"><svg viewBox="0 0 48 48" aria-hidden="true"><rect x="3" y="9" width="42" height="30" rx="5" fill="none" stroke="#f2c14e" stroke-width="3"/>
       <circle cx="24" cy="24" r="8.5" fill="none" stroke="#ecebe8" stroke-width="3"/><circle cx="24" cy="24" r="3" fill="#f2c14e"/>

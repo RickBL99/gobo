@@ -459,6 +459,35 @@ class Flow(unittest.TestCase):
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
 
+    def test_a_clip_lands_silent_unless_sound_was_asked_for_and_no_bigger_than_uhd(self):
+        """A model's soundtrack nobody asked for is taken off (MiniMax H3 adds one
+        with no switch to stop it); sound asked for stays; a clip past UHD comes
+        down to it, so players don't fall back to a decoder that stutters."""
+        reel = self.reel()
+        probe = lambda f: json.loads(subprocess.run(["ffprobe", "-v", "error", "-show_entries", "stream=codec_type,codec_name,width,height",
+                                                     "-of", "json", f], capture_output=True, text=True).stdout)["streams"]
+
+        def made(model, audio, size="320x180", seconds=1.0):
+            src = os.path.join(TMP, f"land-{model.split('/')[0]}-{audio}-{size}.mp4"); clip(src, seconds, "teal", size=size, audio=True)
+            with open(src, "rb") as f:
+                data = f.read()
+            t = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": model, "scene": "A wave.", "duration": 5,
+                                                                "audio": audio}).json()["takes"][0]
+            self.finish(reel, t["id"], data, ".mp4")
+            t = J.get_take(reel, t["id"])
+            return t, probe(J.out_path(reel, t["file"]))
+
+        t, st = made("minimax/minimax-h3", False)
+        self.assertEqual([x["codec_type"] for x in st], ["video"], "the unasked soundtrack is gone")
+        self.assertIs(t["sound"], False)
+        t, st = made("byteplus/dreamina-seedance-2-5-260628", True)
+        self.assertIn("audio", [x["codec_type"] for x in st], "sound asked for stays")
+        self.assertIs(t["sound"], True)
+        t, st = made("minimax/minimax-h3", False, size="4000x2250", seconds=0.3)
+        v = next(x for x in st if x["codec_type"] == "video")
+        self.assertEqual((v["codec_name"], v["width"], v["height"]), ("h264", 3840, 2160))
+        self.assertNotIn("audio", [x["codec_type"] for x in st])
+
     def test_a_take_from_another_reel_is_brought_in(self):
         """The Lab's match grades a take from anywhere in the library: it's copied
         into the reel being graded first, file and all."""
@@ -482,6 +511,35 @@ class Flow(unittest.TestCase):
         self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{a}:{busy['id']}"}).status_code, 400)
         self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{a}:1790000000000-zzzzzz"}).status_code, 404)
         self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": "../etc"}).status_code, 404)
+
+    def test_the_shot_on_the_panel_opens_in_comfyui_as_the_director(self):
+        """Open in ComfyUI by the prompt: the Gobo Director with the scene and every
+        choice (by label), its prompt wired into the model's own node, a start
+        frame fetched from Gobo by a signed link, and a save."""
+        reel = self.reel()
+        up = self.c.post(f"/studio/reels/{reel}/refs", files={"file": ("start.jpg", jpeg(), "image/jpeg")}).json()
+        body = {"reel": reel, "scene": "A ferry leaves the pier.", "direction": {"shot": "wide", "move": "push", "film": "portra"},
+                "mode": "video", "pmode": "cinematic", "model": "kling/kling-v3-omni", "aspect": "16:9", "duration": 5,
+                "audio": False, "first_frame": up["name"]}
+        r = self.c.post("/studio/comfyui/shot", json=body, headers={"host": "gobo.test"}).json()
+        g = r["workflow"]
+        by = {n["class_type"]: (k, n) for k, n in g.items()}
+        dk, d = by["GoboDirector"]
+        self.assertEqual((d["inputs"]["scene"], d["inputs"]["shot"], d["inputs"]["move"], d["inputs"]["film"], d["inputs"]["light"], d["inputs"]["shoot"]),
+                         ("A ferry leaves the pier.", "Wide", "Push in", "Portra 400", "Auto", "video"))
+        _, k = by["KlingOmniProFirstLastFrameNode"]
+        self.assertEqual(k["inputs"]["prompt"], [dk, 0])
+        self.assertIs(k["inputs"]["generate_audio"], False)
+        lk, load = by["GoboLoadTake"]
+        self.assertEqual(k["inputs"]["first_frame"], [lk, 2])
+        token = load["inputs"]["link"].split("/t/")[1]
+        self.assertTrue(load["inputs"]["link"].startswith("http://gobo.test/t/"))
+        got = self.c.get(f"/t/{token}")
+        self.assertEqual((got.status_code, got.content), (200, jpeg()), "the start frame, fetched by its link")
+        self.assertIn("SaveVideo", by)
+        # a model ComfyUI has no node for: the Director and its prompt, to wire to any
+        r = self.c.post("/studio/comfyui/shot", json={**body, "model": "runway/gen4_turbo", "first_frame": ""}).json()
+        self.assertEqual(sorted(n["class_type"] for n in r["workflow"].values()), ["GoboDirector", "PreviewAny"])
 
     def test_a_release_reaches_the_browser_at_once(self):
         """The page's scripts and Gobo's Rust are checked with the server on every
@@ -811,6 +869,45 @@ class Flow(unittest.TestCase):
         self.assertTrue(self.submitted[-1]["payload"]["image_url"].startswith("https://hosted/"))
         cut = self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/upscale", json={"tool": "cutout"}).json()["take"]
         self.assertEqual((cut["model"], cut["action"]), (M.CUTOUT, "cutout"))
+
+    def test_upscale_asks_where_to(self):
+        """A clip to 1080p, 1440p or 4K, a still ×2 or ×4: the scale that lands
+        there, or the resolution an upscaler renders to that reaches it."""
+        reel = self.reel()
+        src = os.path.join(TMP, "up-src.mp4"); clip(src, 0.5, "navy", size="640x360")
+        with open(src, "rb") as f:
+            data = f.read()
+        t = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628",
+                                                            "scene": "A wave.", "duration": 5}).json()["takes"][0]
+        self.finish(reel, t["id"], data, ".mp4")
+        up = lambda **b: self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/upscale", json=b)
+        # a scale model: 360 → 1080 is ×3
+        r = up(model="bfl/video-upscale-v1", to="1080p").json()
+        self.assertEqual((r["take"]["request"]["scale"], r["take"]["request"]["to_px"], r["note"]), (3.0, 1080, ""))
+        self.assertEqual(self.submitted[-1]["payload"]["upscale_factor"], 3.0)
+        # it goes up to ×3, so 4K (×6) is said to land smaller
+        r = up(model="bfl/video-upscale-v1", to="4k").json()
+        self.assertIn("up to ×3", r["note"])
+        # a resolution model gets the one that reaches it
+        up(model="wavespeed/flashvsr", to="1440p")
+        self.assertEqual(self.submitted[-1]["payload"]["target_resolution"], "2k")
+        up(model="wavespeed/flashvsr", to="4k")
+        self.assertEqual(self.submitted[-1]["payload"]["target_resolution"], "4k")
+        self.assertEqual(up(model="wavespeed/flashvsr", to="8k").status_code, 400)
+        # a still: ×2 or ×4
+        s = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "x"}).json()["takes"][0]
+        self.finish(reel, s["id"], jpeg((400, 300)), ".jpg")
+        r = self.c.post(f"/studio/reels/{reel}/takes/{s['id']}/upscale", json={"model": "fal/crystal-upscaler", "scale": 4}).json()
+        self.assertEqual((r["take"]["request"]["scale"], r["take"]["request"]["to_px"]), (4.0, 1600))
+        self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{s['id']}/upscale", json={"scale": 3}).status_code, 400)
+        # a clip that's 4K already can't go further
+        big = os.path.join(TMP, "up-uhd.mp4"); clip(big, 0.2, "navy", size="3840x2160")
+        with open(big, "rb") as f:
+            data = f.read()
+        u = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628",
+                                                            "scene": "Big.", "duration": 5}).json()["takes"][0]
+        self.finish(reel, u["id"], data, ".mp4")
+        self.assertIn("already", self.c.post(f"/studio/reels/{reel}/takes/{u['id']}/upscale", json={"to": "4k"}).json()["error"])
 
     # ── the Content Generator (stills mode) ─────────────────────────────────
     def test_stills_page_has_only_still_models(self):

@@ -1,0 +1,20 @@
+{# The strip across the top of every Gobo page: generated video is one thing,
+   real footage another. Rick, 2026-10-26: "Need real video? Visit SuperStock". #}
+<style>
+.ssbar { display: flex; align-items: center; justify-content: center; gap: 9px; min-height: 30px; padding: 5px 16px;
+  background: linear-gradient(90deg, #120f08 0%, #231c0c 50%, #120f08 100%); border-bottom: 1px solid #3a2f12;
+  color: #cfc9ba; font: 500 12.5px/1.3 Inter, system-ui, -apple-system, "Segoe UI", sans-serif; letter-spacing: .01em;
+  text-decoration: none; position: relative; z-index: 31; }
+.ssbar svg { width: 15px; height: 15px; flex: none; }
+.ssbar b { color: #f2c14e; font-weight: 700; }
+.ssbar .arr { color: #f2c14e; transition: transform .15s; }
+.ssbar:hover { color: #ecebe8; background: linear-gradient(90deg, #15110a 0%, #2b2310 50%, #15110a 100%); }
+.ssbar:hover .arr { transform: translateX(3px); }
+@media (max-width: 520px) { .ssbar { font-size: 12px; } }
+@media print { .ssbar { display: none; } }
+</style>
+<a class="ssbar" href="https://www.superstock.com/" target="_blank" rel="noopener" title="SuperStock: real footage and photography, licensed for your production">
+  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="2.5" y="5" width="19" height="14" rx="2.5" fill="none" stroke="#f2c14e" stroke-width="1.8"/>
+    <path d="M10 9.2v5.6l4.8-2.8z" fill="#ecebe8"/><path d="M2.5 9h2M2.5 15h2M19.5 9h2M19.5 15h2" stroke="#f2c14e" stroke-width="1.6"/></svg>
+  <span>Need real video?</span> <b>Visit SuperStock</b> <span class="arr" aria-hidden="true">→</span>
+</a>

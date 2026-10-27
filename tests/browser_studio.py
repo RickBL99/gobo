@@ -123,6 +123,10 @@ def main():
         n_img = tab.js("byKind('image').length")
         n_vid = tab.js("byKind('video').length")
         check("catalogue loaded", n_img > 50 and n_vid > 40, f"{n_img} image, {n_vid} video")
+        bar = json.loads(tab.js("""JSON.stringify((() => { const b = [...document.body.children].find(e => !/^(STYLE|SCRIPT)$/.test(e.tagName)), r = $('.ssbar') && $('.ssbar').getBoundingClientRect();
+          return {first: !!b && b.classList.contains('ssbar'), href: $('.ssbar') && $('.ssbar').href, text: $('.ssbar') && $('.ssbar').textContent.replace(/\\s+/g, ' ').trim(), top: r && r.top, h: r && r.height}; })())"""))
+        check("the top strip: Need real video? Visit SuperStock", bar["first"] and bar["top"] == 0 and bar["h"] >= 26
+              and "superstock.com" in (bar["href"] or "") and bar["text"] == "Need real video? Visit SuperStock →", bar)
         check("opens in video", tab.js("S.mode") == "video" and tab.js("$('#modeVideo').classList.contains('on') && model().kind === 'video'"))
         # a mode saved before video became the default is overridden once, then a choice sticks
         tab.js("localStorage.setItem('studio.shot', JSON.stringify({mode: 'image'})); localStorage.removeItem('studio.videoDefault'); 1")
@@ -733,6 +737,23 @@ def main():
               and tab.js("$('#clearFails').classList.contains('hidden')") == (tab.js("!S.takes.some(t => t.status === 'failed' || t.status === 'cancelled')")),
               tab.js("JSON.stringify({cleared: _cleared, left: S.takes.filter(t => /-dud00[12]$/.test(t.id)).map(t => t.id), hidden: $('#clearFails').classList.contains('hidden'), duds: S.takes.filter(t => t.status === 'failed' || t.status === 'cancelled').map(t => t.id), picking: S.picking})"))
         tab.js("window.fetch = _df; window.confirm = _confirm; 1")
+        # Upscale asks where to: 1080p, 1440p or 4K for a clip, each with the size it lands at, and which upscaler
+        tab.js("""setView('shot'); window._uf = window.fetch; window._ups = null;
+          window.fetch = (u, o) => /\\/upscale$/.test(String(u)) ? (window._ups = JSON.parse(o.body),
+            Promise.resolve(new Response(JSON.stringify({error: 'Not in the test.'}), {status: 400, headers: {'Content-Type': 'application/json'}}))) : _uf(u, o);
+          mergeTakes([{id: '17950000000003-upclip', reel: S.reel.id, shot: 98, letter: 'A', kind: 'video', status: 'done', model: byKind('video')[0].id,
+                       label: 'Test clip', url: '/nowhere/u.mp4', w: 1280, h: 720, created: Date.now() / 1000}]);
+          select('17950000000003-upclip'); 1"""); time.sleep(0.3)
+        tab.js("$('#actions [data-a=upscale]').click(); 1"); time.sleep(0.3)
+        u = json.loads(tab.js("""JSON.stringify({to: $$('#upTo button').map(b => b.textContent.replace(/\\s+/g, ' ').trim()),
+          models: $$('#upModel option').length, go: ($('[data-up=go]') || {}).textContent})"""))
+        check("upscale: a clip asks where to, with the size each lands at", u["to"] == ["1080p 1920×1080", "1440p 2560×1440", "4K 3840×2160"]
+              and u["models"] >= 1 and u["go"] == "Upscale to 4K", u)
+        tab.js("$$('#upTo button')[1].click(); 1"); time.sleep(0.2)
+        tab.js("$('[data-up=go]').click(); 1"); time.sleep(0.6)
+        check("upscale: it sends where to and on which upscaler", (tab.js("_ups") or {}).get("to") == "1440p"
+              and (tab.js("_ups") or {}).get("model") == tab.js("JSON.parse(localStorage.getItem('studio.up.model.video'))"), tab.js("_ups"))
+        tab.js("window.fetch = _uf; S.takes = S.takes.filter(t => t.id !== '17950000000003-upclip'); S.upAsk = null; renderStrip(); 1")
         # Draw the move's Shoot it: the take again, on the clip model picked on the left, not the one it was made with
         tab.js("""window._keep = JSON.stringify({scene: S.scene, direction: S.direction, model: S.model, mode: S.mode});
           window._gen = generate; window._gens = [];
@@ -897,6 +918,7 @@ def main():
         tab.call("Page.navigate", url=f"{BASE}/direct"); time.sleep(3)
         tab.js("localStorage.clear(); 1"); tab.call("Page.reload"); time.sleep(3)
         check("director: opens on the line", tab.js("!$('#director').classList.contains('off')") and "film" in tab.js("$('#director h1').textContent"))
+        check("director: the SuperStock strip is across its top too", tab.js("!!$('#director > .ssbar') && $('#director > .ssbar').getBoundingClientRect().top === 0"))
         check("director: a way home, where the studio's Home goes", tab.js("$('#dHome').getAttribute('href')") == tab.js("$('.homebtn').getAttribute('href')")
               and tab.js("$('#director .dlogo').getAttribute('href')") == tab.js("$('.homebtn').getAttribute('href')"), tab.js("$('#dHome').getAttribute('href')"))
         check("director: 13 looks, Let Gobo decide first", tab.js("$$('#director .look img').length") == 13
@@ -1098,8 +1120,21 @@ def main():
         classes = [n["class_type"] for n in flow.get("workflow", {}).values()]
         check("comfyui: it opens ComfyUI with the take and its look as Gobo's nodes", url.startswith("http://127.0.0.1:8188/#gobo=")
               and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes, classes)
+        tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1"); time.sleep(0.3)
+        # the shot on the panel: the Gobo Director with its scene and choices, wired to the model's own node
+        tab.js("setView('shot'); setMode('video', true); S.scene = 'A ferry leaves a foggy pier.'; S.direction.shot = 'wide'; S.direction.move = 'push'; "
+               "S.model.video = 'kling/kling-v3-omni'; onShotChange(); $('#shotComfy').click(); 1"); time.sleep(2)
+        url = tab.js("window._opened[window._opened.length - 1] || ''")
+        sent = url.split("#gobo=")[1] if "#gobo=" in url else ""
+        flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
+        nodes = flow.get("workflow", {})
+        d = next((n for n in nodes.values() if n["class_type"] == "GoboDirector"), {})
+        k = next((n for n in nodes.values() if n["class_type"].startswith("KlingOmniPro")), {})
+        check("comfyui: the shot opens as the Gobo Director, wired to the model's own node",
+              (d.get("inputs") or {}).get("scene") == "A ferry leaves a foggy pier." and (d.get("inputs") or {}).get("shot") == "Wide"
+              and (d.get("inputs") or {}).get("move") == "Push in" and isinstance((k.get("inputs") or {}).get("prompt"), list)
+              and "SaveVideo" in [n["class_type"] for n in nodes.values()], [flow.get("title"), sorted(n["class_type"] for n in nodes.values())])
         tab.js("window.open = window._open0; 1")
-        tab.js("$('#lab .x, #labClose, #lab [data-close]') && 1"); tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1")
 
         # ── the library to a board: takes from anywhere, a card each, in film order ──
         tab.js("window._prompt = window.prompt; window.prompt = () => 'Library check'; LIB.kind = ''; LIB.starred = false; LIB.q = ''; 1")

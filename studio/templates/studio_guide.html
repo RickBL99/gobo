@@ -116,6 +116,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <link rel="apple-touch-icon" href="/static/icons/icon-180.png">
 </head>
 <body>
+{% include "_superstock.html" %}
 <header>
   <a class="homebtn" href="/" title="Home"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
   <a class="back" href="{{ api }}">&larr; Back to the studio</a>
@@ -217,7 +218,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <p>The order is the one a colourist uses: a camera LUT, the CDL, the wheels, the curves, the stock and grade, a creative LUT, then grain, halation and the vignette. <span class="ui">Download .cube</span> carries all of it except those last three, which need the whole picture.</p>
     <div class="tip">Grade by the scopes, not your screen: on the waveform, keep the blacks just above 0 and the brightest whites just under 100; a neutral grey should sit in the middle of the vectorscope.</div>
   </section>
-  <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes gobo nodes custom node pack grade colour">
+  <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes gobo nodes custom node pack grade colour director prompt steal look">
     <h3>Open in ComfyUI</h3>
     <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>
       <p><b>A take's colour, in your own ComfyUI.</b> <span class="ui">Open in ComfyUI</span> in the Lab's <span class="ui">Grade</span> (and on the Colour page) opens your ComfyUI with the take on screen and its look laid out as Gobo's own nodes:</p>
@@ -227,6 +228,8 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Gobo LUT</span> for a LUT on the look, and <span class="ui">Gobo Shot Match</span> with the reference take, for a take matched to another.</li>
       <li><span class="ui">Gobo Grade</span> puts every frame through the look with the same Rust as Gobo (the grain moving, the sound kept), then <span class="ui">Save Video</span>.</li>
     </ul>
+    <p><b>This shot, in ComfyUI.</b> <span class="ui">Open in ComfyUI ↗</span> under the prompt opens your ComfyUI with the shot on the panel as Gobo's nodes: the <span class="ui">Gobo Director</span> holding your scene and every choice, its prompt wired into the model's own ComfyUI node (Kling, Seedance, MiniMax, LTX, Veo, Wan, FLUX…) with your starting frame fetched from Gobo, then a save. For a model ComfyUI has no node for, you get the Director and its prompt, to wire into any.</p>
+    <p><b>Directing ComfyUI's models.</b> <span class="ui">Gobo Director</span> is Gobo's shot compiler as a node: write the scene in plain words, pick the camera, lens, framing, move, light, film stock, look, grade and composition, and it writes the prompt for any video or image node in ComfyUI (Kling, Seedance, MiniMax, Wan, LTX, FLUX…), the same prompt Gobo sends, shown live as you change it. Its <span class="ui">look</span> goes to <span class="ui">Gobo Grade</span>, so the footage is graded the way the prompt asked. Wire <span class="ui">Gobo Steal Look</span>'s <span class="ui">direction</span> into it and a frame from any film sets the focus, composition, stock and grade: new footage shot in that film's look. <span class="ui">Gobo Draw the Move</span> is the Lab's drawing as a node: draw the camera's path and the subject's on the frame, and the Director shoots it. <span class="ui">Gobo Sequence Match</span> then takes the clips the models made, in order, matches every one to the hero shot's colour, grades them with one look and cuts them together as one film, checking every cut.</p>
     <p>Change anything there and queue it. The nodes are part of Gobo: the first time, <span class="ui">Open in ComfyUI</span> asks where your ComfyUI is (the desktop app is usually <code>http://127.0.0.1:8000</code>) and offers <span class="ui">Get the Gobo nodes</span>: unzip them into <code>ComfyUI/custom_nodes</code>, run <code>pip install wasmtime</code> in ComfyUI's Python and restart it. Shift-click <span class="ui">Open in ComfyUI</span> to change the address. There are more nodes to build with: <span class="ui">Gobo Steal Look</span>, <span class="ui">Gobo Grade Images</span> and <span class="ui">Gobo Continuity</span>.</p>
   </section>
   <section class="topic" id="users" data-keys="users people accounts add user password admin sign in team access remove">
@@ -330,7 +333,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <ul>
       <li><b>Aspect</b> (frame shape) and <b>Resolution</b>: only what the chosen model supports.</li>
       <li><b>Takes</b> (stills): 1–4 in the studio, up to 20 in the Content Generator. Each take is a different variation.</li>
-      <li><b>Duration</b> and <b>Audio</b> (video): the lengths the model can make; sound only on models that make it.</li>
+      <li><b>Duration</b> and <b>Audio</b> (video): the lengths the model can make; sound only on models that make it. Sound is off unless you turn it on, and Gobo keeps it that way: a model that adds a soundtrack anyway (some have no switch) has it taken off when the clip lands. Footage you bring in keeps its own sound.</li>
     </ul>
   </section>
   <section class="topic" id="seed" data-keys="seed negative prompt advanced repeat same result random">
@@ -385,7 +388,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Generate again</span>: same settings, new take. <span class="ui">Reuse settings</span>: load them into the panel to change something.</li>
       <li><span class="ui">Use as reference</span>: make it a character or product reference.</li>
       <li><span class="ui">Animate</span>: make it the starting frame of a clip. <span class="ui">Use as end frame</span>: the ending frame.</li>
-      <li><span class="ui">Upscale</span>: twice the size. <span class="ui">Remove background</span>: the subject on transparency.</li>
+      <li><span class="ui">Upscale…</span>: asks how big first, ×2 or ×4 (each with the size it lands at), and which upscaler, with what it costs. <span class="ui">Remove background</span>: the subject on transparency.</li>
       <li><span class="ui">Copy prompt</span>, <span class="ui">Delete</span>.</li>
     </ul>
   </section>
@@ -395,7 +398,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Continue shot</span>: the next clip starts on this clip's last frame. Describe what happens next.</li>
       <li><span class="ui">Grab frame</span>: pause the clip where you want, then pull that frame out as a still.</li>
       <li><span class="ui">Change clip</span>, <span class="ui">Extend clip</span>, <span class="ui">Lead into it</span>: see <a href="#footage-shot">your own footage</a>; they work on any clip.</li>
-      <li><span class="ui">Upscale</span>: a sharper, larger clip.</li>
+      <li><span class="ui">Upscale…</span>: a sharper, larger clip. It asks where to first, 1080p, 1440p or 4K (each with the size it lands at), and which upscaler; Gobo works out the scale that lands there. 4K is as far as a clip goes: past it, players stutter.</li>
     </ul>
   </section>
   <section class="topic" id="sequence" data-keys="sequence bin strip select stitch join combine film delete several hold stills order">

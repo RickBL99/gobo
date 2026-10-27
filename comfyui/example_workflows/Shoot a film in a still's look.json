@@ -1,0 +1,1632 @@
+{
+ "id": "66baa084-9265-4438-8fbf-2eaccd7ce908",
+ "revision": 0,
+ "last_node_id": 12,
+ "last_link_id": 14,
+ "nodes": [
+  {
+   "id": 1,
+   "type": "LoadImage",
+   "pos": [
+    0,
+    40
+   ],
+   "size": [
+    282.798828125,
+    314
+   ],
+   "flags": {},
+   "order": 0,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "image",
+     "name": "image",
+     "type": "COMBO",
+     "widget": {
+      "name": "image"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "choose file to upload",
+     "name": "upload",
+     "type": "IMAGEUPLOAD",
+     "widget": {
+      "name": "upload"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "IMAGE",
+     "name": "IMAGE",
+     "type": "IMAGE",
+     "links": [
+      1
+     ]
+    },
+    {
+     "localized_name": "MASK",
+     "name": "MASK",
+     "type": "MASK",
+     "links": null
+    }
+   ],
+   "title": "A frame from any film",
+   "properties": {
+    "Node name for S&R": "LoadImage"
+   },
+   "widgets_values": [
+    "example.png",
+    "image"
+   ],
+   "widgets_values_named": {
+    "image": "example.png",
+    "upload": "image"
+   }
+  },
+  {
+   "id": 2,
+   "type": "GoboStealLook",
+   "pos": [
+    380,
+    40
+   ],
+   "size": [
+    148.946875,
+    66
+   ],
+   "flags": {},
+   "order": 1,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "image",
+     "name": "image",
+     "type": "IMAGE",
+     "link": 1
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "GOBO_LOOK",
+     "links": [
+      11
+     ]
+    },
+    {
+     "localized_name": "what it saw",
+     "name": "what it saw",
+     "type": "STRING",
+     "links": [
+      14
+     ]
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "GOBO_DIRECTION",
+     "links": [
+      2,
+      4,
+      6
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "GoboStealLook"
+   },
+   "color": "#4a3a10",
+   "bgcolor": "#2b2310"
+  },
+  {
+   "id": 3,
+   "type": "GoboDirector",
+   "pos": [
+    780,
+    40
+   ],
+   "size": [
+    400,
+    612
+   ],
+   "flags": {},
+   "order": 3,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "shape": 7,
+     "type": "GOBO_DIRECTION",
+     "link": 2
+    },
+    {
+     "localized_name": "scene",
+     "name": "scene",
+     "type": "STRING",
+     "widget": {
+      "name": "scene"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shoot",
+     "name": "shoot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shoot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "cinematic",
+     "name": "cinematic",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "cinematic"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "body",
+     "name": "body",
+     "type": "COMBO",
+     "widget": {
+      "name": "body"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "lens",
+     "name": "lens",
+     "type": "COMBO",
+     "widget": {
+      "name": "lens"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "focal",
+     "name": "focal",
+     "type": "COMBO",
+     "widget": {
+      "name": "focal"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aperture",
+     "name": "aperture",
+     "type": "COMBO",
+     "widget": {
+      "name": "aperture"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "angle",
+     "name": "angle",
+     "type": "COMBO",
+     "widget": {
+      "name": "angle"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "move",
+     "name": "move",
+     "type": "COMBO",
+     "widget": {
+      "name": "move"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "light",
+     "name": "light",
+     "type": "COMBO",
+     "widget": {
+      "name": "light"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "film",
+     "name": "film",
+     "type": "COMBO",
+     "widget": {
+      "name": "film"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "COMBO",
+     "widget": {
+      "name": "look"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "grade",
+     "name": "grade",
+     "type": "COMBO",
+     "widget": {
+      "name": "grade"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "compose",
+     "name": "compose",
+     "type": "COMBO",
+     "widget": {
+      "name": "compose"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "links": [
+      3
+     ]
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "GOBO_LOOK",
+     "links": null
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "GOBO_DIRECTION",
+     "links": null
+    }
+   ],
+   "title": "Gobo Director \u00b7 shot 1",
+   "properties": {
+    "Node name for S&R": "GoboDirector"
+   },
+   "widgets_values": [
+    "A ferry pulls away from a fog-bound pier at dawn, its deck lights blurring in the mist.",
+    "video",
+    true,
+    "Large format",
+    "Anamorphic",
+    "50mm",
+    "f/2.8",
+    "Extreme wide",
+    "Auto",
+    "Crane up",
+    "Fog",
+    "Auto",
+    "Period drama",
+    "Auto",
+    "Auto",
+    ""
+   ],
+   "widgets_values_named": {
+    "scene": "A ferry pulls away from a fog-bound pier at dawn, its deck lights blurring in the mist.",
+    "shoot": "video",
+    "cinematic": true,
+    "body": "Large format",
+    "lens": "Anamorphic",
+    "focal": "50mm",
+    "aperture": "f/2.8",
+    "shot": "Extreme wide",
+    "angle": "Auto",
+    "move": "Crane up",
+    "light": "Fog",
+    "film": "Auto",
+    "look": "Period drama",
+    "grade": "Auto",
+    "compose": "Auto",
+    "gobo_prompt": ""
+   },
+   "color": "#4a3a10",
+   "bgcolor": "#2b2310"
+  },
+  {
+   "id": 4,
+   "type": "ByteDanceTextToVideoNode",
+   "pos": [
+    1260,
+    40
+   ],
+   "size": [
+    400,
+    304
+   ],
+   "flags": {},
+   "order": 6,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "model",
+     "name": "model",
+     "type": "COMBO",
+     "widget": {
+      "name": "model"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "widget": {
+      "name": "prompt"
+     },
+     "link": 3
+    },
+    {
+     "localized_name": "resolution",
+     "name": "resolution",
+     "type": "COMBO",
+     "widget": {
+      "name": "resolution"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aspect_ratio",
+     "name": "aspect_ratio",
+     "type": "COMBO",
+     "widget": {
+      "name": "aspect_ratio"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "duration",
+     "name": "duration",
+     "type": "INT",
+     "widget": {
+      "name": "duration"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "seed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "camera_fixed",
+     "name": "camera_fixed",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "camera_fixed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "watermark",
+     "name": "watermark",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "watermark"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "generate_audio",
+     "name": "generate_audio",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "generate_audio"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "VIDEO",
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      8
+     ]
+    }
+   ],
+   "title": "Shot 1 \u00b7 Seedance",
+   "properties": {
+    "Node name for S&R": "ByteDanceTextToVideoNode"
+   },
+   "widgets_values": [
+    "seedance-1-5-pro-251215",
+    "",
+    "720p",
+    "16:9",
+    5,
+    1001,
+    "randomize",
+    false,
+    false,
+    false
+   ],
+   "widgets_values_named": {
+    "model": "seedance-1-5-pro-251215",
+    "prompt": "",
+    "resolution": "720p",
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "seed": 1001,
+    "control_after_generate": "randomize",
+    "camera_fixed": false,
+    "watermark": false,
+    "generate_audio": false
+   },
+   "color": "#432",
+   "bgcolor": "#653"
+  },
+  {
+   "id": 5,
+   "type": "GoboDirector",
+   "pos": [
+    780,
+    712
+   ],
+   "size": [
+    400,
+    612
+   ],
+   "flags": {},
+   "order": 4,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "shape": 7,
+     "type": "GOBO_DIRECTION",
+     "link": 4
+    },
+    {
+     "localized_name": "scene",
+     "name": "scene",
+     "type": "STRING",
+     "widget": {
+      "name": "scene"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shoot",
+     "name": "shoot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shoot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "cinematic",
+     "name": "cinematic",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "cinematic"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "body",
+     "name": "body",
+     "type": "COMBO",
+     "widget": {
+      "name": "body"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "lens",
+     "name": "lens",
+     "type": "COMBO",
+     "widget": {
+      "name": "lens"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "focal",
+     "name": "focal",
+     "type": "COMBO",
+     "widget": {
+      "name": "focal"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aperture",
+     "name": "aperture",
+     "type": "COMBO",
+     "widget": {
+      "name": "aperture"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "angle",
+     "name": "angle",
+     "type": "COMBO",
+     "widget": {
+      "name": "angle"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "move",
+     "name": "move",
+     "type": "COMBO",
+     "widget": {
+      "name": "move"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "light",
+     "name": "light",
+     "type": "COMBO",
+     "widget": {
+      "name": "light"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "film",
+     "name": "film",
+     "type": "COMBO",
+     "widget": {
+      "name": "film"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "COMBO",
+     "widget": {
+      "name": "look"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "grade",
+     "name": "grade",
+     "type": "COMBO",
+     "widget": {
+      "name": "grade"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "compose",
+     "name": "compose",
+     "type": "COMBO",
+     "widget": {
+      "name": "compose"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "links": [
+      5
+     ]
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "GOBO_LOOK",
+     "links": null
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "GOBO_DIRECTION",
+     "links": null
+    }
+   ],
+   "title": "Gobo Director \u00b7 shot 2",
+   "properties": {
+    "Node name for S&R": "GoboDirector"
+   },
+   "widgets_values": [
+    "A woman at the ferry's rail watches the harbour town shrink behind her, her scarf lifting in the wind.",
+    "video",
+    true,
+    "Large format",
+    "Anamorphic",
+    "50mm",
+    "f/2.8",
+    "Close-up",
+    "Auto",
+    "Push in",
+    "Fog",
+    "Auto",
+    "Period drama",
+    "Auto",
+    "Auto",
+    ""
+   ],
+   "widgets_values_named": {
+    "scene": "A woman at the ferry's rail watches the harbour town shrink behind her, her scarf lifting in the wind.",
+    "shoot": "video",
+    "cinematic": true,
+    "body": "Large format",
+    "lens": "Anamorphic",
+    "focal": "50mm",
+    "aperture": "f/2.8",
+    "shot": "Close-up",
+    "angle": "Auto",
+    "move": "Push in",
+    "light": "Fog",
+    "film": "Auto",
+    "look": "Period drama",
+    "grade": "Auto",
+    "compose": "Auto",
+    "gobo_prompt": ""
+   },
+   "color": "#4a3a10",
+   "bgcolor": "#2b2310"
+  },
+  {
+   "id": 6,
+   "type": "ByteDanceTextToVideoNode",
+   "pos": [
+    1260,
+    404
+   ],
+   "size": [
+    400,
+    304
+   ],
+   "flags": {},
+   "order": 7,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "model",
+     "name": "model",
+     "type": "COMBO",
+     "widget": {
+      "name": "model"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "widget": {
+      "name": "prompt"
+     },
+     "link": 5
+    },
+    {
+     "localized_name": "resolution",
+     "name": "resolution",
+     "type": "COMBO",
+     "widget": {
+      "name": "resolution"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aspect_ratio",
+     "name": "aspect_ratio",
+     "type": "COMBO",
+     "widget": {
+      "name": "aspect_ratio"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "duration",
+     "name": "duration",
+     "type": "INT",
+     "widget": {
+      "name": "duration"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "seed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "camera_fixed",
+     "name": "camera_fixed",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "camera_fixed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "watermark",
+     "name": "watermark",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "watermark"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "generate_audio",
+     "name": "generate_audio",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "generate_audio"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "VIDEO",
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      9
+     ]
+    }
+   ],
+   "title": "Shot 2 \u00b7 Seedance",
+   "properties": {
+    "Node name for S&R": "ByteDanceTextToVideoNode"
+   },
+   "widgets_values": [
+    "seedance-1-5-pro-251215",
+    "",
+    "720p",
+    "16:9",
+    5,
+    1002,
+    "randomize",
+    false,
+    false,
+    false
+   ],
+   "widgets_values_named": {
+    "model": "seedance-1-5-pro-251215",
+    "prompt": "",
+    "resolution": "720p",
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "seed": 1002,
+    "control_after_generate": "randomize",
+    "camera_fixed": false,
+    "watermark": false,
+    "generate_audio": false
+   },
+   "color": "#432",
+   "bgcolor": "#653"
+  },
+  {
+   "id": 7,
+   "type": "GoboDirector",
+   "pos": [
+    780,
+    1384
+   ],
+   "size": [
+    400,
+    612
+   ],
+   "flags": {},
+   "order": 5,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "shape": 7,
+     "type": "GOBO_DIRECTION",
+     "link": 6
+    },
+    {
+     "localized_name": "scene",
+     "name": "scene",
+     "type": "STRING",
+     "widget": {
+      "name": "scene"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shoot",
+     "name": "shoot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shoot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "cinematic",
+     "name": "cinematic",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "cinematic"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "body",
+     "name": "body",
+     "type": "COMBO",
+     "widget": {
+      "name": "body"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "lens",
+     "name": "lens",
+     "type": "COMBO",
+     "widget": {
+      "name": "lens"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "focal",
+     "name": "focal",
+     "type": "COMBO",
+     "widget": {
+      "name": "focal"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aperture",
+     "name": "aperture",
+     "type": "COMBO",
+     "widget": {
+      "name": "aperture"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "shot",
+     "name": "shot",
+     "type": "COMBO",
+     "widget": {
+      "name": "shot"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "angle",
+     "name": "angle",
+     "type": "COMBO",
+     "widget": {
+      "name": "angle"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "move",
+     "name": "move",
+     "type": "COMBO",
+     "widget": {
+      "name": "move"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "light",
+     "name": "light",
+     "type": "COMBO",
+     "widget": {
+      "name": "light"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "film",
+     "name": "film",
+     "type": "COMBO",
+     "widget": {
+      "name": "film"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "COMBO",
+     "widget": {
+      "name": "look"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "grade",
+     "name": "grade",
+     "type": "COMBO",
+     "widget": {
+      "name": "grade"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "compose",
+     "name": "compose",
+     "type": "COMBO",
+     "widget": {
+      "name": "compose"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "links": [
+      7
+     ]
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "type": "GOBO_LOOK",
+     "links": null
+    },
+    {
+     "localized_name": "direction",
+     "name": "direction",
+     "type": "GOBO_DIRECTION",
+     "links": null
+    }
+   ],
+   "title": "Gobo Director \u00b7 shot 3",
+   "properties": {
+    "Node name for S&R": "GoboDirector"
+   },
+   "widgets_values": [
+    "The pier stands empty in the fog, gulls settling on the posts as the ferry's wake laps at the pilings.",
+    "video",
+    true,
+    "Large format",
+    "Anamorphic",
+    "50mm",
+    "f/2.8",
+    "Wide",
+    "Auto",
+    "Locked off",
+    "Fog",
+    "Auto",
+    "Period drama",
+    "Auto",
+    "Auto",
+    ""
+   ],
+   "widgets_values_named": {
+    "scene": "The pier stands empty in the fog, gulls settling on the posts as the ferry's wake laps at the pilings.",
+    "shoot": "video",
+    "cinematic": true,
+    "body": "Large format",
+    "lens": "Anamorphic",
+    "focal": "50mm",
+    "aperture": "f/2.8",
+    "shot": "Wide",
+    "angle": "Auto",
+    "move": "Locked off",
+    "light": "Fog",
+    "film": "Auto",
+    "look": "Period drama",
+    "grade": "Auto",
+    "compose": "Auto",
+    "gobo_prompt": ""
+   },
+   "color": "#4a3a10",
+   "bgcolor": "#2b2310"
+  },
+  {
+   "id": 8,
+   "type": "ByteDanceTextToVideoNode",
+   "pos": [
+    1260,
+    768
+   ],
+   "size": [
+    400,
+    304
+   ],
+   "flags": {},
+   "order": 8,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "model",
+     "name": "model",
+     "type": "COMBO",
+     "widget": {
+      "name": "model"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "prompt",
+     "name": "prompt",
+     "type": "STRING",
+     "widget": {
+      "name": "prompt"
+     },
+     "link": 7
+    },
+    {
+     "localized_name": "resolution",
+     "name": "resolution",
+     "type": "COMBO",
+     "widget": {
+      "name": "resolution"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "aspect_ratio",
+     "name": "aspect_ratio",
+     "type": "COMBO",
+     "widget": {
+      "name": "aspect_ratio"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "duration",
+     "name": "duration",
+     "type": "INT",
+     "widget": {
+      "name": "duration"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "seed",
+     "name": "seed",
+     "shape": 7,
+     "type": "INT",
+     "widget": {
+      "name": "seed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "camera_fixed",
+     "name": "camera_fixed",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "camera_fixed"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "watermark",
+     "name": "watermark",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "watermark"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "generate_audio",
+     "name": "generate_audio",
+     "shape": 7,
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "generate_audio"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "VIDEO",
+     "name": "VIDEO",
+     "type": "VIDEO",
+     "links": [
+      10
+     ]
+    }
+   ],
+   "title": "Shot 3 \u00b7 Seedance",
+   "properties": {
+    "Node name for S&R": "ByteDanceTextToVideoNode"
+   },
+   "widgets_values": [
+    "seedance-1-5-pro-251215",
+    "",
+    "720p",
+    "16:9",
+    5,
+    1003,
+    "randomize",
+    false,
+    false,
+    false
+   ],
+   "widgets_values_named": {
+    "model": "seedance-1-5-pro-251215",
+    "prompt": "",
+    "resolution": "720p",
+    "aspect_ratio": "16:9",
+    "duration": 5,
+    "seed": 1003,
+    "control_after_generate": "randomize",
+    "camera_fixed": false,
+    "watermark": false,
+    "generate_audio": false
+   },
+   "color": "#432",
+   "bgcolor": "#653"
+  },
+  {
+   "id": 9,
+   "type": "GoboSequenceMatch",
+   "pos": [
+    1680,
+    40
+   ],
+   "size": [
+    270,
+    242
+   ],
+   "flags": {},
+   "order": 9,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "shot_1",
+     "name": "shot_1",
+     "type": "VIDEO",
+     "link": 8
+    },
+    {
+     "localized_name": "look",
+     "name": "look",
+     "shape": 7,
+     "type": "GOBO_LOOK",
+     "link": 11
+    },
+    {
+     "localized_name": "shot_2",
+     "name": "shot_2",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": 9
+    },
+    {
+     "localized_name": "shot_3",
+     "name": "shot_3",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": 10
+    },
+    {
+     "localized_name": "shot_4",
+     "name": "shot_4",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": null
+    },
+    {
+     "localized_name": "shot_5",
+     "name": "shot_5",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": null
+    },
+    {
+     "localized_name": "shot_6",
+     "name": "shot_6",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": null
+    },
+    {
+     "localized_name": "shot_7",
+     "name": "shot_7",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": null
+    },
+    {
+     "localized_name": "shot_8",
+     "name": "shot_8",
+     "shape": 7,
+     "type": "VIDEO",
+     "link": null
+    },
+    {
+     "localized_name": "hero",
+     "name": "hero",
+     "type": "INT",
+     "widget": {
+      "name": "hero"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "match_colour",
+     "name": "match_colour",
+     "type": "BOOLEAN",
+     "widget": {
+      "name": "match_colour"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "film",
+     "name": "film",
+     "type": "VIDEO",
+     "links": [
+      12
+     ]
+    },
+    {
+     "localized_name": "report",
+     "name": "report",
+     "type": "STRING",
+     "links": [
+      13
+     ]
+    }
+   ],
+   "properties": {
+    "Node name for S&R": "GoboSequenceMatch"
+   },
+   "widgets_values": [
+    1,
+    true
+   ],
+   "widgets_values_named": {
+    "hero": 1,
+    "match_colour": true
+   },
+   "color": "#4a3a10",
+   "bgcolor": "#2b2310"
+  },
+  {
+   "id": 10,
+   "type": "SaveVideo",
+   "pos": [
+    2080,
+    40
+   ],
+   "size": [
+    270,
+    106
+   ],
+   "flags": {},
+   "order": 10,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "video",
+     "name": "video",
+     "type": "VIDEO",
+     "link": 12
+    },
+    {
+     "localized_name": "filename_prefix",
+     "name": "filename_prefix",
+     "type": "STRING",
+     "widget": {
+      "name": "filename_prefix"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "format",
+     "name": "format",
+     "type": "COMFY_DYNAMICCOMBO_V3",
+     "widget": {
+      "name": "format"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "codec",
+     "name": "format.codec",
+     "type": "COMFY_DYNAMICCOMBO_V3",
+     "widget": {
+      "name": "format.codec"
+     },
+     "link": null
+    },
+    {
+     "localized_name": "codec",
+     "name": "codec",
+     "shape": 7,
+     "type": "COMFY_DYNAMICCOMBO_V3",
+     "widget": {
+      "name": "codec"
+     },
+     "link": null
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "video",
+     "name": "video",
+     "type": "VIDEO",
+     "links": null
+    }
+   ],
+   "title": "The film",
+   "properties": {},
+   "widgets_values": [
+    "gobo/film",
+    "mp4",
+    "auto",
+    "auto"
+   ],
+   "widgets_values_named": {
+    "filename_prefix": "gobo/film",
+    "format": "mp4",
+    "format.codec": "auto",
+    "codec": "auto"
+   }
+  },
+  {
+   "id": 11,
+   "type": "PreviewAny",
+   "pos": [
+    2080,
+    206
+   ],
+   "size": [
+    210,
+    122
+   ],
+   "flags": {},
+   "order": 11,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "source",
+     "name": "source",
+     "type": "*",
+     "link": 13
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "STRING",
+     "name": "STRING",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "title": "Every shot and every cut",
+   "properties": {
+    "Node name for S&R": "PreviewAny"
+   },
+   "widgets_values": [],
+   "widgets_values_named": {}
+  },
+  {
+   "id": 12,
+   "type": "PreviewAny",
+   "pos": [
+    380,
+    520
+   ],
+   "size": [
+    210,
+    122
+   ],
+   "flags": {},
+   "order": 2,
+   "mode": 0,
+   "inputs": [
+    {
+     "localized_name": "source",
+     "name": "source",
+     "type": "*",
+     "link": 14
+    }
+   ],
+   "outputs": [
+    {
+     "localized_name": "STRING",
+     "name": "STRING",
+     "type": "STRING",
+     "links": null
+    }
+   ],
+   "title": "What Gobo saw in the frame",
+   "properties": {
+    "Node name for S&R": "PreviewAny"
+   },
+   "widgets_values": [],
+   "widgets_values_named": {}
+  }
+ ],
+ "links": [
+  [
+   1,
+   1,
+   0,
+   2,
+   0,
+   "IMAGE"
+  ],
+  [
+   2,
+   2,
+   2,
+   3,
+   0,
+   "GOBO_DIRECTION"
+  ],
+  [
+   3,
+   3,
+   0,
+   4,
+   1,
+   "STRING"
+  ],
+  [
+   4,
+   2,
+   2,
+   5,
+   0,
+   "GOBO_DIRECTION"
+  ],
+  [
+   5,
+   5,
+   0,
+   6,
+   1,
+   "STRING"
+  ],
+  [
+   6,
+   2,
+   2,
+   7,
+   0,
+   "GOBO_DIRECTION"
+  ],
+  [
+   7,
+   7,
+   0,
+   8,
+   1,
+   "STRING"
+  ],
+  [
+   8,
+   4,
+   0,
+   9,
+   0,
+   "VIDEO"
+  ],
+  [
+   9,
+   6,
+   0,
+   9,
+   2,
+   "VIDEO"
+  ],
+  [
+   10,
+   8,
+   0,
+   9,
+   3,
+   "VIDEO"
+  ],
+  [
+   11,
+   2,
+   0,
+   9,
+   1,
+   "GOBO_LOOK"
+  ],
+  [
+   12,
+   9,
+   0,
+   10,
+   0,
+   "VIDEO"
+  ],
+  [
+   13,
+   9,
+   1,
+   11,
+   0,
+   "STRING"
+  ],
+  [
+   14,
+   2,
+   1,
+   12,
+   0,
+   "STRING"
+  ]
+ ],
+ "groups": [],
+ "config": {},
+ "extra": {
+  "ds": {
+   "scale": 0.9,
+   "offset": [
+    416,
+    110
+   ]
+  }
+ },
+ "version": 0.4
+}
