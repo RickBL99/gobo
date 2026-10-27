@@ -1852,6 +1852,35 @@ def _copy_take(src_reel: str, t: Dict, reel: str, shot: int, by: str, **fields) 
     return J.update_take(reel, nt["id"], status="done", file=copy(t["file"]), finished=time.time(), **extra)
 
 
+@router.post("/reels/{reel}/takes/bring", response_class=JSONResponse)
+async def bring_take(reel: str, request: Request):
+    """A finished take from another reel in the library ({item: "reel:take"}),
+    copied into this one, file, frames and all, as a take of its own. The
+    Lab's match grades it here, beside the take it's matched to, so the two
+    cut together."""
+    tr = _reel_or_404(reel)
+    if not tr or not V.owns(tr):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    pairs = _lib_pairs([b.get("item")])
+    if not pairs:
+        return _err("No such take.", 404)
+    src, tid = pairs[0]
+    r, t = J.get_reel(src), J.get_take(src, tid)
+    if not r or not t or not V.owns(r):
+        return _err("No such take.", 404)
+    if src == reel:
+        return {"take": _public_take(t)}
+    if t.get("status") != "done" or not t.get("file") or t.get("kind") not in ("video", "image") \
+            or not os.path.exists(J.out_path(src, t["file"])):
+        return _err("Only a finished take can be brought in.")
+    try:
+        nt = await run_in_threadpool(_copy_take, src, t, reel, J.next_shot(reel), _who(request))
+    except (OSError, RuntimeError):
+        return _err("It couldn't be copied just now. Try again.", 503)
+    return {"take": _public_take(nt)}
+
+
 @router.post("/library/board", response_class=JSONResponse)
 async def library_to_board(request: Request):
     """Takes from the library onto a board, a card each: the board of `reel`,

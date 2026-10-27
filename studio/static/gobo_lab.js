@@ -696,29 +696,60 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   const matchAt = t => t.kind === "video" ? ["first", Math.max(0.1, (+t.seconds || 4) / 2), "last"] : ["first"];
   async function framesOf(t) { const out = []; for (const at of matchAt(t)) out.push(await takeFrame(t, at, 320)); return out; }
   const matchable = pic => done().filter(t => pic && t.id !== pic.id && t.action !== "grade" && (t.kind === "video" || t.kind === "image"));
+  // takes to match can come from anywhere in the library: one from another
+  // reel is copied into this one first, so what's graded here cuts together
+  const mkey = t => `${t.reel || ST().reel()}:${t.id}`;
+  let matchFrom = "reel", libTakes = null, matchPicked = new Set();
+  async function libraryTakes() {
+    if (libTakes) return libTakes;
+    const get = who => ST().api(`/library?${new URLSearchParams({ app: "studio", who, kind: "", starred: 0, q: "", offset: 0, limit: 120 })}`);
+    let r = await get("mine");
+    if (!r.error && !r.items.length) r = await get("all");
+    if (r.error) throw new Error(r.error);
+    return (libTakes = r.items.filter(t => t.reel !== ST().reel() && t.action !== "grade" && t.action !== "stitch"
+      && (t.kind === "video" || t.kind === "image")));
+  }
   const kin = (a, b) => a.parent === b.id || b.parent === a.id || (a.parent && a.parent === b.parent) || (+a.shot && a.shot === b.shot);
   const takeName = t => `${t.shot || "?"}${t.letter || ""}`;
-  function matchOpen() {
+  async function matchOpen(fresh = true) {
     const { pic, graded } = gradeSource(), box = q("#gMatchBox", lab);
     if (!pic || pic.status !== "done" || !gradeLook) return say("Pick a finished take to grade first.", true);
-    const list = matchable(pic);
-    if (!list.length) return say("There's no other finished take in this reel to match it to.", true);
-    box.innerHTML = `<p class="hint">Takes to grade like take ${h(takeName(pic))}. Each is matched to its colour first, then given this grade; the originals stay as they are.</p>
-      <div class="mlist">${list.map(t => `<label class="mt" title="${h(t.label || "")}"><input type="checkbox" value="${h(t.id)}" ${kin(t, pic) ? "checked" : ""}>
-        ${t.thumb_url ? `<img src="${h(t.thumb_url)}" alt="">` : `<i></i>`}<span>${h(takeName(t))}${t.kind === "video" && t.seconds ? ` · ${Math.round(t.seconds)}s` : ""}${t.action === "extend" ? " · extension" : ""}</span></label>`).join("")}</div>
+    if (fresh) {
+      libTakes = null;
+      matchPicked = new Set(matchable(pic).filter(t => kin(t, pic)).map(mkey));
+      matchFrom = matchable(pic).length ? "reel" : "lib";             // nothing else here: the library, at once
+    }
+    let list = matchable(pic);
+    if (matchFrom === "lib") {
+      box.innerHTML = `<p class="hint">Reading the library…</p>`; box.classList.remove("hidden");
+      try { list = await libraryTakes(); } catch (e) { box.innerHTML = `<p class="hint">${h(e.message)}</p>`; return; }
+    }
+    const inLib = list.length && matchFrom === "lib", n = matchPicked.size;
+    box.innerHTML = `<div class="row"><span class="seg" id="gMatchFrom"><button data-f="reel" class="${matchFrom === "reel" ? "on" : ""}">This reel</button><button data-f="lib" class="${matchFrom === "lib" ? "on" : ""}">Library</button></span>
+        <span class="hint" id="gMatchN">${n ? `${n} ticked` : ""}</span></div>
+      <p class="hint">Takes to grade like take ${h(takeName(pic))}. Each is matched to its colour first, then given this grade; the originals stay as they are.${matchFrom === "lib" ? " A take from another reel is copied into this one first, so they cut together." : ""}</p>
+      ${list.length ? `<div class="mlist">${list.map(t => `<label class="mt" title="${h(t.label || "")}${t.reel_name ? ` · ${h(t.reel_name)}` : ""}"><input type="checkbox" value="${h(mkey(t))}" ${matchPicked.has(mkey(t)) ? "checked" : ""}>
+        ${t.thumb_url ? `<img src="${h(t.thumb_url)}" alt="">` : `<i></i>`}<span>${h(takeName(t))}${t.kind === "video" && t.seconds ? ` · ${Math.round(t.seconds)}s` : ""}${t.action === "extend" ? " · extension" : ""}${inLib && t.reel_name ? `<br>${h(t.reel_name)}` : ""}</span></label>`).join("")}</div>`
+        : `<p class="hint">${matchFrom === "lib" ? "Nothing finished in the library outside this reel." : "No other finished take in this reel: look in the Library."}</p>`}
       <label class="hint row"><input type="checkbox" id="gMatchColour" checked> Match their colour to take ${h(takeName(pic))} first</label>
       ${graded ? "" : `<label class="hint row"><input type="checkbox" id="gMatchSelf" checked> Grade take ${h(takeName(pic))} too</label>`}
       <div class="row"><button class="btn small primary" id="gMatchGo">Grade them to match</button><button class="btn small" id="gMatchX">Cancel</button></div>
       <div class="hint" id="gMatchOut"></div>`;
     box.classList.remove("hidden");
+    qa("#gMatchFrom button", lab).forEach(b => b.onclick = () => { matchFrom = b.dataset.f; matchOpen(false); });
+    qa("#gMatchBox .mt input", lab).forEach(i => i.onchange = () => {
+      i.checked ? matchPicked.add(i.value) : matchPicked.delete(i.value);
+      q("#gMatchN", lab).textContent = matchPicked.size ? `${matchPicked.size} ticked` : "";
+    });
     q("#gMatchX", lab).onclick = () => box.classList.add("hidden");
     q("#gMatchGo", lab).onclick = () => matchGo(pic).catch(e => { q("#gMatchOut", lab).textContent = e.message; q("#gMatchGo", lab).disabled = false; });
     box.scrollIntoView({ behavior: "smooth", block: "nearest" });
   }
   async function matchGo(pic) {
-    const ids = qa("#gMatchBox .mt input:checked", lab).map(i => i.value), colour = q("#gMatchColour", lab).checked;
+    const colour = q("#gMatchColour", lab).checked;
     const self = q("#gMatchSelf", lab) && q("#gMatchSelf", lab).checked;
-    const targets = matchable(pic).filter(t => ids.includes(t.id));
+    const seen = new Set(), targets = [...matchable(pic), ...(libTakes || [])]
+      .filter(t => matchPicked.has(mkey(t)) && !seen.has(mkey(t)) && seen.add(mkey(t)));
     if (!targets.length && !self) return say("Tick a take to grade first.", true);
     if (colour && gradeLook.cdl) return say("This grade has a CDL of its own, which the match would replace. Remove it under the LUT list (a CDL imported now goes on the wheels), then match.", true);
     if (!(await ensureLut(gradeLook))) return;
@@ -732,7 +763,13 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     };
     if (self) { out.textContent = `Grading take ${takeName(pic)}…`; await send(pic, gradeLook, `Graded · ${name}`); }
     const ref = colour && targets.length ? await framesOf(pic) : null;
-    for (const [i, t] of targets.entries()) {
+    for (let [i, t] of targets.entries()) {
+      if (t.reel && t.reel !== ST().reel()) {
+        out.textContent = `Bringing ${takeName(t)} in from ${t.reel_name || "its reel"}…`;
+        const b = await ST().api(`/reels/${ST().reel()}/takes/bring`, { method: "POST", json: { item: mkey(t) } });
+        if (b.error) { how.push(`${takeName(t)}: ${b.error}`); continue; }
+        ST().addTakes([b.take]); t = b.take;
+      }
       out.textContent = `Matching take ${takeName(t)} (${i + 1} of ${targets.length}) to ${takeName(pic)}…`;
       const look = JSON.parse(JSON.stringify(gradeLook));
       if (colour) {
@@ -748,7 +785,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     out.textContent = colour && targets.length ? `How far each was from ${takeName(pic)}'s colour, before and after (ΔE; under 2 is hard to see): ${how.join(" · ")}` : how.join(" · ");
     if (made.length) say(`${made.length} take${made.length > 1 ? "s" : ""} grading in the background, each beside its original. Stitch them when they're done and the cut keeps one look.`);
   }
-  q("#gMatch", lab).onclick = matchOpen;
+  q("#gMatch", lab).onclick = () => matchOpen();
 
   // ── open in ComfyUI ────────────────────────────────────────────────────
   // Your own ComfyUI opens with this take and its look as Gobo's nodes

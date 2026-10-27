@@ -459,6 +459,30 @@ class Flow(unittest.TestCase):
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
 
+    def test_a_take_from_another_reel_is_brought_in(self):
+        """The Lab's match grades a take from anywhere in the library: it's copied
+        into the reel being graded first, file and all."""
+        a, b = self.reel(), self.reel()
+        src = os.path.join(TMP, "bring.mp4"); clip(src, 1.0, "green")
+        with open(src, "rb") as f:
+            mp4 = f.read()
+        t = self.c.post(f"/studio/reels/{a}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628",
+                                                         "scene": "Over there.", "duration": 5}).json()["takes"][0]
+        self.finish(a, t["id"], mp4, ".mp4")
+        r = self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{a}:{t['id']}"})
+        self.assertEqual(r.status_code, 200, r.text)
+        nt = r.json()["take"]
+        self.assertEqual((nt["reel"], nt["copied_from"], nt["status"]), (b, f"{a}:{t['id']}", "done"))
+        self.assertTrue(os.path.exists(J.out_path(b, nt["file"])))
+        self.assertEqual(J.get_take(a, t["id"])["status"], "done", "the original stays")
+        # one already here is itself; one still rendering, or nobody's, isn't brought
+        self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{b}:{nt['id']}"}).json()["take"]["id"], nt["id"])
+        busy = self.c.post(f"/studio/reels/{a}/run", json={"mode": "video", "model": "byteplus/dreamina-seedance-2-5-260628",
+                                                            "scene": "Not yet.", "duration": 5}).json()["takes"][0]
+        self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{a}:{busy['id']}"}).status_code, 400)
+        self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": f"{a}:1790000000000-zzzzzz"}).status_code, 404)
+        self.assertEqual(self.c.post(f"/studio/reels/{b}/takes/bring", json={"item": "../etc"}).status_code, 404)
+
     def test_a_release_reaches_the_browser_at_once(self):
         """The page's scripts and Gobo's Rust are checked with the server on every
         load, so nobody grades with last release's scopes from a kept copy."""

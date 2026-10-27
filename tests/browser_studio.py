@@ -712,6 +712,27 @@ def main():
               and "Stop grading" in stage and "Rendering" not in stage, stage)
         tab.js("S.takes.find(t => t.id === _gid).progress = 'frame 30 of 48'; tickStage(); 1")
         check("grade: the frame count moves without redrawing the stage", tab.js("$('#gradeprog').textContent") == "frame 30 of 48")
+        # takes that didn't make it: slivers, with why on hover, and Clear N failed takes them out
+        tab.js("""setView('shot'); window._df = window.fetch; window._cleared = null;
+          window.fetch = (u, o) => String(u).endsWith('/takes/delete') ? (window._cleared = JSON.parse(o.body).takes,
+            Promise.resolve(new Response(JSON.stringify({deleted: window._cleared, kept: []}), {headers: {'Content-Type': 'application/json'}}))) : _df(u, o);
+          const now = Date.now() / 1000;
+          mergeTakes([{id: '17950000000001-dud001', reel: S.reel.id, shot: 99, letter: 'B', kind: 'video', status: 'failed', model: 'x', label: 'MiniMax H3',
+                       hint: 'The provider was busy. Try again in a minute.', created: now, finished: now},
+                      {id: '17950000000002-dud002', reel: S.reel.id, shot: 99, letter: 'C', kind: 'video', status: 'cancelled', model: 'x', label: 'MiniMax H3', created: now}]);
+          window._confirm = window.confirm; window.confirm = () => true; 1"""); time.sleep(0.3)
+        d = json.loads(tab.js("""JSON.stringify((() => { const b = document.querySelector('#strip .tk[data-t="17950000000001-dud001"]');
+          return {dud: b.classList.contains('dud'), w: b.getBoundingClientRect().width, title: b.title, mark: b.querySelector('.st').textContent,
+                  clear: !$('#clearFails').classList.contains('hidden') && $('#clearFails').textContent}; })())"""))
+        check("strip: a failed take is a sliver, with why on hover", d["dud"] and d["w"] < 40 and d["mark"] == "✕"
+              and "The provider was busy." in d["title"] and "MiniMax H3" in d["title"], d)
+        check("strip: Clear N failed is offered", (d["clear"] or "").startswith("Clear ") and "failed" in d["clear"], d)
+        tab.js("$('#clearFails').click(); 1"); time.sleep(0.5)
+        check("strip: Clear failed takes them out of the reel", "17950000000001-dud001" in (tab.js("_cleared") or [])
+              and "17950000000002-dud002" in (tab.js("_cleared") or []) and not tab.js("S.takes.some(t => /-dud00[12]$/.test(t.id))")
+              and tab.js("$('#clearFails').classList.contains('hidden')") == (tab.js("!S.takes.some(t => t.status === 'failed' || t.status === 'cancelled')")),
+              tab.js("JSON.stringify({cleared: _cleared, left: S.takes.filter(t => /-dud00[12]$/.test(t.id)).map(t => t.id), hidden: $('#clearFails').classList.contains('hidden'), duds: S.takes.filter(t => t.status === 'failed' || t.status === 'cancelled').map(t => t.id), picking: S.picking})"))
+        tab.js("window.fetch = _df; window.confirm = _confirm; 1")
         # Draw the move's Shoot it: the take again, on the clip model picked on the left, not the one it was made with
         tab.js("""window._keep = JSON.stringify({scene: S.scene, direction: S.direction, model: S.model, mode: S.mode});
           window._gen = generate; window._gens = [];
@@ -1026,10 +1047,12 @@ def main():
         time.sleep(1)
         tab.js("setView('shot'); $('#labBtn').click(); $('#lab [data-tab=grade]').click(); 1"); time.sleep(2)
         tab.js("$('#gMatch').click(); 1"); time.sleep(0.5)
-        listed = tab.js("$$('#gMatchBox .mt input').map(i => i.value)")
+        listed = tab.js("$$('#gMatchBox .mt input').map(i => i.value.split(':')[1])")
         check("match: the other takes are offered, not the graded ones", tab.js("window._drift") in listed
               and not any(t for t in tab.js("S.takes.filter(t => t.action === 'grade').map(t => t.id)") if t in listed), listed)
-        tab.js("$$('#gMatchBox .mt input').forEach(i => { i.checked = i.value === window._drift; }); $('#gMatchGo').click(); 1")
+        tick = """$$('#gMatchBox .mt input').forEach(i => { const want = i.value.endsWith(':' + window._want);
+          if (i.checked !== want) { i.checked = want; i.dispatchEvent(new Event('change')); } }); 1"""
+        tab.js("window._want = window._drift; 1"); tab.js(tick); tab.js("$('#gMatchGo').click(); 1")
         for _ in range(40):
             time.sleep(0.5)
             if "→" in (tab.js("$('#gMatchOut').textContent") or ""):
@@ -1038,6 +1061,30 @@ def main():
         note = tab.js("$('#gMatchOut').textContent")
         check("match: the drifted take is matched to A's colour and graded like it", '"cdl":true' in made and "Matched to" in made and "→" in note, [made, note])
         tab.shot("36-match")
+        # a take from another reel, from the Library: copied in, then matched and graded here
+        tab.js(f"""window._away = null; (async () => {{
+          const bin = Uint8Array.from(atob('{_bars_clip("eq=brightness=0.05:saturation=1.3")}'), c => c.charCodeAt(0));
+          const r = await api('/reels', {{method: 'POST', json: {{name: 'Elsewhere'}}}});
+          const fd = new FormData(); fd.append('file', new Blob([bin], {{type: 'video/mp4'}}), 'away.mp4');
+          const t = await api(`/reels/${{r.id}}/footage`, {{method: 'POST', body: fd}});
+          window._away = {{reel: r.id, id: t.take.id}}; }})(); 1""")
+        for _ in range(20):
+            time.sleep(0.5)
+            if tab.js("!!window._away"):
+                break
+        tab.js("$('#gMatch').click(); 1"); time.sleep(0.5)
+        tab.js("$('#gMatchFrom [data-f=lib]').click(); 1"); time.sleep(1.5)
+        away = tab.js("$$('#gMatchBox .mt input').map(i => i.value)")
+        check("match: the Library offers takes from other reels", f"{tab.js('_away.reel')}:{tab.js('_away.id')}" in away, away)
+        tab.js("window._want = _away.id; 1"); tab.js(tick); tab.js("$('#gMatchGo').click(); 1")
+        for _ in range(40):
+            time.sleep(0.5)
+            if "→" in (tab.js("$('#gMatchOut').textContent") or ""):
+                break
+        got = json.loads(tab.js("""JSON.stringify((() => { const c = S.takes.find(t => t.copied_from === `${_away.reel}:${_away.id}`);
+          return {copied: !!c, graded: !!c && S.takes.some(t => t.action === 'grade' && t.parent === c.id && (t.look || {}).cdl)}; })())"""))
+        check("match: a take from another reel is copied in, then matched and graded here", got == {"copied": True, "graded": True},
+              [got, tab.js("$('#gMatchOut').textContent")])
         # ── Open in ComfyUI: the first time asks where it is, then hands it the workflow ──
         tab.js("try { localStorage.removeItem('gobo.comfyui'); } catch (e) {} window._open0 = window.open; window._opened = []; window.open = u => { window._opened.push(u); return null; }; 1")
         tab.js("$('#gComfy').click(); 1"); time.sleep(0.5)

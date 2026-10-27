@@ -888,10 +888,15 @@ function renderStrip() {
     : n ? `${n} take${n > 1 ? "s" : ""} · ${Object.keys(shots).length} shot${Object.keys(shots).length > 1 ? "s" : ""}` : "";
   const st = t => ({ queued: lineNote(t) ? "In line" : "Queued", running: "Rendering", cancelled: "Stopped", failed: t.reason === "policy" ? "Blocked" : "Failed" }[t.status]);
   const order = filmOrder();
+  // a take that didn't make it is a sliver beside the ones that did: its
+  // letter and a mark, why on hover, the whole story when clicked
+  const dud = t => t.status === "failed" || t.status === "cancelled";
+  const why = t => `${st(t)} · ${t.label}${t.hint || t.error ? `: ${firstSentence(t.hint || t.error)}` : ""} · click for what to try`;
   $("#strip").innerHTML = n ? Object.keys(shots).sort((a, b) => a - b).map(k => `<div class="shotgrp"><span class="gl">Shot ${k}</span><div class="items">${shots[k].map(t => `
-    <div class="tk ${t.id === S.current ? "on" : ""} ${canSelect(t) ? "can" : ""} ${S.picked.has(t.id) ? "picked" : ""}" data-t="${t.id}" data-kind="${t.kind}" draggable="${t.status === "done"}" title="${esc(t.label)} · ${esc(t.action || "")}">
+    <div class="tk ${t.id === S.current ? "on" : ""} ${canSelect(t) ? "can" : ""} ${S.picked.has(t.id) ? "picked" : ""} ${dud(t) ? "dud" : ""}" data-t="${t.id}" data-kind="${t.kind}" draggable="${t.status === "done"}" title="${esc(dud(t) ? why(t) : `${t.label} · ${t.action || ""}`)}">
       ${t.thumb_url ? `<img src="${esc(t.thumb_url)}" alt="" loading="lazy">` : ""}
-      ${t.status !== "done" ? `<div class="st ${t.status === "failed" ? "bad" : ""}">${st(t)}<br>${esc(t.label)}</div>` : ""}
+      ${dud(t) ? `<div class="st ${t.status === "failed" ? "bad" : ""}" aria-label="${esc(st(t))}">${t.status === "failed" ? "✕" : "■"}</div>`
+        : t.status !== "done" ? `<div class="st">${st(t)}<br>${esc(t.label)}</div>` : ""}
       <span class="lt">${esc(t.letter)}</span>${t.kind === "video" ? `<span class="kind">▶${t.seconds ? " " + Math.round(t.seconds) + "s" : ""}</span>` : ""}
       ${t.starred ? `<span class="star">★</span>` : ""}
       ${canSelect(t) ? `<input type="checkbox" class="pick" data-pick="${t.id}" ${S.picked.has(t.id) ? "checked" : ""}>` : ""}
@@ -901,7 +906,6 @@ function renderStrip() {
   $$("#strip .tk").forEach(el => {
     el.onclick = e => {
       if (e.target.classList.contains("pick")) return;
-      const o = e.target.closest("[data-o]"); if (o) return libOpen(t, o.dataset.o === "board");
       // selecting: a click toggles; takes still rendering sit it out. ⌘/Shift-click starts selecting.
       if (!S.picking && (e.metaKey || e.ctrlKey || e.shiftKey) && el.classList.contains("can")) { S.picking = true; S.picked.clear(); }
       if (S.picking) { if (el.classList.contains("can")) togglePick(el.dataset.t); return; }
@@ -910,6 +914,12 @@ function renderStrip() {
     el.ondragstart = e => { e.dataTransfer.setData("text/take", el.dataset.t); e.dataTransfer.effectAllowed = "copy"; };
   });
   $$("#strip .pick").forEach(p => p.onchange = () => togglePick(p.dataset.pick, p.checked));
+  const duds = S.takes.filter(dud), cf = $("#clearFails");
+  if (cf) {
+    cf.classList.toggle("hidden", !duds.length || S.picking);
+    cf.textContent = `Clear ${duds.length} failed`;
+    cf.title = `Take the ${duds.length} failed and stopped take${duds.length === 1 ? "" : "s"} out of this ${REELWORD}`;
+  }
   if (S.reel) { $("#dlAll").href = `${API}/reels/${S.reel.id}/download?size=${dlSize()}`; $("#dlStar").href = `${API}/reels/${S.reel.id}/download?starred=1&size=${dlSize()}`; }
   const film = S.takes.filter(t => t.action === "stitch" && t.status === "done").sort((a, b) => a.id < b.id ? 1 : -1)[0];
   $("#dlFilm").classList.toggle("hidden", !film || S.picking);
@@ -977,6 +987,18 @@ async function stitchGo() {
   S.picking = false; S.picked.clear(); updateStitch();
   mergeTakes([r.take]); select(r.take.id);
   toast(`${r.take.label}${r.take.seconds ? ` · ${(+r.take.seconds).toFixed(1)}s` : ""}. Download stitched is in the Sequence bar.`);
+}
+// the takes that didn't make it, out of the reel in one go
+async function clearFails() {
+  const ids = S.takes.filter(t => t.status === "failed" || t.status === "cancelled").map(t => t.id);
+  if (!ids.length || !confirm(`Clear the ${ids.length} failed and stopped take${ids.length > 1 ? "s" : ""} from this ${REELWORD}? This can't be undone.`)) return;
+  const r = await api(`/reels/${S.reel.id}/takes/delete`, { method: "POST", json: { takes: ids } });
+  if (r.error) return toast(r.error, true);
+  const gone = new Set(r.deleted);
+  S.takes = S.takes.filter(t => !gone.has(t.id));
+  if (gone.has(S.current)) S.current = (S.takes.slice().reverse().find(t => t.status === "done") || S.takes[S.takes.length - 1] || {}).id || null;
+  renderStrip(); renderStage(); renderFails(); if (!STILLS) refreshBoard();
+  toast(`Cleared ${gone.size} take${gone.size === 1 ? "" : "s"} that didn't make it.`);
 }
 async function deleteSelected() {
   const ids = [...S.picked];
@@ -1413,6 +1435,7 @@ function wire() {
   $("#reelName").oninput = () => { clearTimeout(nameT); nameT = setTimeout(async () => { if (S.reel) { const r = await api(`/reels/${S.reel.id}`, { method: "PATCH", json: { name: $("#reelName").value } }); if (!r.error) S.reel = r; } }, 600); };
   $("#stitchBtn").onclick = startFilm;
   $("#selBtn").onclick = startSelect;
+  $("#clearFails").onclick = clearFails;
   $("#selDel").onclick = deleteSelected;
   $("#selDl").onclick = e => { if ($("#selDl").classList.contains("off")) { e.preventDefault(); toast("Select a finished take to download."); } };
   $("#stitchCancel").onclick = stopFilm;
