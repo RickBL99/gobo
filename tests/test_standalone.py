@@ -178,7 +178,7 @@ class SignIn(unittest.TestCase):
         r = self.c.get("/about", headers={"accept": "text/html"}, follow_redirects=False)
         self.assertEqual(r.status_code, 200)
         page = r.text
-        for words in ("Stewart Cohen Productions", "commercial production augmentation with real shot content",
+        for words in ("SuperStock</b></a> and", "VistaLab", "commercial production augmentation with real shot content",
                       "inspired by Higgsfield", "33×33×33 3D LUT", "MIT or Apache 2.0", "CC BY 4.0", settings.SOURCE_URL,
                       "Not affiliated with Comfy Org or Higgsfield"):
             self.assertIn(words.lower(), page.lower(), words)

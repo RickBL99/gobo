@@ -174,6 +174,8 @@ Any take or film in Gobo downloads as a ComfyUI API workflow: open a take and ch
 
 Drag a `workflow_api.json` onto ComfyUI, sign in to your Comfy account (these are partner nodes and run on your credits), and queue it. Every exported workflow is checked against ComfyUI's own node definitions: required inputs, dropdown values with the right JSON types (`"8"` is not `8`), and links between outputs of the right type.
 
+One more uses Gobo's own nodes: [`Shoot a film in a still's look`](comfyui/example_workflows/Shoot%20a%20film%20in%20a%20still's%20look.json). A frame from any film goes into **Gobo Steal Look**, three **Gobo Director** shots are filmed in that look, and **Gobo Sequence Match** grades and cuts them into one film. With [Gobo's nodes](comfyui/README.md) installed it's under **Templates → gobo** in ComfyUI.
+
 ---
 
 ## Tests
@@ -194,7 +196,7 @@ The tests that matter most:
 
 ## Where Gobo came from
 
-PictureNet built an in-house AI cinema system for **[SuperStock](https://www.superstock.com)** and **[Stewart Cohen Productions](https://www.stewartcohen.com)**. They needed a bespoke system that could handle full commercial production augmentation with real shot content: footage and stills from real commercial shoots, extended, restyled, matched and cut alongside generated shots, not a box that only makes clips from nothing.
+PictureNet built an in-house AI cinema system for **[SuperStock](https://www.superstock.com)** and **[VistaLab](https://vistalab.ai)**. They needed a bespoke system that could handle full commercial production augmentation with real shot content: footage and stills from real commercial shoots, extended, restyled, matched and cut alongside generated shots, not a box that only makes clips from nothing.
 
 That's why Gobo works the way it does. Footage you shot comes in and can be restyled, changed or made longer. Steal the Look reads the grade off a real frame, so the generated shots can match it. The script supervisor checks every cut for jumps in light, colour and grain. Every look exports as a `.cube` file for the editor the rest of the job lives in.
 
@@ -254,7 +256,7 @@ What we do for clients:
 - **Media licensing and content:** rights management, DAM and royalty engineering.
 - **Creative production:** photography and film, aerial and drone work, 3D animation, storyboarding and music.
 
-**Rick Leckrone** is a principal engineer and polyglot developer who has spent his career where pictures meet software. He was Director of Tech & Content at Digital Stock and Director of Commercial Photography Worldwide at Corbis, founded Blend Images, is CTO and co-owner of SuperStock, and created vistalab.ai. [LinkedIn](https://www.linkedin.com/in/rickleckrone/) · [picturenetcorp.com](https://picturenetcorp.com)
+**Rick Leckrone** is a principal engineer and polyglot developer who has spent his career where pictures meet software. He was Director of Tech & Content at Digital Stock and Director of Commercial Photography Worldwide at Corbis, founded Blend Images, is CTO and co-owner of [SuperStock](https://www.superstock.com), and created [VistaLab](https://vistalab.ai). [LinkedIn](https://www.linkedin.com/in/rickleckrone/) · [picturenetcorp.com](https://picturenetcorp.com)
 
 ---
 
