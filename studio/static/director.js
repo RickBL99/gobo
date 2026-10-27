@@ -11,7 +11,6 @@
 // (settings.py) makes the home page the front door again, as it was.
 (function () {
   "use strict";
-  if (typeof STILLS !== "undefined" && STILLS) return;
   if (typeof DIRECTOR_ON === "undefined" || !DIRECTOR_ON || !window.autopilot) return;
   const AP = window.autopilot;
   const usd = v => `$${v < 10 ? v.toFixed(2) : v.toFixed(0)}`;

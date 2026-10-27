@@ -21,7 +21,6 @@
 // card here is the default, and the Director (director.js) brings its own.
 (function () {
   "use strict";
-  if (typeof STILLS !== "undefined" && STILLS) return;
   const h = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const sleep = ms => new Promise(r => setTimeout(r, ms));
   const usd = v => `$${v < 10 ? v.toFixed(2) : v.toFixed(0)}`;

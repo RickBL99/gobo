@@ -1,0 +1,21 @@
+{# What a link to this page shows when it's shared: Slack, iMessage, LinkedIn,
+   X, WhatsApp read these. Their bots never sign in, so the sign-in page carries
+   them too (app.py sends a bot asking for a page there, as it does a browser).
+   og_title / og_desc override the site's own words; the try site says what it
+   is: bring your own Comfy key. #}
+{% set og_site = "Try Gobo · direct AI film like a cinematographer" if visitor else "Gobo · direct AI film like a cinematographer" %}
+{% set og_about = ("Bring your own Comfy key and try Gobo, the open-source AI film studio: pick the camera, lens, light, film stock and move, or type one line and Autopilot makes the whole film." if visitor
+   else "Gobo is an open-source AI film studio: pick the camera, lens, light, film stock and move, or type one line and Autopilot makes the whole film. Every major video model through one Comfy key, graded in Rust.") %}
+{% set og_base = (request.base_url|string).rstrip("/") %}
+<meta property="og:site_name" content="Gobo">
+<meta property="og:type" content="website">
+<meta property="og:title" content="{{ og_title or og_site }}">
+<meta property="og:description" content="{{ og_desc or og_about }}">
+<meta property="og:image" content="{{ og_base }}/static/og/gobo-card.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Gobo: Direct it like a cinematographer. Stills from films shot in Gobo.">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="{{ og_title or og_site }}">
+<meta name="twitter:description" content="{{ og_desc or og_about }}">
+<meta name="twitter:image" content="{{ og_base }}/static/og/gobo-card.jpg">

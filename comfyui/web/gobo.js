@@ -1,7 +1,9 @@
 // Gobo's nodes on the ComfyUI page.
 //
-// * A workflow Gobo hands over: "Open in ComfyUI" in Gobo opens this page with
-//   #gobo=<the workflow, base64url JSON> and it loads here, nodes and all.
+// * A workflow from Gobo: "Open in ComfyUI" in Gobo downloads it as a file
+//   (ComfyUI turns away pages other sites send it to), and dropped here or
+//   opened with File › Open it's laid out left to right, the way the picture
+//   flows: ComfyUI on its own puts every node of such a file in one spot.
 // * The Look node behaves as Gobo's Lab does: picking a film stock or a grade
 //   fills the sliders with its numbers (from /gobo/look, the same Rust).
 // * The Director shows the prompt it writes as its choices change, coloured
@@ -171,29 +173,24 @@ const SLIDERS = ["exposure", "contrast", "pivot", "saturation", "warmth", "tint"
   "grain", "grain_size", "halation", "vignette"];
 const PRESET_OWNED = ["shadows", "highlights", "bleach", "mono"];
 
-function sent() {
-  const m = location.hash.match(/[#&]gobo=([^&]+)/);
-  if (!m) return null;
-  history.replaceState(null, "", location.pathname + location.search);
-  // a reload of the same address doesn't open the same workflow a second time
-  const seen = (() => { try { return sessionStorage.getItem("gobo.opened"); } catch (e) { return null; } })();
-  if (seen === m[1].slice(-64)) return null;
-  try { sessionStorage.setItem("gobo.opened", m[1].slice(-64)); } catch (e) { /* then it may open twice */ }
-  const b64 = m[1].replace(/-/g, "+").replace(/_/g, "/");
-  const bytes = Uint8Array.from(atob(b64), c => c.charCodeAt(0));
-  return JSON.parse(new TextDecoder().decode(bytes));
-}
+// a workflow in API form (what Gobo downloads) with Gobo's nodes in it
+const fromGobo = p => !!p && typeof p === "object" && !Array.isArray(p)
+  && Object.values(p).some(n => n && String(n.class_type || "").startsWith("Gobo"));
 
 app.registerExtension({
   name: "gobo.nodes",
   async setup() {
-    let got = null;
-    try { got = sent(); } catch (e) { console.error("Gobo: that link didn't read", e); }
-    if (!got || !got.workflow) return;
-    await app.loadApiJson(got.workflow, got.title || "From Gobo");
-    // left to right, the way the picture flows
-    try { if (app.graph && app.graph.arrange) app.graph.arrange(80); } catch (e) { /* leave it as loaded */ }
-    app.canvas && app.canvas.setDirty(true, true);
+    // a dropped or opened file comes through app.loadApiJson; Gobo's are laid out after
+    const load = typeof app.loadApiJson === "function" ? app.loadApiJson.bind(app) : null;
+    if (!load) return;
+    app.loadApiJson = async (prompt, ...rest) => {
+      const out = await load(prompt, ...rest);
+      if (fromGobo(prompt)) {
+        try { if (app.graph && app.graph.arrange) app.graph.arrange(80); } catch (e) { /* leave it as loaded */ }
+        app.canvas && app.canvas.setDirty(true, true);
+      }
+      return out;
+    };
   },
   async beforeRegisterNodeDef(nodeType, nodeData) {
     if (nodeData.category !== "Gobo") return;

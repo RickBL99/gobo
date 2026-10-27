@@ -54,9 +54,6 @@ BUILD = RELEASE_DATE or "dev"
 # the Director and the planner run on it.
 COMFY_API_KEY = os.getenv("COMFY_API_KEY", "")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY", "")     # the Director and planner from Anthropic instead; optional
-# "Prompts from a reference" in the Content Generator: GPT-4o when this is set,
-# Claude otherwise.
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
 
 # where the studio lives in the URL space; everything hangs off it
 PREFIX = "/" + os.getenv("STUDIO_PREFIX", "/studio").strip("/")

@@ -1,6 +1,5 @@
-"""The standalone shell around the studio: sign-in, the home page, the
-Content Generator's address, the reference-to-prompts tool and the health
-check. Hermetic like test_studio.py: no .env, no real keys, nothing sent.
+"""The standalone shell around the studio: sign-in, the home page and the
+health check. Hermetic like test_studio.py: no .env, no real keys, nothing sent.
 
     .venv/bin/python -m pytest tests/test_standalone.py
 """
@@ -24,7 +23,7 @@ os.environ.update(STUDIO_ENV_FILE="", COMFY_API_KEY="", ANTHROPIC_API_KEY="", OP
 from fastapi.testclient import TestClient  # noqa: E402
 from PIL import Image  # noqa: E402
 
-from studio import accounts, jobs as J, prompts, settings, shell  # noqa: E402
+from studio import accounts, jobs as J, settings, shell  # noqa: E402
 from studio.app import app as APP  # noqa: E402
 
 
@@ -137,6 +136,25 @@ class SignIn(unittest.TestCase):
         self.assertEqual(self.c.get("/studio/reels").status_code, 401)
         self.assertEqual(self.c.post("/studio/reels", json={}).status_code, 401)
 
+    def test_a_shared_link_shows_a_preview(self):
+        # a link-preview bot (Slack, iMessage, X) asks with Accept: */* and never signs in:
+        # it goes where a browser goes, and the sign-in page carries the card
+        bot = {"accept": "*/*", "user-agent": "facebookexternalhit/1.1"}
+        for path in ("/", "/home", "/studio", "/direct"):
+            r = self.c.get(path, headers=bot, follow_redirects=False)
+            self.assertEqual(r.status_code, 303, path)
+            self.assertTrue(r.headers["location"].startswith("/login"), path)
+        self.assertEqual(self.c.get("/studio/reels", headers=bot).status_code, 401)      # the API still answers 401
+        page = self.c.get("/", headers=bot).text
+        self.assertIn('<meta property="og:title" content="Gobo · direct AI film like a cinematographer">', page)
+        self.assertIn('<meta property="og:image" content="http://testserver/static/og/gobo-card.jpg">', page)
+        self.assertIn('<meta name="twitter:card" content="summary_large_image">', page)
+        self.assertEqual(self.c.get("/static/og/gobo-card.jpg").headers["content-type"], "image/jpeg")
+        self.assertIn('content="About Gobo"', self.c.get("/about").text)
+        with mock.patch.object(settings, "VISITOR_KEYS", True):            # the try site says what it is
+            self.assertIn('<meta property="og:title" content="Try Gobo · direct AI film like a cinematographer">',
+                          self.c.get("/login").text)
+
     def test_open_paths(self):
         self.assertEqual(self.c.get("/login").status_code, 200)
         self.assertEqual(self.c.get("/healthz").json()["sign_in"], True)
@@ -246,8 +264,9 @@ class Pages(unittest.TestCase):
     def test_home(self):
         r = self.c.get("/home")
         self.assertEqual(r.status_code, 200)
-        for link in ('href="/studio"', 'href="/studio/stills"', 'href="/studio?open=board"', 'href="/studio/guide"'):
+        for link in ('href="/studio"', 'href="/studio?open=board"', 'href="/studio/guide"'):
             self.assertIn(link, r.text)
+        self.assertNotIn("/studio/stills", r.text)                # no Content Generator
 
     def test_the_front_door_is_the_director(self):
         # the contest's front door: "/" opens the studio page on the Director
@@ -257,11 +276,9 @@ class Pages(unittest.TestCase):
         self.assertIn('href="/home"', page, "the studio's Home button goes to the page with every tool")
         self.assertIn("const DIRECTOR = false;", self.c.get("/studio").text, "the studio itself opens on the studio")
         self.assertIn("const DIRECTOR_ON = true;", self.c.get("/studio").text, "and offers the Director")
-        self.assertIn("const DIRECTOR_ON = false;", self.c.get("/studio/stills").text, "the Content Generator doesn't")
         # STUDIO_FRONT=studio: everything as it was before the Director
         with mock.patch.object(settings, "FRONT", "studio"):
             home = self.c.get("/").text
-            self.assertIn('href="/studio/stills"', home)
             self.assertNotIn("director.js", home)
             self.assertIn("const DIRECTOR_ON = false;", self.c.get("/studio").text)
             self.assertIn("const DIRECTOR = true;", self.c.get("/direct").text, "the Director is still at /direct")
@@ -281,24 +298,18 @@ class Pages(unittest.TestCase):
         take, date = settings._release()                      # what studio/release.json says
         self.assertEqual(settings.RELEASE_ID, f"take-{take}")
 
-    def test_content_generator_is_the_studio_in_stills(self):
-        r = self.c.get("/studio/stills")
-        self.assertEqual(r.status_code, 200)
-        self.assertIn("Content Generator", r.text)
-        self.assertIn('href="/studio"', r.text)                 # its way over to the full studio
-        self.assertIn("/static/standalone.js", r.text)
-        self.assertNotIn("/api/", r.text)                       # nothing points back at the back office
+    def test_there_is_no_content_generator(self):
+        # Gobo is the studio: no batch stills page and no prompt writer
+        self.assertEqual(self.c.get("/studio/stills").status_code, 404)
+        self.assertEqual(self.c.post("/studio/prompt-variants", files={"file": ("a.png", png(), "image/png")}).status_code, 404)
+        self.assertNotIn("Content Generator", self.c.get("/studio").text)
+        self.assertNotIn("Content Generator", self.c.get("/home").text)
 
     def test_studio_and_guide_have_no_back_office_links(self):
         for path in ("/", "/direct", "/studio", "/studio/guide", "/studio/app.js", "/static/director.js"):
             body = self.c.get(path).text
             self.assertNotIn("/api/", body, path)
             self.assertNotIn("back office", body.lower(), path)
-
-    def test_kill_switch_covers_the_generator(self):
-        with mock.patch.dict(os.environ, {"STUDIO_ENABLED": "0"}):
-            self.assertEqual(self.c.get("/studio/stills").status_code, 503)
-            self.assertEqual(self.c.post("/studio/prompt-variants", files={"file": ("a.png", png(), "image/png")}).status_code, 503)
 
 
 
@@ -372,46 +383,6 @@ class Shares(unittest.TestCase):
         with mock.patch.object(J, "KEEP_GB", 1e-12):
             J.trim_to_size(force=True)
         self.assertFalse(os.path.isdir(J.reel_dir(old)), "the unshared reel went first")
-
-
-class Prompts(unittest.TestCase):
-    def setUp(self):
-        self.c = TestClient(APP)
-
-    def ask(self, **data):
-        return self.c.post("/studio/prompt-variants", files={"file": ("ref.png", png(), "image/png")},
-                           data={"image_style": "photography", "num_variants": "2", "variation_level": "5", **data}).json()
-
-    def test_no_key_says_so(self):
-        self.assertIn("needs OPENAI_API_KEY, ANTHROPIC_API_KEY or COMFY_API_KEY", self.ask()["error"])
-
-    def test_claude_when_there_is_no_openai_key(self):
-        seen = {}
-
-        def fake(system, content, schema, **kw):
-            seen.update(content=content, schema=schema)
-            return {"prompts": ["a red barn at dawn", "a red barn at dusk, " + prompts.TAIL], "negative_prompts": ["blurry"]}
-        with mock.patch.object(settings, "ANTHROPIC_API_KEY", "k"), mock.patch.object(prompts.M, "_claude_json", fake):
-            out = self.ask(user_notes="no people")
-        self.assertEqual(out["by"], "claude")
-        self.assertEqual(seen["content"][0]["type"], "image")
-        self.assertIn("ART DIRECTOR'S NOTES", seen["content"][1]["text"])
-        self.assertTrue(out["prompts"][0].endswith(prompts.TAIL))           # the closing tags are guaranteed
-        self.assertEqual(out["prompts"][1].count(prompts.TAIL), 1)          # ...and not doubled
-        self.assertEqual(len(out["negative_prompts"]), 2)                   # padded to one per prompt
-
-    def test_gpt4o_when_there_is(self):
-        class R:
-            def raise_for_status(self):
-                pass
-
-            def json(self):
-                return {"choices": [{"message": {"content": '```json{"prompts": ["x"], "negative_prompts": ["y"]}```'}}]}
-        with mock.patch.object(settings, "OPENAI_API_KEY", "k"), \
-                mock.patch.object(prompts.requests, "post", return_value=R()) as post:
-            out = self.ask(image_style="illustration")
-        self.assertEqual((out["by"], out["prompts"]), ("gpt-4o", ["x"]))      # no photo tags on an illustration
-        self.assertEqual(post.call_args.kwargs["json"]["model"], "gpt-4o")
 
 
 if __name__ == "__main__":

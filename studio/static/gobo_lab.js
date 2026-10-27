@@ -123,7 +123,6 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
 .comfyask b { color: var(--text, #ecebe8); }
 .comfyask p, .comfyask li { font-size: .88rem; color: #c9c7cf; line-height: 1.5; }
 .comfyask ol { padding-left: 18px; margin: 10px 0 14px; } .comfyask li { margin-bottom: 8px; }
-.comfyask input { width: 100%; margin: 6px 0 2px; }
 .comfyask code { font-size: .82rem; }
 .comfyask a { color: var(--accent, #f2c14e); }
 #lab .matchbox { border: 1px solid var(--line); border-radius: 10px; padding: 10px; margin: 6px 0; }
@@ -179,7 +178,7 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       <div id="gMatchBox" class="matchbox hidden"></div>
       <div class="row"><button class="btn small primary" id="gBake" title="Every frame through this look, in Rust, as a new take beside the original">Grade the take</button>
         <button class="btn small" id="gStill">Download graded still</button><button class="btn small" id="gCube">Download .cube</button>
-        <button class="btn small" id="gComfy" title="Your ComfyUI, with this take and its look as Gobo's own nodes">Open in ComfyUI</button>
+        <button class="btn small" id="gComfy" title="This take and its look as a ComfyUI workflow of Gobo's own nodes, to drop on ComfyUI (shift-click: how to set it up)">Open in ComfyUI</button>
         <button class="btn small" id="gReset">Reset</button></div>
       <p class="hint">The .cube is the same table the preview uses: load it in Resolve, Premiere or Final Cut and the colour matches. Grain, halation and the vignette need the whole picture, so they stay out of the LUT.</p>
     </section>
@@ -790,13 +789,14 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
   q("#gMatch", lab).onclick = () => matchOpen();
 
   // ── open in ComfyUI ────────────────────────────────────────────────────
-  // Your own ComfyUI opens with this take and its look as Gobo's nodes
-  // (comfyui/ in Gobo's code: the same Rust grades it there). The workflow
-  // rides in the address (#gobo=…), and ComfyUI fetches the take from here by
-  // a link that works for a week.
-  const COMFY = "gobo.comfyui";
-  const comfyAddress = () => { try { return localStorage.getItem(COMFY) || ""; } catch (e) { return ""; } };
-  const COLOUR_BLURB = "Gobo opens your ComfyUI with this take and its look, laid out as Gobo's own nodes: the stock and grade with every slider, any LUT, a shot match, then Gobo Grade (the same Rust as here) and a save. Change anything and queue it.";
+  // This take and its look as a workflow of Gobo's own nodes (comfyui/ in
+  // Gobo's code: the same Rust grades it there), downloaded as a file to drop
+  // on ComfyUI. ComfyUI turns away any page another site sends it to, so a
+  // file is the way in; the take itself it fetches from here by a link that
+  // works for a week.
+  const STEPS = "gobo.comfyui.steps";
+  const stepsSeen = () => { try { return localStorage.getItem(STEPS) === "1"; } catch (e) { return false; } };
+  const COLOUR_BLURB = "This take and its look as a ComfyUI workflow of Gobo's own nodes: the stock and grade with every slider, any LUT, a shot match, then Gobo Grade (the same Rust as here) and a save. Change anything and run it.";
   function comfyAsk(then, blurb = COLOUR_BLURB) {
     const d = document.createElement("div");
     d.className = "comfyask";
@@ -804,39 +804,33 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       <p>${h(blurb)}</p>
       <h5>The first time: add Gobo to your ComfyUI</h5>
       <ol><li><a href="/comfyui/gobo-nodes.zip" download>Download the Gobo nodes</a> and open the file. You get a folder called <b>gobo</b>.</li>
-      <li>Move the <b>gobo</b> folder into ComfyUI's <b>custom_nodes</b> folder. In the ComfyUI app, <b>Help › Open Folder › Open Custom Nodes Folder</b> opens it. (Run ComfyUI from a folder yourself? It's <code>ComfyUI/custom_nodes</code>.)</li>
+      <li>Move the <b>gobo</b> folder into ComfyUI's <b>custom_nodes</b> folder. With the Comfy Desktop app it's in your home folder: <b>ComfyUI-Installs › your install's name › ComfyUI › custom_nodes</b> (on a Mac, Finder's <b>Go › Home</b> takes you to your home folder). Run ComfyUI yourself? It's <code>ComfyUI/custom_nodes</code>.</li>
       <li>Quit ComfyUI and open it again. Its first start takes a minute longer while Gobo sets itself up.</li></ol>
-      <h5>Then open it</h5>
-      <ol start="4"><li>Where your ComfyUI is: <input class="field" id="caAddr" value="${h(comfyAddress() || "http://127.0.0.1:8000")}"> <span class="hint">The ComfyUI app is usually http://127.0.0.1:8000; a ComfyUI you start yourself, http://127.0.0.1:8188.</span></li>
-      <li>Click <b>Open in ComfyUI</b>. ComfyUI not running yet? Start it: the tab waits and opens there. If your browser asks whether Gobo may look for apps on your device, allow it.</li></ol>
-      <div class="row"><button class="btn small primary" id="caGo">Open in ComfyUI</button><button class="btn small" id="caX">Cancel</button></div></div>`;
+      <h5>Then, each time</h5>
+      <ol start="4"><li>Click <b>Download the workflow</b>. A small file lands in your Downloads.</li>
+      <li>Drag it onto your ComfyUI window, or open it from ComfyUI's menu (the ComfyUI logo, top left): <b>File › Open</b>. Then click <b>Run</b>.</li></ol>
+      <div class="row"><button class="btn small primary" id="caGo">Download the workflow</button><button class="btn small" id="caX">Cancel</button></div></div>`;
     document.body.appendChild(d);
-    const go = () => {
-      const a = q("#caAddr", d).value.trim().replace(/\/+$/, "");
-      if (!/^https?:\/\//.test(a)) return q("#caAddr", d).focus();
-      try { localStorage.setItem(COMFY, a); } catch (e) { /* asked again next time */ }
+    q("#caGo", d).onclick = () => {
+      try { localStorage.setItem(STEPS, "1"); } catch (e) { /* shown again next time */ }
       d.remove(); then();
     };
-    q("#caGo", d).onclick = go;
-    q("#caAddr", d).onkeydown = e => { if (e.key === "Enter") go(); };
     q("#caX", d).onclick = () => d.remove();
     d.onclick = e => { if (e.target === d) d.remove(); };
   }
-  // a workflow handed to the colourist's own ComfyUI in its address (#gobo=…):
-  // where it is is asked once (and again on shift-click); `get` asks Gobo for it.
-  // The tab opens on /comfyui/open, which waits for ComfyUI to be running and
-  // then goes there, so starting ComfyUI after the click still works
+  // the workflow `get` asks Gobo for, saved as "<its title>.json"; the steps
+  // show the first time, and again on shift-click
   async function comfyOpen(get, ask, blurb, done) {
-    if (ask || !comfyAddress()) return comfyAsk(() => comfyOpen(get, false, blurb, done), blurb);
-    // a window now, while the click still counts, so no pop-up blocker stops it
-    const win = window.open("about:blank", "_blank");
+    if (ask || !stepsSeen()) return comfyAsk(() => comfyOpen(get, false, blurb, done), blurb);
     const r = await get();
-    if (r.error) { if (win) win.close(); return done(r.error); }
-    let bin = "";
-    new TextEncoder().encode(JSON.stringify({ workflow: r.workflow, title: r.title })).forEach(c => { bin += String.fromCharCode(c); });
-    const url = `/comfyui/open#to=${encodeURIComponent(comfyAddress())}&gobo=${btoa(bin).replace(/\+/g, "-").replace(/\//g, "_").replace(/=+$/, "")}`;
-    if (win) { win.opener = null; win.location.href = url; } else window.open(url, "_blank");
-    done(null, r);
+    if (r.error) return done(r.error);
+    const file = `${String(r.title || "Gobo").replace(/[\\/:*?"<>|]+/g, "-").trim()}.json`;
+    const a = document.createElement("a");
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(r.workflow, null, 2)], { type: "application/json" }));
+    a.download = file;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+    done(null, { ...r, file });
   }
   window.goboComfy = { open: comfyOpen };
   async function openInComfy(ask) {
@@ -846,8 +840,8 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     const ref = look.match_to && ST().takes().find(t => t.id === look.match_to && t.status === "done");
     comfyOpen(() => ST().api(`/reels/${ST().reel()}/takes/${pic.id}/comfyui/colour`, { method: "POST",
       json: { look, film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value, reference: ref ? ref.id : "" } }), ask, COLOUR_BLURB,
-      err => err ? say(err, true)
-        : say("ComfyUI is opening with the take and its look as Gobo's nodes. Queue it to grade there. (If ComfyUI opens empty, the Gobo nodes aren't installed yet: shift-click Open in ComfyUI for how.)"));
+      (err, r) => err ? say(err, true)
+        : say(`${r.file} is in your Downloads: drag it onto your ComfyUI window (or File › Open there) and click Run. Red nodes mean Gobo's nodes aren't in that ComfyUI yet: shift-click Open in ComfyUI for how.`));
   }
   q("#gComfy", lab).onclick = e => openInComfy(e.shiftKey || e.altKey);
 

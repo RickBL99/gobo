@@ -81,11 +81,11 @@ def _read(path: str) -> Optional[Dict]:
 
 
 # ── reels ───────────────────────────────────────────────────────────────────
-def new_reel(name: str = "", app: str = "studio", owner: str = "") -> Dict:
+def new_reel(name: str = "", owner: str = "") -> Dict:
     purge_old()
     rid = uuid.uuid4().hex[:12]
     reel = {"id": rid, "name": (name or "").strip()[:80] or "Untitled reel",
-            "created": time.time(), "app": app, "owner": owner}
+            "created": time.time(), "owner": owner}
     for sub in ("takes", "out", "refs"):
         os.makedirs(os.path.join(reel_dir(rid), sub), exist_ok=True)
     _write(os.path.join(reel_dir(rid), "reel.json"), reel)
@@ -103,9 +103,8 @@ def rename_reel(reel: str, name: str) -> Dict:
     return r
 
 
-def list_reels(limit: int = 60, app: str = "") -> List[Dict]:
-    """Newest first. `app` keeps the Content Generator's sessions and the
-    studio's reels apart (a reel made before the tag counts as the studio's)."""
+def list_reels(limit: int = 60) -> List[Dict]:
+    """Newest first."""
     out = []
     if not os.path.isdir(BASE):
         return out
@@ -114,7 +113,7 @@ def list_reels(limit: int = 60, app: str = "") -> List[Dict]:
             r = get_reel(rid)
         except ValueError:
             continue
-        if not r or (app and r.get("app", "studio") != app):
+        if not r:
             continue
         tdir = os.path.join(reel_dir(rid), "takes")
         files = [f for f in os.listdir(tdir) if f.endswith(".json")] if os.path.isdir(tdir) else []
@@ -255,9 +254,9 @@ def owner_of(t: Dict, reel: Optional[Dict]) -> str:
     return t.get("by") or (reel or {}).get("owner") or ""
 
 
-def library(app: str = "") -> List[Dict]:
-    """Every finished take in `app`'s reels, newest first, each with its
-    reel's name and its maker."""
+def library() -> List[Dict]:
+    """Every finished take, newest first, each with its reel's name and its
+    maker."""
     out = []
     if not os.path.isdir(BASE):
         return out
@@ -280,8 +279,6 @@ def library(app: str = "") -> List[Dict]:
             hit = (key, now, r, [t for t in list_takes(rid) if t.get("status") == "done" and t.get("file")])
             _lib[rid] = hit
         r, done = hit[2], hit[3]
-        if app and r.get("app", "studio") != app:
-            continue
         out += [{**t, "reel_name": r.get("name") or "", "owner": owner_of(t, r)} for t in done]
     for rid in [x for x in _lib if x not in seen]:
         _lib.pop(rid, None)

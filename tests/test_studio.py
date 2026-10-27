@@ -460,11 +460,8 @@ class Flow(unittest.TestCase):
         self.assertTrue({"__init__.py", "install.py", "nodes.py", "engine.py", "gobo.wasm", "web/gobo.js", "requirements.txt"} <= names, names)
         self.assertFalse(any("__pycache__" in n for n in names))
         self.assertEqual(self.c.post(f"/studio/reels/{reel}/takes/{t['id']}/comfyui/colour", json={"look": {"film": "nope"}}).status_code, 400)
-        # the tab Open in ComfyUI opens, which waits for ComfyUI (the workflow stays after the #, never sent here)
-        page = self.c.get("/comfyui/open")
-        self.assertEqual(page.status_code, 200)
-        self.assertIn("Opening ComfyUI", page.text)
-        self.assertIn('class="ssbar"', page.text)
+        # no tab that sends you to ComfyUI: ComfyUI turns those away (403), so the workflow comes as a file
+        self.assertEqual(self.c.get("/comfyui/open").status_code, 404)
 
     def test_a_clip_lands_silent_unless_sound_was_asked_for_and_no_bigger_than_uhd(self):
         """A model's soundtrack nobody asked for is taken off (MiniMax H3 adds one
@@ -930,50 +927,21 @@ class Flow(unittest.TestCase):
         self.finish(reel, u["id"], data, ".mp4")
         self.assertIn("already", self.c.post(f"/studio/reels/{reel}/takes/{u['id']}/upscale", json={"to": "4k"}).json()["error"])
 
-    # ── the Content Generator (stills mode) ─────────────────────────────────
-    def test_stills_page_has_only_still_models(self):
-        r = self.c.get("/studio?stills=1")
-        self.assertEqual(r.status_code, 200)
-        self.assertIn("<title>Content Generator · Gobo</title>", r.text)
-        self.assertIn("const STILLS = true;", r.text)
-        models = json.loads(r.text.split("const MODELS = ", 1)[1].split(";\n", 1)[0])
-        self.assertTrue(models and all(m["kind"] in ("image", "upscale") for m in models))
-        self.assertGreater(sum(m["kind"] == "image" for m in models), 50)
-        self.assertIn("const STILLS = false;", self.c.get("/studio").text)
-
-    def test_a_batch_of_prompts(self):
-        reel = self.c.post("/studio/reels", json={"name": "Batch", "app": "cg"}).json()["id"]
-        r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "byteplus/seedream-5-0-260128", "enhance": False,
-            "prompts": [{"scene": "A red door.", "negative_prompt": "blur"}, "A blue door.", {"scene": "  "}]}).json()
-        self.assertEqual([t["letter"] for t in r["takes"]], ["A", "B"])
-        self.assertEqual(len({t["shot"] for t in r["takes"]}), 1)
-        reqs = [J.get_take(reel, t["id"])["request"] for t in r["takes"]]
-        self.assertEqual([(q["prompt"], q["negative_prompt"]) for q in reqs], [("A red door.", "blur"), ("A blue door.", "")])
-        self.assertEqual(J.get_take(reel, r["takes"][1]["id"])["settings"]["scene"], "A blue door.")
-        # one still model only
-        self.assertEqual(self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "models": ["byteplus/seedream-5-0-260128", "bfl/flux-3-image"], "prompts": ["x"]}).status_code, 400)
-        # twenty is the cap, lettered past H
-        r = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier.", "takes": 50}).json()
-        self.assertEqual(len(r["takes"]), 20)
-        self.assertEqual(r["takes"][-1]["letter"], "T")
-        # each page lists its own reels
-        self.assertIn(reel, [x["id"] for x in self.c.get("/studio/reels?app=cg").json()["reels"]])
-        self.assertNotIn(reel, [x["id"] for x in self.c.get("/studio/reels?app=studio").json()["reels"]])
-
-    def test_download_upsized_for_filing(self):
+    # ── stills live in the studio: four takes a shot, files as they were made ──
+    def test_four_takes_and_downloads_as_made(self):
+        self.assertNotIn("STILLS", self.c.get("/studio").text)
         reel = self.reel()
-        t = self.c.post(f"/studio/reels/{reel}/run", json={
-            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier."}).json()["takes"][0]
-        self.finish(reel, t["id"], jpeg((640, 360)), ".jpg")
-        r = self.c.get(f"/studio/reels/{reel}/download?size=4000")
-        self.assertIn("-4k.zip", r.headers["content-disposition"])
-        z = zipfile.ZipFile(io.BytesIO(r.content))
-        name = next(n for n in z.namelist() if n.endswith(".jpg"))
-        with Image.open(io.BytesIO(z.read(name))) as im:
-            self.assertEqual((im.size, round(im.info["dpi"][0])), ((4000, 2250), 300))
+        r = self.c.post(f"/studio/reels/{reel}/run", json={
+            "mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "A pier.", "takes": 50,
+            "prompts": ["ignored: the batch tool went with the Content Generator"]}).json()
+        self.assertEqual([t["letter"] for t in r["takes"]], ["A", "B", "C", "D"])
+        self.assertEqual(J.get_take(reel, r["takes"][0]["id"])["request"]["prompt"].split(".")[0], "A pier")
+        self.finish(reel, r["takes"][0]["id"], jpeg((640, 360)), ".jpg")
+        got = self.c.get(f"/studio/reels/{reel}/download?size=4000")      # an old link's size is ignored
+        self.assertNotIn("-4k", got.headers["content-disposition"])
+        z = zipfile.ZipFile(io.BytesIO(got.content))
+        with Image.open(io.BytesIO(z.read(next(n for n in z.namelist() if n.endswith(".jpg"))))) as im:
+            self.assertEqual(im.size, (640, 360))
 
     def test_a_running_clip_is_never_dropped(self):
         # prod, 2026-10-23: a read that landed mid-rewrite on the shared disk made the
@@ -1053,8 +1021,10 @@ class Flow(unittest.TestCase):
             busy = shoot(a1, "Still rendering.", done=False)
             a2 = self.c.post("/studio/reels", json={"name": "Beta"}).json()["id"]
             pier = shoot(a2, "A pier in fog.")
-            cg = self.c.post("/studio/reels", json={"name": "Stills", "app": "cg"}).json()["id"]
-            shoot(cg, "A teacup.")
+            cg = self.c.post("/studio/reels", json={"name": "Stills"}).json()["id"]
+            old_cg = J.get_reel(cg); old_cg["app"] = "cg"                    # a Content Generator session from before it went
+            J._write(os.path.join(J.reel_dir(cg), "reel.json"), old_cg)
+            teacup = shoot(cg, "A teacup.")
         with as_("Bob"):
             bobs = shoot(a1, "Bob's lighthouse.")           # Bob shooting in Alice's reel: his take
         with as_(""):                                        # like everything made before takes carried a name
@@ -1063,13 +1033,13 @@ class Flow(unittest.TestCase):
         mine_ids = lambda r: [x["id"] for x in r["items"]]
 
         with as_("Alice"):
-            r = self.c.get("/studio/library?app=studio").json()
-            # across reels, finished only, newest first; the Content Generator keeps its own
-            self.assertEqual(mine_ids(r), [pier, barn])
-            self.assertEqual([x["reel_name"] for x in r["items"]], ["Beta", "Alpha"])
+            r = self.c.get("/studio/library").json()
+            # across reels (an old Content Generator session's too), finished only, newest first
+            self.assertEqual(mine_ids(r), [teacup, pier, barn])
+            self.assertEqual([x["reel_name"] for x in r["items"]], ["Stills", "Beta", "Alpha"])
             self.assertTrue(all(x["yours"] and x["url"] and x["thumb_url"] for x in r["items"]))
             self.assertNotIn("payload", r["items"][0])
-            self.assertEqual((r["counts"]["mine"], r["me"]), (2, "Alice"))
+            self.assertEqual((r["counts"]["mine"], r["me"]), (3, "Alice"))
             every = self.c.get("/studio/library?who=all&limit=200").json()   # other tests' takes too
             self.assertTrue({pier, barn, bobs, legacy} <= set(mine_ids(every)))
             self.assertNotIn(busy, mine_ids(every))
@@ -1077,11 +1047,10 @@ class Flow(unittest.TestCase):
             self.assertEqual({x["id"]: x["owner"] for x in every["items"]}[legacy], "")
             self.assertEqual(mine_ids(self.c.get("/studio/library?q=barn dusk").json()), [barn])
             self.assertEqual(self.c.get("/studio/library?kind=video").json()["items"], [])
-            self.assertEqual(len(self.c.get("/studio/library?app=cg").json()["items"]), 1)
             self.c.post(f"/studio/reels/{a2}/takes/{pier}/star", json={"starred": True})
             self.assertEqual(mine_ids(self.c.get("/studio/library?starred=1").json()), [pier])
             page = self.c.get("/studio/library?limit=1&offset=1").json()
-            self.assertEqual((mine_ids(page), page["total"]), ([barn], 2))
+            self.assertEqual((mine_ids(page), page["total"]), ([pier], 3))
 
             # one zip across reels, a folder per reel
             z = zipfile.ZipFile(io.BytesIO(self.c.get(
@@ -1095,7 +1064,7 @@ class Flow(unittest.TestCase):
                 f"{a1}:{barn}", f"{old['id']}:{legacy}", f"{a1}:{bobs}", f"{a1}:{busy}", "../x:y"]}).json()
             self.assertEqual(sorted(r["deleted"]), sorted([f"{a1}:{barn}", f"{old['id']}:{legacy}"]))
             self.assertEqual(sorted(r["kept"]), sorted([f"{a1}:{bobs}", f"{a1}:{busy}"]))
-            self.assertEqual(mine_ids(self.c.get("/studio/library").json()), [pier])
+            self.assertEqual(mine_ids(self.c.get("/studio/library").json()), [teacup, pier])
             self.assertIsNotNone(J.get_take(a1, bobs))
         # a take with no name can be claimed by whoever's signed in; a named one keeps its name
         with as_(""):

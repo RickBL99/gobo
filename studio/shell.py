@@ -1,6 +1,5 @@
 """What a standalone app needs around the studio: the front door (the
-Director, or the home page), sign-in, the About page, shared films, and the
-Content Generator's own address.
+Director, or the home page), sign-in, the About page and shared films.
 
 Sign-in is deliberately small: accounts an admin adds on the Users page, each
 with its own password (accounts.py); one shared password (people type their
@@ -42,6 +41,16 @@ def is_open(path: str) -> bool:
 
 def wants_page(request: Request) -> bool:
     return request.method == "GET" and "text/html" in request.headers.get("accept", "")
+
+
+# The pages a shared link lands on. A link-preview bot (Slack, iMessage, X…)
+# doesn't say it wants a page, so wants_page() misses it; sent to sign-in as a
+# browser is, it reads the preview there (_og.html) instead of a bare 401.
+PAGES = ("/", "/home", "/direct", settings.PREFIX, settings.PREFIX + "/guide")
+
+
+def is_page(request: Request) -> bool:
+    return request.method in ("GET", "HEAD") and request.url.path in PAGES
 
 
 def login_url(request: Request) -> str:
@@ -180,8 +189,7 @@ async def home(request: Request):
         "release_date": settings.RELEASE_DATE,
         "model_count": len(M.MODELS),
         "keys": {"comfy": bool(comfy.api_key()),
-                 "claude": M.claude_on(), "anthropic": bool(settings.ANTHROPIC_API_KEY) and not settings.VISITOR_KEYS,
-                 "openai": bool(settings.OPENAI_API_KEY) and not settings.VISITOR_KEYS}})
+                 "claude": M.claude_on(), "anthropic": bool(settings.ANTHROPIC_API_KEY) and not settings.VISITOR_KEYS}})
 
 
 # ── ComfyUI: the nodes, and the files a workflow from Gobo fetches ──────────
@@ -211,13 +219,6 @@ async def comfy_nodes():
     from fastapi.responses import Response
     return Response(await run_in_threadpool(pack), media_type="application/zip",
                     headers={"Content-Disposition": 'attachment; filename="gobo.zip"'})
-
-
-@router.get("/comfyui/open", response_class=HTMLResponse)
-async def comfy_open(request: Request):
-    """The tab "Open in ComfyUI" opens: it waits for your ComfyUI to answer,
-    then hands it the workflow (in the address, after the #, never sent here)."""
-    return templates.TemplateResponse(request, "comfy_open.html", _page(request))
 
 
 @router.get("/t/{token}")
@@ -301,13 +302,6 @@ async def users_remove(request: Request):
     except KeyError:
         return JSONResponse({"error": "No such user."}, status_code=404)
     return {"removed": accounts.norm(name)}
-
-
-# The Content Generator: the studio limited to stills, with the batch tools.
-@router.get(settings.PREFIX + "/stills", response_class=HTMLResponse,
-            dependencies=[Depends(routes._switched_on)])
-async def content_generator(request: Request):
-    return await routes.studio_page(request, stills=1)
 
 
 # ── shared films ────────────────────────────────────────────────────────────

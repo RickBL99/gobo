@@ -73,8 +73,8 @@ function blockReason() {
 // ── persistence of the working shot (per browser, a convenience only) ──
 const KEEP = ["mode", "model", "shootout", "scene", "pmode", "direction", "colors", "mainColor", "aspect", "resolution", "ntakes", "duration", "audio", "negative", "seed"];
 function saveLocal() { const o = {}; KEEP.forEach(k => o[k] = S[k]); LS.set("shot", o); if (S.reel) LS.set("reel", S.reel.id); }
-// where Reset goes: Comfy's look in the studio; nothing at all in the Content Generator
-const baseDirection = () => STILLS ? Object.fromEntries(Object.keys(CAT.defaults).map(k => [k, "auto"])) : Object.assign({}, CAT.defaults);
+// where Reset goes: Comfy's look
+const baseDirection = () => Object.assign({}, CAT.defaults);
 function loadLocal() {
   const o = LS.get("shot", null);
   if (o) KEEP.forEach(k => { if (o[k] !== undefined) S[k] = o[k]; });
@@ -155,7 +155,7 @@ function openModelSheet(multi) {
     if (m.price != null) out.push(`<span class="price">≈${fmtUSD(m.price)}${m.price_per === "second" ? "/s" : ""}</span>`);
     return out.join("");
   };
-  const kinds = STILLS || boardOn() ? "" : `<span class="seg" id="mKind">${["image", "video"].map(k => `<button data-k="${k}" class="${S.mode === k ? "on" : ""}">${k === "image" ? "Image" : "Video"} · ${byKind(k).length}</button>`).join("")}</span>`;
+  const kinds = boardOn() ? "" : `<span class="seg" id="mKind">${["image", "video"].map(k => `<button data-k="${k}" class="${S.mode === k ? "on" : ""}">${k === "image" ? "Image" : "Video"} · ${byKind(k).length}</button>`).join("")}</span>`;
   el.innerHTML = `<h3>${sheetMulti ? "Shootout — run one shot on several models" : "Choose a model"} ${kinds} <span class="r"><a class="btn small" href="${API}/guide#directory" target="studioguide" title="What every model is good at, in plain English">Model directory</a> <button class="btn small" data-close>Done</button></span></h3>
     <div class="mfilters"><input class="field" id="mq" placeholder="Search ${list.length} models" value="${esc(mQuery)}">
       ${(MFILTERS[S.mode] || []).map(([k, l]) => `<button class="chipbtn ${mFilter.has(k) ? "on" : ""}" data-f="${k}">${l}</button>`).join("")}</div>
@@ -325,7 +325,7 @@ function renderFormat() {
   }
   if (c.resolutions.length) h += `<div><label for="fRes">Resolution</label><select class="field" id="fRes">${c.resolutions.map(r => `<option ${r === S.resolution ? "selected" : ""}>${esc(r)}</option>`).join("")}</select></div>`;
   if (S.mode === "image") {
-    h += `<div><label>${STILLS ? "Images" : "Takes"}</label><div class="stepper"><button id="tMinus" aria-label="Fewer takes">−</button><span id="tN">${S.ntakes}</span><button id="tPlus" aria-label="More takes">+</button></div></div>`;
+    h += `<div><label>Takes</label><div class="stepper"><button id="tMinus" aria-label="Fewer takes">−</button><span id="tN">${S.ntakes}</span><button id="tPlus" aria-label="More takes">+</button></div></div>`;
   } else {
     if (c.durations.length && !boardOn()) h += `<div><label for="fDur">Duration</label><select class="field" id="fDur">${c.durations.map(d => `<option value="${d}" ${d === S.duration ? "selected" : ""}>${d}s</option>`).join("")}</select></div>`;
     if (c.audio) h += `<div><label>Audio</label><label class="switch" style="margin-top:6px"><input type="checkbox" id="fAudio" ${S.audio ? "checked" : ""}><i></i> ${S.audio ? "On" : "Off"}</label></div>`;
@@ -338,7 +338,7 @@ function renderFormat() {
   on("fDur", "onchange", e => { S.duration = +e.target.value; onShotChange(); });
   on("fAudio", "onchange", e => { S.audio = e.target.checked; onShotChange(); });
   on("tMinus", "onclick", () => { S.ntakes = Math.max(1, S.ntakes - 1); onShotChange(); });
-  on("tPlus", "onclick", () => { S.ntakes = Math.min(STILLS ? 20 : 4, S.ntakes + 1); onShotChange(); });
+  on("tPlus", "onclick", () => { S.ntakes = Math.min(4, S.ntakes + 1); onShotChange(); });
   $("#negWrap").classList.toggle("hidden", !c.negative);
   $("#seedWrap").classList.toggle("hidden", !c.seed);
 }
@@ -461,7 +461,7 @@ function estimate() {
     const n = ids.length > 1 ? 1 : (S.mode === "image" ? S.ntakes : 1);
     total += (m.price_per === "second" ? m.price * (S.duration || 5) : m.price) * n;
   });
-  const unit = STILLS ? "image" : "take";
+  const unit = "take";
   const n = ids.length > 1 ? `${ids.length} models` : (S.mode === "image" && S.ntakes > 1 ? `${S.ntakes} ${unit}s` : `1 ${unit}`);
   return known ? `${n} · ≈ ${fmtUSD(total)}` : `${n} · cost varies`;
 }
@@ -477,7 +477,7 @@ function updateGen() {
 }
 async function ensureReel() {
   if (S.reel) return S.reel;
-  const r = await api("/reels", { method: "POST", json: { name: $("#reelName").value, app: STILLS ? "cg" : "studio" } });
+  const r = await api("/reels", { method: "POST", json: { name: $("#reelName").value } });
   if (r.error) { toast(r.error, true); throw new Error(r.error); }
   S.reel = r; saveLocal(); return r;
 }
@@ -511,11 +511,11 @@ function mergeTakes(list) {
   if (list.some(t => t.status === "queued" || t.status === "running")) creditsSoon();
 }
 async function loadReel(id) {
-  if (!STILLS) await flushBoard();
+  await flushBoard();
   const r = await api(`/reels/${id}`);
   if (r.error) { LS.set("reel", null); return false; }
   S.reel = r.reel; S.takes = r.takes; $("#reelName").value = r.reel.name;
-  if (!STILLS) { boardFrom(r.board, id); renderKit(); if (boardOn()) onShotChange(); }
+  boardFrom(r.board, id); renderKit(); if (boardOn()) onShotChange();
   S.picking = false; S.picked.clear(); updateStitch();
   S.current = (S.takes.slice().reverse().find(t => t.status === "done") || S.takes[S.takes.length - 1] || {}).id || null;
   refusals.length = 0;
@@ -568,9 +568,9 @@ function seeFail(id) {
   const n = refusals.findIndex(x => x.id === id);
   if (n >= 0) refusals.splice(n, 1);
   else { failSeen.add(id); failAsked.delete(id); LS.set("failSeen", [...failSeen].slice(-300)); }
-  renderFails(); if (!STILLS) refreshBoard();
+  renderFails(); refreshBoard();
 }
-function unseeFail(id) { failSeen.delete(id); failAsked.add(id); LS.set("failSeen", [...failSeen]); renderFails(); if (!STILLS) refreshBoard(); }
+function unseeFail(id) { failSeen.delete(id); failAsked.add(id); LS.set("failSeen", [...failSeen]); renderFails(); refreshBoard(); }
 let refusalN = 0;
 function refused(text, model) {
   const m = model && modelById(model), title = m ? `${m.label}: not run` : "Not run";
@@ -581,12 +581,12 @@ function refused(text, model) {
   if (same) { const c = $(`#fails [data-fail="${same.id}"]`); if (c) { c.classList.remove("flash"); void c.offsetWidth; c.classList.add("flash"); } }
 }
 function showFail(t) {
-  if (!STILLS && t.board && B.shots.some(s => s.id === t.board)) {
+  if (t.board && B.shots.some(s => s.id === t.board)) {
     if (!boardOn()) setView("board");
     const c = $(`.bcard[data-s="${t.board}"]`);
     if (c) { c.scrollIntoView({ behavior: "smooth", block: "center" }); c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 1800); }
   } else {
-    if (!STILLS && boardOn()) setView("shot");
+    if (boardOn()) setView("shot");
     select(t.id);
   }
 }
@@ -975,15 +975,13 @@ function renderStrip() {
     cf.textContent = `Clear ${duds.length} failed`;
     cf.title = `Take the ${duds.length} failed and stopped take${duds.length === 1 ? "" : "s"} out of this ${REELWORD}`;
   }
-  if (S.reel) { $("#dlAll").href = `${API}/reels/${S.reel.id}/download?size=${dlSize()}`; $("#dlStar").href = `${API}/reels/${S.reel.id}/download?starred=1&size=${dlSize()}`; }
+  if (S.reel) { $("#dlAll").href = `${API}/reels/${S.reel.id}/download`; $("#dlStar").href = `${API}/reels/${S.reel.id}/download?starred=1`; }
   const film = S.takes.filter(t => t.action === "stitch" && t.status === "done").sort((a, b) => a.id < b.id ? 1 : -1)[0];
   $("#dlFilm").classList.toggle("hidden", !film || S.picking);
   if (film) $("#dlFilm").href = film.url + "?download=1";
 }
 // The bin's selection: pick takes to stitch, download or delete. A take still
 // rendering can't be picked (stop it first); only finished ones stitch or download.
-// Content Generator: stills delivered at 2K/4K/8K, 300 dpi (0 = as made)
-const dlSize = () => ($("#dlSize") && +$("#dlSize").value) || 0;
 const canSelect = t => t.status !== "running" && t.status !== "queued";
 const stitchable = t => t.status === "done" && (t.kind === "video" || t.kind === "image");
 const takeById = id => S.takes.find(t => t.id === id);
@@ -1023,13 +1021,13 @@ function updateStitch() {
   const nStitch = sel.filter(stitchable).length, nDone = sel.filter(t => t.status === "done").length;
   $("#seq").classList.toggle("picking", S.picking);
   ["#stitchGo", "#stitchCancel", "#stitchHint", "#stitchAll", "#selDl", "#selDel"].forEach(s => $(s).classList.toggle("hidden", !S.picking));
-  ["#selBtn", "#stitchBtn", "#dlAll", "#dlStar"].forEach(s => $(s).classList.toggle("hidden", S.picking || (STILLS && s === "#stitchBtn")));
+  ["#selBtn", "#stitchBtn", "#dlAll", "#dlStar"].forEach(s => $(s).classList.toggle("hidden", S.picking));
   $("#holdWrap").classList.toggle("hidden", !S.picking || !sel.some(t => stitchable(t) && t.kind === "image"));
   $("#stitchGo").textContent = nStitch < 2 ? "Stitch (pick 2+)" : `Stitch ${nStitch}`;
   $("#stitchGo").disabled = nStitch < 2;
   $("#selDl").textContent = `Download ${nDone || ""}`.trim();
   $("#selDl").classList.toggle("off", !nDone);
-  if (S.reel) $("#selDl").href = nDone ? `${API}/reels/${S.reel.id}/download?size=${dlSize()}&takes=${sel.filter(t => t.status === "done").map(t => t.id).join(",")}` : "#";
+  if (S.reel) $("#selDl").href = nDone ? `${API}/reels/${S.reel.id}/download?takes=${sel.filter(t => t.status === "done").map(t => t.id).join(",")}` : "#";
   $("#selDel").textContent = `Delete ${ids.length || ""}`.trim();
   $("#selDel").disabled = !ids.length;
   if (S.picking) $("#seqCount").textContent = `${ids.length} selected`;
@@ -1052,8 +1050,8 @@ function shotToComfy(ask) {
     aspect: S.aspect, resolution: S.resolution, duration: S.duration, audio: S.audio, seed: S.seed, negative_prompt: S.negative,
     first_frame: name(S.firstFrame), last_frame: name(S.lastFrame), refs: (S.refs || []).filter(Boolean).map(name) };
   window.goboComfy.open(() => api("/comfyui/shot", { method: "POST", json: body }), ask,
-    `Gobo opens your ComfyUI with this shot as Gobo's own nodes: the Gobo Director holding your scene and every choice, writing the prompt${m ? ` for ${m.label}'s own node` : ""}, then a save. Change anything and queue it.`,
-    (err, r) => err ? toast(err, true) : toast(`ComfyUI is opening with this shot (${r.title}). Empty? Shift-click Open in ComfyUI to add Gobo's nodes.`));
+    `This shot as a ComfyUI workflow of Gobo's own nodes: the Gobo Director holding your scene and every choice, writing the prompt${m ? ` for ${m.label}'s own node` : ""}, then a save. Change anything and run it.`,
+    (err, r) => err ? toast(err, true) : toast(`${r.file} is in your Downloads: drag it onto your ComfyUI window (or File › Open there) and click Run. Red nodes? Shift-click Open in ComfyUI to add Gobo's.`));
 }
 // the takes that didn't make it, out of the reel in one go
 async function clearFails() {
@@ -1064,7 +1062,7 @@ async function clearFails() {
   const gone = new Set(r.deleted);
   S.takes = S.takes.filter(t => !gone.has(t.id));
   if (gone.has(S.current)) S.current = (S.takes.slice().reverse().find(t => t.status === "done") || S.takes[S.takes.length - 1] || {}).id || null;
-  renderStrip(); renderStage(); renderFails(); if (!STILLS) refreshBoard();
+  renderStrip(); renderStage(); renderFails(); refreshBoard();
   toast(`Cleared ${gone.size} take${gone.size === 1 ? "" : "s"} that didn't make it.`);
 }
 async function deleteSelected() {
@@ -1082,24 +1080,24 @@ async function deleteSelected() {
 // ── reels sheet ────────────────────────────────────────────────────────
 async function openReels() {
   const el = $("#reelSheet");
-  const word = STILLS ? "Sessions" : "Reels";
+  const word = "Reels";
   el.innerHTML = `<h3>${word} <span class="r"><button class="btn small" data-close>Close</button></span></h3><p class="hint">Loading…</p>`;
   showPop(el); $("[data-close]", el).onclick = closePop;
-  const r = await api(`/reels?app=${STILLS ? "cg" : "studio"}`);
+  const r = await api("/reels");
   const list = r.reels || [];
-  el.innerHTML = `<h3>${word} <span class="r"><button class="btn small primary" id="rsNew">${STILLS ? "New session" : "New reel"}</button> <button class="btn small" data-close>Close</button></span></h3>
+  el.innerHTML = `<h3>${word} <span class="r"><button class="btn small primary" id="rsNew">New reel</button> <button class="btn small" data-close>Close</button></span></h3>
     ${list.length ? `<div class="reels">${list.map(x => `<button class="reelcard ${S.reel && S.reel.id === x.id ? "on" : ""}" data-r="${x.id}">
       <div class="rc" style="${x.cover ? `background-image:url('${API}/reels/${x.id}/thumb/${encodeURIComponent(x.cover)}?w=360')` : ""}"></div>
       <div class="rl"><b>${esc(x.name)}</b><small>${x.takes} take${x.takes === 1 ? "" : "s"} · ${new Date((x.touched || x.created) * 1000).toLocaleDateString()}</small></div></button>`).join("")}</div>`
       : `<p class="hint">No ${word.toLowerCase()} yet. Your first Generate makes one.</p>`}
-    <p class="hint" style="margin-top:10px">Takes stay until you delete them — the Library has all of yours, from every ${STILLS ? "session" : "reel"}. Empty ${word.toLowerCase()} are cleared after 60 days.</p>`;
+    <p class="hint" style="margin-top:10px">Takes stay until you delete them — the Library has all of yours, from every reel. Empty ${word.toLowerCase()} are cleared after 60 days.</p>`;
   $("[data-close]", el).onclick = closePop;
   $("#rsNew").onclick = () => { closePop(); newReel(); };
   $$("[data-r]", el).forEach(b => b.onclick = async () => { closePop(); await loadReel(b.dataset.r); });
 }
 async function newReel() {
-  if (!STILLS) { await flushBoard(); B = newBoard(); renderKit(); renderBoard(); }
-  S.reel = null; S.takes = []; S.current = null; $("#reelName").value = STILLS ? "Untitled session" : "Untitled reel";
+  await flushBoard(); B = newBoard(); renderKit(); renderBoard();
+  S.reel = null; S.takes = []; S.current = null; $("#reelName").value = "Untitled reel";
   S.refs = []; S.firstFrame = S.lastFrame = S.sourceVideo = null;
   refusals.length = 0;
   LS.set("reel", null); renderStrip(); renderStage(); renderFails(); onShotChange();
@@ -1109,10 +1107,10 @@ async function newReel() {
 // A take stays until its maker deletes it. Mine is what you made, by the name
 // you signed in with; Everyone is the whole team's, plus takes from before
 // names were kept, which anyone may tidy away.
-const LIB = { who: LS.get("lib.who", "mine"), kind: LS.get("lib.kind", ""), starred: false, q: "", size: 0,
+const LIB = { who: LS.get("lib.who", "mine"), kind: LS.get("lib.kind", ""), starred: false, q: "",
               items: [], total: 0, counts: {}, me: "", picked: new Set(), view: -1, seq: 0 };
 const libKey = t => `${t.reel}:${t.id}`;
-const REELWORD = STILLS ? "session" : "reel";
+const REELWORD = "reel";
 function libDay(ts) {
   const d = new Date(ts * 1000), today = new Date(); today.setHours(0, 0, 0, 0);
   const days = Math.round((today - new Date(ts * 1000).setHours(0, 0, 0, 0)) / 864e5);
@@ -1128,7 +1126,7 @@ async function openLibrary() {
       <h3>Library <small id="libTotal"></small><span class="r"><button class="btn small" data-close>Close</button></span></h3>
       <div class="libbar">
         <span class="seg" id="libWho"><button data-w="mine">Mine<i></i></button><button data-w="all">Everyone<i></i></button></span>
-        ${STILLS ? "" : `<span class="seg" id="libKind"><button data-k="">All<i></i></button><button data-k="video">Clips<i></i></button><button data-k="image">Stills<i></i></button></span>`}
+        <span class="seg" id="libKind"><button data-k="">All<i></i></button><button data-k="video">Clips<i></i></button><button data-k="image">Stills<i></i></button></span>
         <button class="chipbtn" id="libStar">★ Starred<i></i></button>
         <input class="field" id="libQ" placeholder="Search prompts, models, ${REELWORD}s" value="${esc(LIB.q)}">
       </div></div>
@@ -1145,7 +1143,7 @@ async function openLibrary() {
 }
 async function libFetch(more) {
   const seq = ++LIB.seq;            // a later search wins over an earlier, slower one
-  const qs = new URLSearchParams({ app: STILLS ? "cg" : "studio", who: LIB.who, kind: STILLS ? "" : LIB.kind,
+  const qs = new URLSearchParams({ who: LIB.who, kind: LIB.kind,
                                    starred: LIB.starred ? 1 : 0, q: LIB.q, offset: more ? LIB.items.length : 0, limit: 60 });
   const r = await api(`/library?${qs}`);
   if (seq !== LIB.seq) return;
@@ -1183,7 +1181,7 @@ function libCard(t, i) {
   return `<div class="lc ${on ? "picked" : ""}" data-i="${i}" tabindex="0" title="${esc((t.prompt || "").slice(0, 300))}">
     <div class="lm">${media}${vid ? `<span class="badge">▶${t.seconds ? " " + Math.round(t.seconds) + "s" : ""}</span>` : ""}
       ${t.starred ? `<span class="star">★</span>` : ""}<input type="checkbox" class="pick" ${on ? "checked" : ""} aria-label="Select">
-      ${STILLS ? "" : `<span class="lo">${t.board ? `<button data-o="board" title="Its board, its card showing this ${vid ? "clip" : "keyframe"}">On its board</button>` : ""}<button data-o="clip" title="In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage">${vid ? "As a clip" : "As a still"}</button></span>`}</div>
+      <span class="lo">${t.board ? `<button data-o="board" title="Its board, its card showing this ${vid ? "clip" : "keyframe"}">On its board</button>` : ""}<button data-o="clip" title="In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage">${vid ? "As a clip" : "As a still"}</button></span></div>
     <div class="ll"><b>${esc(t.label)}</b><small>${size}${when} · ${esc(t.reel_name)}</small>
       ${LIB.who === "all" ? `<small>${esc(t.owner || "no name")}</small>` : ""}</div></div>`;
 }
@@ -1238,17 +1236,14 @@ function libFoot() {
   const sel = libSelected(), mine = sel.filter(t => t.yours), f = $("#libFoot");
   const unnamed = LIB.me ? sel.filter(t => !t.owner) : [];
   $("#libSheet").classList.toggle("picking", sel.length > 0);
-  const sizes = STILLS ? `<select class="field" id="libSize" title="Stills at this long side, sharpened, 300 dpi">${[[0, "Original size"], [2000, "2K · 300 dpi"], [4000, "4K · 300 dpi"], [8000, "8K · 300 dpi"]]
-    .map(([v, l]) => `<option value="${v}" ${LIB.size === v ? "selected" : ""}>${l}</option>`).join("")}</select>` : "";
   f.innerHTML = sel.length ? `<b>${sel.length} selected</b>
       <button class="btn small" id="libAll">Select all ${LIB.items.length < LIB.total ? `${LIB.items.length} shown` : LIB.items.length}</button>
-      <button class="btn small" id="libNone">Clear</button><span class="grow"></span>${sizes}
+      <button class="btn small" id="libNone">Clear</button><span class="grow"></span>
       ${unnamed.length ? `<button class="btn small" id="libClaim" title="Put your name on takes made before names were kept">Mark ${unnamed.length} as mine</button>` : ""}
-      ${STILLS ? "" : `<button class="btn small" id="libBoard" title="A card each on a board, in film order, to cut or work on">Put on a board</button>`}
-      <a class="btn small primary" id="libDl" href="${API}/library/download?items=${sel.map(libKey).join(",")}&size=${LIB.size}">Download ${sel.length} (.zip)</a>
+      <button class="btn small" id="libBoard" title="A card each on a board, in film order, to cut or work on">Put on a board</button>
+      <a class="btn small primary" id="libDl" href="${API}/library/download?items=${sel.map(libKey).join(",")}">Download ${sel.length} (.zip)</a>
       <button class="btn small danger" id="libDel" ${mine.length ? "" : "disabled"} title="${mine.length < sel.length ? "Only your own takes, and ones with no name on them, can be deleted here" : ""}">Delete ${mine.length}</button>`
-    : `<span class="hint">Click a take to view it · tick or ⌘-click to select several · takes stay here until you delete them</span><span class="grow"></span>${sizes}`;
-  const sz = $("#libSize", f); if (sz) sz.onchange = () => { LIB.size = +sz.value; libFoot(); };
+    : `<span class="hint">Click a take to view it · tick or ⌘-click to select several · takes stay here until you delete them</span><span class="grow"></span>`;
   if (!sel.length) return;
   $("#libAll", f).onclick = () => { LIB.items.forEach(t => LIB.picked.add(libKey(t))); renderLib(); };
   $("#libNone", f).onclick = () => { LIB.picked.clear(); renderLib(); };
@@ -1308,7 +1303,7 @@ async function libDelete(list) {
     }
   }
   renderLib();
-  api(`/library?${new URLSearchParams({ app: STILLS ? "cg" : "studio", who: LIB.who, kind: STILLS ? "" : LIB.kind, starred: LIB.starred ? 1 : 0, q: LIB.q, limit: 1 })}`)
+  api(`/library?${new URLSearchParams({ who: LIB.who, kind: LIB.kind, starred: LIB.starred ? 1 : 0, q: LIB.q, limit: 1 })}`)
     .then(c => { if (!c.error) { LIB.counts = c.counts; libCounts(); } });
   toast(`Deleted ${gone.size} take${gone.size === 1 ? "" : "s"}.${r.kept.length ? ` ${r.kept.length} left alone — still rendering, or someone else's.` : ""}`);
   return true;
@@ -1331,16 +1326,16 @@ function libView(i) {
       <dl class="kv">
         <dt>Made</dt><dd>${esc(made)}</dd>
         <dt>By</dt><dd>${esc(t.owner || "No name — made before names were kept")}</dd>
-        <dt>${STILLS ? "Session" : "Reel"}</dt><dd>${esc(t.reel_name)}</dd>
+        <dt>Reel</dt><dd>${esc(t.reel_name)}</dd>
         <dt>Shot</dt><dd>${esc(t.shot)} · take ${esc(t.letter)}</dd>
         ${dims ? `<dt>Format</dt><dd>${esc(dims)}</dd>` : ""}
         ${t.cost != null ? `<dt>Cost</dt><dd>${fmtUSD(+t.cost)}</dd>` : ""}
       </dl>
       ${t.prompt ? `<div><p class="sectitle">Prompt</p><div class="prompt">${esc(t.prompt)}</div></div>` : ""}
       <div class="vacts">
-        ${t.board && !STILLS ? `<button class="btn small primary" id="lvBoard" title="The board this was made for, its card showing this ${vid ? "clip" : "keyframe"}">Open on its board</button>` : ""}
-        <button class="btn small ${t.board && !STILLS ? "" : "primary"}" id="lvOpen" title="${STILLS ? "" : `In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage: play it, grade it, upscale it, grab a frame`}">${STILLS ? `Open in its ${REELWORD}` : `Open as a ${vid ? "clip" : "still"}`}</button>
-        <a class="btn small" href="${esc(t.url)}?download=1">Download${STILLS ? " original" : ""}</a>
+        ${t.board ? `<button class="btn small primary" id="lvBoard" title="The board this was made for, its card showing this ${vid ? "clip" : "keyframe"}">Open on its board</button>` : ""}
+        <button class="btn small ${t.board ? "" : "primary"}" id="lvOpen" title="In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage: play it, grade it, upscale it, grab a frame">Open as a ${vid ? "clip" : "still"}</button>
+        <a class="btn small" href="${esc(t.url)}?download=1">Download</a>
         <button class="btn small" id="lvStar">${t.starred ? "★ Starred" : "☆ Star"}</button>
         ${t.prompt ? `<button class="btn small" id="lvCopy">Copy prompt</button>` : ""}
         ${t.kind === "image" ? `<button class="btn small" id="lvUse">${boardOn() ? "Add to kit" : "Use as reference"}</button>` : ""}
@@ -1489,13 +1484,11 @@ function wire() {
   $("#genBtn").onclick = () => generate();
   $("#reelsBtn").onclick = openReels;
   $("#libBtn").onclick = openLibrary;
-  if (!STILLS) {
-    $$("#viewSeg button").forEach(b => b.onclick = () => setView(b.dataset.v)); wireKit();
-    $("#footBtn").onclick = () => pickFootage(async f => {
-      const r = await importFootage(f, null);
-      if (r) { select(r.take.id); toast(`In the reel as shot ${r.take.shot}. Change it, extend it or lead into it with the buttons under the picture.`); }
-    });
-  }
+  $$("#viewSeg button").forEach(b => b.onclick = () => setView(b.dataset.v)); wireKit();
+  $("#footBtn").onclick = () => pickFootage(async f => {
+    const r = await importFootage(f, null);
+    if (r) { select(r.take.id); toast(`In the reel as shot ${r.take.shot}. Change it, extend it or lead into it with the buttons under the picture.`); }
+  });
   $("#newReelBtn").onclick = newReel;
   $("#inspBtn").onclick = () => $("#main").classList.toggle("noinspector");
   let nameT = null;
@@ -1548,162 +1541,6 @@ async function loadCredits(fresh) {
 }
 const creditsSoon = () => { clearTimeout(creditsT); creditsT = setTimeout(() => loadCredits(true), 2500); };
 
-// ── Content Generator: prompts from a reference image, or a folder ─────
-// GPT-4o reads the reference and writes N prompts at the chosen variation;
-// they run as one shot, one take each. A folder runs that per image, with at
-// most THROTTLE takes rendering at once so a big folder doesn't flood the provider.
-const REF = { file: null, files: [], style: "photography", n: 4, prompts: [], busy: false, stop: false };
-const THROTTLE = 8;
-const IMG_RE = /\.(jpe?g|png|webp)$/i;
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-// a camera original can be 20 MB; the model only needs to see it
-function shrink(file, max = 1536) {
-  return new Promise(res => {
-    const img = new Image();
-    img.onload = () => {
-      const k = Math.min(1, max / Math.max(img.width, img.height));
-      const c = document.createElement("canvas");
-      c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-      c.getContext("2d").drawImage(img, 0, 0, c.width, c.height);
-      URL.revokeObjectURL(img.src);
-      c.toBlob(b => res(b || file), "image/jpeg", 0.9);
-    };
-    img.onerror = () => res(file);
-    img.src = URL.createObjectURL(file);
-  });
-}
-async function writePrompts(file) {
-  const blob = await shrink(file);
-  for (let attempt = 0; attempt < 3; attempt++) {
-    if (attempt) await sleep(attempt * 4000);
-    const fd = new FormData();
-    fd.append("file", blob, "reference.jpg");
-    fd.append("image_style", REF.style);
-    fd.append("num_variants", REF.n);
-    fd.append("variation_level", $("#refVar").value);
-    const notes = $("#refNotes").value.trim();
-    if (notes) fd.append("user_notes", notes);
-    try {
-      const r = await (await fetch(`${API}/prompt-variants`, { method: "POST", body: fd })).json();
-      const ps = (r.prompts || []).filter(Boolean);
-      if (!r.error && ps.length) return ps.map((p, i) => ({ scene: p, negative_prompt: (r.negative_prompts || [])[i] || "" }));
-    } catch (e) { /* retried below */ }
-  }
-  return null;
-}
-function refPrice(n) {
-  const m = model();
-  return m && m.price != null ? ` · ≈ ${fmtUSD(m.price * n)}` : "";
-}
-function renderRef() {
-  const many = REF.files.length;
-  $("#refWrite").disabled = REF.busy || (!REF.file && !many);
-  $("#refWrite").textContent = many ? `Run ${many} image${many > 1 ? "s" : ""} × ${REF.n}` : `Write ${REF.n} prompt${REF.n > 1 ? "s" : ""}`;
-  $("#refStop").classList.toggle("hidden", !REF.busy);
-  $("#rnN").textContent = REF.n;
-  $("#refVarV").textContent = $("#refVar").value;
-  $$("#refStyle button").forEach(b => b.classList.toggle("on", b.dataset.s === REF.style));
-  if (!REF.busy && many) $("#refStatus").textContent = `${many * REF.n} images${refPrice(many * REF.n)}`;
-}
-function setRefFiles(list, label) {
-  const files = Array.from(list || []).filter(f => IMG_RE.test(f.name)).sort((a, b) => a.name.localeCompare(b.name));
-  if (!files.length) return toast("No JPEG, PNG or WebP images there.", true);
-  REF.prompts = []; renderRefList();
-  if (files.length === 1 && !label) { REF.file = files[0]; REF.files = []; }
-  else { REF.file = null; REF.files = files; }
-  $("#refThumb").style.backgroundImage = `url('${URL.createObjectURL(files[0])}')`;
-  $("#refThumb").classList.add("has");
-  $("#refName").textContent = label ? `${label} · ${files.length} image${files.length > 1 ? "s" : ""}` : files[0].name;
-  $("#refSub").textContent = files.length > 1 ? `${REF.n} prompt${REF.n > 1 ? "s" : ""} each, one shot per image` : "GPT-4o writes the prompts from this";
-  $("#refStatus").textContent = "";
-  renderRef();
-}
-function renderRefList() {
-  const el = $("#refList");
-  if (!REF.prompts.length) { el.innerHTML = ""; return; }
-  el.innerHTML = REF.prompts.map((p, i) => `<div class="rp"><span class="n">${i + 1}</span><textarea class="field" data-i="${i}">${esc(p.scene)}</textarea>
-      <div style="display:flex;flex-direction:column;gap:4px"><button class="btn small x" data-x="${i}" title="Drop this prompt">✕</button><button class="btn small" data-use="${i}" title="Put this prompt in the Scene box">Use</button></div></div>`).join("")
-    + `<div class="rpfoot"><button class="btn primary" id="refGen">Generate ${REF.prompts.length}</button><span class="hint">${esc((model() || {}).label || "")}${refPrice(REF.prompts.length)}</span><span style="flex:1"></span><button class="btn small" id="refClear">Clear</button></div>`;
-  $$("textarea[data-i]", el).forEach(t => t.oninput = () => { REF.prompts[+t.dataset.i].scene = t.value; });
-  $$("[data-x]", el).forEach(b => b.onclick = () => { REF.prompts.splice(+b.dataset.x, 1); renderRefList(); });
-  $$("[data-use]", el).forEach(b => b.onclick = () => {
-    const p = REF.prompts[+b.dataset.use];
-    S.scene = p.scene; $("#scene").value = p.scene;
-    if (p.negative_prompt && caps().negative) { S.negative = p.negative_prompt; $("#neg").value = S.negative; }
-    onShotChange(); toast("In the Scene box. Direct it, then Generate.");
-  });
-  $("#refClear").onclick = () => { REF.prompts = []; renderRefList(); };
-  $("#refGen").onclick = () => runPrompts(REF.prompts.filter(p => p.scene.trim()));
-}
-async function runPrompts(prompts) {
-  if (!prompts.length) return false;
-  const why = blockReason();
-  if (why) { toast(why, true); return false; }
-  await generate({ prompts, models: [model().id], prompt_override: null, takes: prompts.length });
-  return true;
-}
-async function refreshTakes() {
-  const r = await api(`/reels/${S.reel.id}`);
-  if (!r.error) { S.takes = r.takes; renderStrip(); }
-}
-async function runFolder() {
-  const files = REF.files.slice(), n = files.length;
-  let sent = 0, ok = 0;
-  REF.busy = true; REF.stop = false; renderRef();
-  await ensureReel();
-  for (let i = 0; i < n && !REF.stop; i++) {
-    const f = files[i];
-    $("#refThumb").style.backgroundImage = `url('${URL.createObjectURL(f)}')`;
-    $("#refStatus").textContent = `${i + 1}/${n} · ${f.name} · writing prompts…`;
-    const prompts = await writePrompts(f);
-    if (REF.stop) break;
-    if (!prompts) { toast(`${f.name}: no prompts after 3 tries — skipped.`, true); continue; }
-    // keep at most THROTTLE takes rendering before sending more
-    for (;;) {
-      const busy = S.takes.filter(t => t.status === "running" || t.status === "queued").length;
-      if (busy + prompts.length <= Math.max(THROTTLE, prompts.length) || REF.stop) break;
-      $("#refStatus").textContent = `${i + 1}/${n} · ${f.name} · waiting for ${busy} take${busy > 1 ? "s" : ""} to finish…`;
-      await sleep(3000); await refreshTakes();
-    }
-    if (REF.stop) break;
-    if (await runPrompts(prompts)) { ok++; sent += prompts.length; }
-  }
-  REF.busy = false; renderRef();
-  $("#refStatus").textContent = `${REF.stop ? "Stopped" : "Done"} · ${sent} prompt${sent === 1 ? "" : "s"} sent from ${ok} of ${n} image${n > 1 ? "s" : ""}.`;
-}
-function wireReference() {
-  const drop = $("#refDrop");
-  $("#refPickImg").onclick = () => $("#refImg").click();
-  $("#refPickFolder").onclick = () => $("#refFolder").click();
-  $("#refImg").onchange = e => setRefFiles(e.target.files);
-  $("#refFolder").onchange = e => {
-    const fs = e.target.files;
-    setRefFiles(fs, fs.length && fs[0].webkitRelativePath ? fs[0].webkitRelativePath.split("/")[0] : "Folder");
-  };
-  drop.ondragover = e => { if (!e.dataTransfer.types.includes("text/take")) { e.preventDefault(); drop.classList.add("over"); } };
-  drop.ondragleave = () => drop.classList.remove("over");
-  drop.ondrop = e => { drop.classList.remove("over"); if (e.dataTransfer.files.length) { e.preventDefault(); setRefFiles(e.dataTransfer.files, e.dataTransfer.files.length > 1 ? "Dropped" : ""); } };
-  $$("#refStyle button").forEach(b => b.onclick = () => { REF.style = b.dataset.s; renderRef(); });
-  $("#rnMinus").onclick = () => { REF.n = Math.max(1, REF.n - 1); renderRef(); };
-  $("#rnPlus").onclick = () => { REF.n = Math.min(20, REF.n + 1); renderRef(); };
-  $("#refVar").oninput = renderRef;
-  $("#refStop").onclick = () => { REF.stop = true; $("#refStatus").textContent = "Stopping after this image…"; };
-  $("#refWrite").onclick = async () => {
-    if (REF.files.length) return runFolder();
-    REF.busy = true; renderRef(); $("#refStatus").textContent = `Writing ${REF.n} prompt${REF.n > 1 ? "s" : ""}…`;
-    const ps = await writePrompts(REF.file);
-    REF.busy = false; renderRef();
-    if (!ps) { $("#refStatus").textContent = ""; return toast("Couldn't write prompts from that image — try again.", true); }
-    REF.prompts = ps; $("#refStatus").textContent = `${ps.length} prompt${ps.length > 1 ? "s" : ""} — edit, drop or use any, then Generate.`;
-    renderRefList();
-  };
-  if ($("#dlSize")) {
-    $("#dlSize").value = String(LS.get("dlSize", 0));
-    $("#dlSize").onchange = () => { LS.set("dlSize", dlSize()); renderStrip(); updateStitch(); };
-  }
-  renderRef();
-}
-
 // ── board: a spot, shot by shot ────────────────────────────────────────
 // A TV spot is a fixed pipeline, not a graph: brief → shot list → keyframes →
 // clips → the cut. The board keeps what must stay the same across shots — the
@@ -1712,7 +1549,7 @@ function wireReference() {
 // so everything the Shot view can do (upscale, grab a frame, edit) still works.
 let B = null;                     // this reel's board; null while unread, so nothing saves over it
 let boardT = null, boardDirty = false;
-const boardOn = () => !STILLS && $("#main").classList.contains("boardview");
+const boardOn = () => $("#main").classList.contains("boardview");
 const rid = () => Math.random().toString(36).slice(2, 10);
 const fmtSec = s => { s = Math.round(Math.max(0, +s || 0) * 10) / 10; const m = Math.floor(s / 60), r = Math.round((s - m * 60) * 10) / 10;
   return `${m}:${r < 10 ? "0" : ""}${Number.isInteger(r) ? r : r.toFixed(1)}`; };
@@ -1820,7 +1657,6 @@ async function retryBoard(id, n) {
 
 // ── board: the kit ─────────────────────────────────────────────────────
 function renderKit() {
-  if (STILLS) return;
   const els = B ? B.elements : [];
   $("#kitList").innerHTML = els.length ? els.map(e => `<div class="kit" data-e="${e.id}"><span class="kt" style="background-image:url('${esc(elThumb(e))}')"></span>
       <input class="field" value="${esc(e.name)}" placeholder="Name — e.g. Maya" aria-label="Name">
@@ -1886,14 +1722,12 @@ function wireKit() {
 
 // ── board: rendering ───────────────────────────────────────────────────
 function renderBoardModels() {
-  if (STILLS) return;
   const row = (kind, m, label) => `<button class="mrow" data-k="${kind}" type="button">${m ? logo(m) : ""}<span><span class="rt">${label}</span><br>
     <span class="mname">${esc(m ? m.label : "None")}</span><br><span class="mmeta">${m ? esc(modelMeta(m)) : ""}</span></span><span class="chev">▾</span></button>`;
   $("#bModels").innerHTML = row("image", keyModel(), "Keyframes") + row("video", clipModel(), "Clips");
   $$("#bModels .mrow").forEach(b => b.onclick = () => { S.mode = b.dataset.k; mFilter.clear(); openModelSheet(false); });
 }
 function renderBoard() {
-  if (STILLS) return;
   const el = $("#board");
   if (!B) { el.innerHTML = `<div class="bempty"><b>Reading the board…</b></div>`; return; }
   const durs = clipDurations();
@@ -2379,7 +2213,6 @@ async function planSpot(auto) {
   return r;
 }
 function setView(v) {
-  if (STILLS) return;
   const on = v === "board";
   $("#main").classList.toggle("boardview", on);
   document.body.classList.toggle("boardview", on);
@@ -2399,13 +2232,13 @@ function setView(v) {
   // Video is the default since VICTOR8. A mode saved before then was the old
   // default, not a choice, so everyone lands on video once; after that the
   // mode they pick is remembered.
-  if (!STILLS && LS.get("videoDefault", false) !== true) { S.mode = "video"; LS.set("videoDefault", true); }
-  if (STILLS || !byKind("video").length) S.mode = "image";
+  if (LS.get("videoDefault", false) !== true) { S.mode = "video"; LS.set("videoDefault", true); }
+  if (!byKind("video").length) S.mode = "image";
   const m = S.mode; S.mode = null; setMode(m, true);
   $("#scene").value = S.scene; $("#neg").value = S.negative; $("#seed").value = S.seed;
   if (!byKind("video").length) $("#modeVideo").disabled = true;
-  wire(); if (STILLS) wireReference();
-  if (!STILLS) { B = newBoard(); setView(LS.get("view", "shot")); }
+  wire();
+  B = newBoard(); setView(LS.get("view", "shot"));
   onShotChange(); renderStrip(); renderStage();
   const saved = LS.get("reel", null);
   if (saved) await loadReel(saved);

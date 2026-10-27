@@ -167,6 +167,9 @@ def main():
         cost = tab.js("$('#costline').textContent")
         check("takes stepper prices the shot", "2 takes" in cost and "$0.00" not in cost.replace("$0.00", "$0.00", 0) and not cost.endswith("$0.000"), cost)
         tab.js("$('#tMinus').click(); 1")
+        tab.js("for (let i = 0; i < 8; i++) $('#tPlus').click(); 1")
+        check("takes stop at four (no batch page)", tab.js("S.ntakes") == 4, tab.js("S.ntakes"))
+        tab.js("for (let i = 0; i < 8; i++) $('#tMinus').click(); 1")
 
         # camera popover: pick 85mm + 16mm film
         tab.js("$('#shotlist .row[data-g=camera]').click(); 1")
@@ -434,7 +437,7 @@ def main():
         tab.js("$('#libBtn').click(); 1")
         time.sleep(0.8)
         check("library opens on your takes", tab.js("!$('#libSheet').classList.contains('hidden') && $$('#libSheet .lc').length") == 3
-              and tab.js("_libq[0].who") == "mine" and tab.js("_libq[0].app") == "studio", tab.js("_libq[0]"))
+              and tab.js("_libq[0].who") == "mine" and tab.js("_libq[0].app") is None, tab.js("_libq[0]"))
         check("library groups by day", tab.js("$$('#libSheet .libday').map(e => e.textContent)") == ["Today", "Yesterday"],
               tab.js("$$('#libSheet .libday').map(e => e.textContent)"))
         check("library tabs carry counts", tab.js("$('#libWho [data-w=all] i').textContent.trim()") == "5"
@@ -805,68 +808,9 @@ def main():
               all(a in acts for a in ("Change clip", "Lead into it")) and ("Extend clip" in acts) == tab.js("!!defaultExtend()"), acts)
         tab.js("window.fetch = window._ff; upload = window._upl; newReel(); localStorage.removeItem('studio.view'); localStorage.removeItem('studio.reel'); 1")
 
-        # ── the Content Generator: same page, stills only, batch tools ───────
-        tab.call("Page.navigate", url=f"{BASE}/studio/stills")
-        time.sleep(3)
-        tab.js("localStorage.clear(); 1")
-        tab.call("Page.reload")
-        time.sleep(3)
-        check("cg: titled, stills only", tab.js("document.title").startswith("Content Generator") and tab.js("STILLS") is True
-              and tab.js("S.mode") == "image" and tab.js("$('.seg.big').classList.contains('hidden')"))
-        check("cg: every model is a still model", tab.js("MODELS.every(m => m.kind === 'image' || m.kind === 'upscale')")
-              and tab.js("byKind('image').length") > 50, tab.js("byKind('image').length"))
-        check("cg: plain, undirected by default", tab.js("S.pmode") == "plain"
-              and tab.js("Object.values(S.direction).every(v => v === 'auto')"))
-        tab.js("const s=$('#scene'); s.value='A red tractor in a wheat field.'; s.dispatchEvent(new Event('input')); 1")
-        time.sleep(0.8)
-        check("cg: the prompt is exactly what you wrote", tab.js("$('#segs').textContent.trim()") == "A red tractor in a wheat field.",
-              tab.js("$('#segs').textContent"))
-        check("cg: keeps its own storage", tab.js("Object.keys(localStorage).every(k => !k.startsWith('studio.'))")
-              and tab.js("Object.keys(localStorage).some(k => k.startsWith('cg.'))"))
-        tab.js("$('#modelBtn').click(); 1"); time.sleep(0.3)
-        check("cg: no video tab in the picker", not tab.js("!!$('#mKind')"))
-        tab.js("closePop(); 1")
-        tab.js("for (let i = 0; i < 25; i++) $('#tPlus').click(); 1")
-        check("cg: batches up to 20", tab.js("S.ntakes") == 20 and "Images" in tab.js("$('#fmt').textContent"),
-              tab.js("S.ntakes"))
-        tab.js("$('#tMinus').click(); 1")
-        # stub the network: prompts from GPT-4o and every /run — nothing is generated or spent
-        tab.js("""window._fetch = window.fetch; window._runs = [];
-          window.fetch = async (u, o) => {
-            const j = d => new Response(JSON.stringify(d), {headers: {'Content-Type': 'application/json'}});
-            u = String(u);
-            if (u.includes('prompt-variants')) return j({prompts: ['P one', 'P two', 'P three', 'P four'], negative_prompts: ['n1', 'n2', 'n3', 'n4']});
-            if (u.endsWith('/reels') && o && o.method === 'POST') return j({id: 'cgtest00', name: 'Test', app: 'cg'});
-            if (u.endsWith('/run')) { const b = JSON.parse(o.body); window._runs.push(b);
-              return j({shot: _runs.length, takes: b.prompts.map((p, i) => ({id: `00000000000${_runs.length}${i}-run${i}`, reel: 'cgtest00', shot: _runs.length, letter: 'ABCD'[i], kind: 'image', status: 'done', label: 'x', prompt: p.scene}))}); }
-            if (u.includes('/reels/cgtest00')) return j({reel: {id: 'cgtest00', name: 'Test'}, takes: S.takes});
-            return window._fetch(u, o);
-          }; 1""")
-        tab.js("setRefFiles([new File([new Uint8Array([255,216,255])], 'ref.jpg', {type: 'image/jpeg'})]); 1")
-        check("cg: a reference arms Write prompts", not tab.js("$('#refWrite').disabled") and tab.js("$('#refWrite').textContent") == "Write 4 prompts")
-        tab.js("$('#refWrite').click(); 1")
-        time.sleep(1.5)
-        check("cg: prompts come back editable", tab.js("$$('#refList textarea').length") == 4, tab.js("$$('#refList textarea').length"))
-        tab.js("$('#refList [data-x=\"3\"]').click(); const t = $('#refList textarea'); t.value = 'P one, edited'; t.dispatchEvent(new Event('input')); 1")
-        tab.shot("10-cg-prompts")
-        tab.js("$('#refGen').click(); 1")
-        time.sleep(1)
-        run = tab.js("window._runs[0]")
-        check("cg: Generate sends the batch as one shot", run and [p["scene"] for p in run["prompts"]] == ["P one, edited", "P two", "P three"]
-              and run["prompts"][1]["negative_prompt"] == "n2" and run["models"] == [run["model"]] and run.get("prompt_override") is None, run)
-        tab.js("setRefFiles([1, 2].map(i => new File([new Uint8Array([255,216,255])], `img${i}.jpg`, {type: 'image/jpeg'})), 'Shoot'); 1")
-        check("cg: a folder becomes a batch", tab.js("$('#refWrite').textContent") == "Run 2 images × 4" and "Shoot · 2 images" in tab.js("$('#refName').textContent"))
-        tab.js("$('#refWrite').click(); 1")
-        time.sleep(3)
-        check("cg: one shot per image, its prompts each", tab.js("window._runs.length") == 3 and tab.js("window._runs[2].prompts.length") == 4
-              and "Done" in tab.js("$('#refStatus').textContent"), tab.js("$('#refStatus').textContent"))
-        tab.js("$('#dlSize').value = '4000'; $('#dlSize').dispatchEvent(new Event('change')); 1")
-        check("cg: downloads at the chosen size", "size=4000" in tab.js("$('#dlAll').href"), tab.js("$('#dlAll').href"))
-        tab.shot("11-cg")
-        tab.shot("12-cg-phone", w=390, h=844)
-        check("cg: no sideways scroll on a phone", tab.js("document.documentElement.scrollWidth - window.innerWidth") <= 1)
-        tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
-        tab.js("window.fetch = window._fetch; localStorage.clear(); 1")
+        # ── no Content Generator: Gobo is the studio, without a batch stills page ──
+        check("no Content Generator: no link, no page", "Content Generator" not in tab.js("document.body.textContent")
+              and tab.js("fetch('/studio/stills').then(r => r.status)") == 404)
 
         # ── the guide: every feature, searchable ───────────────────────────
         check("guide: linked from the header", tab.js("$('#guideBtn').getAttribute('href')") == "/studio/guide")
@@ -1108,40 +1052,47 @@ def main():
           return {copied: !!c, graded: !!c && S.takes.some(t => t.action === 'grade' && t.parent === c.id && (t.look || {}).cdl)}; })())"""))
         check("match: a take from another reel is copied in, then matched and graded here", got == {"copied": True, "graded": True},
               [got, tab.js("$('#gMatchOut').textContent")])
-        # ── Open in ComfyUI: the first time asks where it is, then hands it the workflow ──
-        tab.js("try { localStorage.removeItem('gobo.comfyui'); } catch (e) {} window._open0 = window.open; window._opened = []; window.open = u => { window._opened.push(u); return null; }; 1")
+        # ── Open in ComfyUI: a workflow file to drop on ComfyUI (ComfyUI turns away pages other sites send it to) ──
+        tab.js("""try { localStorage.removeItem('gobo.comfyui.steps'); } catch (e) {}
+          window._dl = []; window._cou = URL.createObjectURL;
+          URL.createObjectURL = b => { window._dlBlob = b; return window._cou(b); };
+          window._aclick = HTMLAnchorElement.prototype.click;
+          HTMLAnchorElement.prototype.click = function () {
+            if (!this.download) return window._aclick.call(this);
+            const name = this.download; window._dlBlob.text().then(t => window._dl.push({name, text: t}));
+          }; 1""")
+        dl = lambda: json.loads(tab.js("JSON.stringify(window._dl)"))
         tab.js("$('#gComfy').click(); 1"); time.sleep(0.5)
-        check("comfyui: the first time, it asks where ComfyUI is and how to add Gobo's nodes",
+        check("comfyui: the first time, it shows how to add Gobo's nodes",
               tab.js("!!$('.comfyask') && !!$('.comfyask a[href=\\'/comfyui/gobo-nodes.zip\\']')"))
         ask = tab.js("$('.comfyask .box').textContent.replace(/\\s+/g, ' ')")
-        check("comfyui: adding the nodes is three plain steps, no terminal (the pack installs what it needs)",
-              "Open Custom Nodes Folder" in ask and "a folder called gobo" in ask and "pip" not in ask
-              and tab.js("$('#caAddr').value") == "http://127.0.0.1:8000", ask)
+        check("comfyui: three plain steps, then a file to drop on ComfyUI: no address, no terminal",
+              "ComfyUI-Installs" in ask and "a folder called gobo" in ask and "File › Open" in ask and "Download the workflow" in ask
+              and "pip" not in ask and "127.0.0.1" not in ask and not tab.js("!!$('#caAddr')"), ask)
         tab.shot("37-comfyui-ask")
-        tab.js("$('#caAddr').value = 'http://127.0.0.1:8188/'; $('#caGo').click(); 1"); time.sleep(2)
-        url = tab.js("window._opened[window._opened.length - 1] || ''")
-        sent = url.split("gobo=")[1] if "gobo=" in url else ""
-        flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
-        classes = [n["class_type"] for n in flow.get("workflow", {}).values()]
-        check("comfyui: it opens a tab that hands ComfyUI the take and its look as Gobo's nodes",
-              url.startswith("/comfyui/open#to=http%3A%2F%2F127.0.0.1%3A8188&gobo=")
-              and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes, [url[:60], classes])
-        comfy_url = url
-        tab.js("document.dispatchEvent(new KeyboardEvent('keydown', {key: 'Escape'})); 1"); time.sleep(0.3)
+        tab.js("$('#caGo').click(); 1"); time.sleep(2)
+        got = dl()
+        flow = json.loads(got[0]["text"]) if got else {}
+        classes = [n["class_type"] for n in flow.values()]
+        check("comfyui: Download the workflow saves the take and its look as Gobo's nodes, in a file ComfyUI opens",
+              len(got) == 1 and got[0]["name"].endswith(".json") and got[0]["name"].startswith("Gobo")
+              and classes[:2] == ["GoboLoadTake", "GoboLook"] and "GoboGrade" in classes and "SaveVideo" in classes
+              and "Downloads" in tab.js("document.body.textContent"), [got[:1] and got[0]["name"], classes])
+        tab.js("$('#gComfy').click(); 1"); time.sleep(2)
+        check("comfyui: after the first time, it just downloads", not tab.js("!!$('.comfyask')") and len(dl()) == 2, len(dl()))
         # the shot on the panel: the Gobo Director with its scene and choices, wired to the model's own node
         tab.js("setView('shot'); setMode('video', true); S.scene = 'A ferry leaves a foggy pier.'; S.direction.shot = 'wide'; S.direction.move = 'push'; "
                "S.model.video = 'kling/kling-v3-omni'; onShotChange(); $('#shotComfy').click(); 1"); time.sleep(2)
-        url = tab.js("window._opened[window._opened.length - 1] || ''")
-        sent = url.split("gobo=")[1] if "gobo=" in url else ""
-        flow = json.loads(base64.urlsafe_b64decode(sent + "=" * (-len(sent) % 4))) if sent else {}
-        nodes = flow.get("workflow", {})
+        got = dl()
+        nodes = json.loads(got[-1]["text"]) if len(got) == 3 else {}
         d = next((n for n in nodes.values() if n["class_type"] == "GoboDirector"), {})
         k = next((n for n in nodes.values() if n["class_type"].startswith("KlingOmniPro")), {})
-        check("comfyui: the shot opens as the Gobo Director, wired to the model's own node",
+        check("comfyui: the shot comes as the Gobo Director, wired to the model's own node",
               (d.get("inputs") or {}).get("scene") == "A ferry leaves a foggy pier." and (d.get("inputs") or {}).get("shot") == "Wide"
               and (d.get("inputs") or {}).get("move") == "Push in" and isinstance((k.get("inputs") or {}).get("prompt"), list)
-              and "SaveVideo" in [n["class_type"] for n in nodes.values()], [flow.get("title"), sorted(n["class_type"] for n in nodes.values())])
-        tab.js("window.open = window._open0; 1")
+              and "SaveVideo" in [n["class_type"] for n in nodes.values()] and "Downloads" in tab.js("$('#toast').textContent"),
+              [got[-1]["name"] if got else None, sorted(n["class_type"] for n in nodes.values())])
+        tab.js("URL.createObjectURL = window._cou; HTMLAnchorElement.prototype.click = window._aclick; 1")
 
         # ── the library to a board: takes from anywhere, a card each, in film order ──
         tab.js("window._prompt = window.prompt; window.prompt = () => 'Library check'; LIB.kind = ''; LIB.starred = false; LIB.q = ''; 1")
@@ -1180,31 +1131,6 @@ def main():
         check("library: As a clip on a take in the grid puts it on the stage", not tab.js("boardOn()")
               and tab.js("S.current") == tab.js("LIB.items[0].id") and tab.js("$('#libSheet').classList.contains('hidden')"))
         tab.js("window.prompt = window._prompt; 1")
-
-        # ── Open in ComfyUI's tab waits for ComfyUI: nothing at the address yet, then it starts ──
-        import http.server, socket, threading
-        sock = socket.socket(); sock.bind(("127.0.0.1", 0)); port = sock.getsockname()[1]; sock.close()
-        tab.call("Page.navigate", url=BASE + comfy_url.replace("to=http%3A%2F%2F127.0.0.1%3A8188", f"to=http%3A%2F%2F127.0.0.1%3A{port}")); time.sleep(4.5)
-        w = json.loads(tab.js("""JSON.stringify({say: $('#say').textContent, where: $('#where').textContent, what: $('#what').textContent,
-          now: $('#now').classList.contains('go'), help: $('#help').textContent, strip: !!$('.ssbar')})"""))
-        check("comfyui tab: with nothing at the address, it waits and says how to start ComfyUI",
-              w["say"] == "Waiting for ComfyUI to start…" and w["where"] == f"http://127.0.0.1:{port}" and w["now"] and w["strip"]
-              and w["what"] and "python main.py" in w["help"], w)
-        tab.shot("38-comfyui-waiting")
-
-        class Comfy(http.server.BaseHTTPRequestHandler):
-            def do_GET(self):
-                self.send_response(200); self.send_header("Content-Type", "text/html"); self.end_headers(); self.wfile.write(b"<title>ComfyUI</title>up")
-
-            def log_message(self, *a):
-                pass
-        srv = http.server.ThreadingHTTPServer(("127.0.0.1", port), Comfy)
-        threading.Thread(target=srv.serve_forever, daemon=True).start()
-        time.sleep(3)
-        href = tab.js("location.href") or ""
-        check("comfyui tab: once ComfyUI answers, it opens there with the workflow",
-              href.startswith(f"http://127.0.0.1:{port}/#gobo=") and href.split("gobo=")[1] == comfy_url.split("gobo=")[1], href[:90])
-        srv.shutdown()
 
         check("no script errors", not tab.errors, tab.errors[:3])
     finally:

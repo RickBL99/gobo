@@ -3,7 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>{% if stills %}Content Generator · Gobo{% else %}Gobo{% endif %}</title>
+<title>Gobo</title>
+{% include "_og.html" %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap">
@@ -26,7 +27,6 @@ a { color: var(--blue); }
 header { display: flex; align-items: center; gap: 12px; padding: 10px 18px;
   border-bottom: 1px solid var(--line); position: sticky; top: 0; z-index: 30;
   background: rgba(11,11,13,.92); backdrop-filter: blur(8px); flex-wrap: wrap; }
-header .back { color: var(--muted); text-decoration: none; font-size: .85rem; }
 /* Home: the studio's home page */
 .homebtn { display: inline-flex; align-items: center; gap: 6px; background: #2d6cdf; color: #fff;
   border-radius: 8px; padding: 5px 11px; font-size: .82rem; font-weight: 600; text-decoration: none; white-space: nowrap; }
@@ -229,29 +229,6 @@ details.adv[open] summary { margin-bottom: 8px; }
   background: var(--accent); color: var(--accent-ink); font-weight: 800; font-size: .8rem; display: grid; place-items: center; box-shadow: 0 2px 8px rgba(0,0,0,.5); }
 #stitchHint { color: var(--accent); }
 a.btn, a.chipbtn { text-decoration: none; }
-#dlSize { width: auto; padding: 4px 26px 4px 8px; font-size: .74rem; }
-/* ── Content Generator: from a reference ─────────────────────────────── */
-.refdrop { display: flex; align-items: center; gap: 10px; border: 1.5px dashed var(--line2); border-radius: 12px; padding: 10px; transition: border-color .15s, background .15s; }
-.refdrop.over { border-color: var(--accent); background: rgba(242,193,78,.06); }
-.refthumb { width: 52px; height: 52px; border-radius: 8px; background: var(--panel2) center/cover no-repeat; flex: none; display: grid; place-items: center; color: var(--dim); font-size: 1.2rem; }
-.refthumb:not(.has)::after { content: "＋"; }
-.refwhat { flex: 1; min-width: 0; }
-.refwhat b { display: block; font-size: .84rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.refwhat small { color: var(--dim); font-size: .72rem; }
-.refbtns { display: flex; gap: 6px; }
-.refopts { display: flex; align-items: center; gap: 10px; margin: 10px 0 8px; flex-wrap: wrap; }
-.refn { display: inline-flex; align-items: center; gap: 8px; font-size: .78rem; color: var(--muted); margin-left: auto; }
-.refvar { display: flex; flex-direction: column; gap: 4px; font-size: .76rem; color: var(--muted); margin-bottom: 8px; }
-.refvar input { width: 100%; accent-color: var(--accent); }
-.refgo { display: flex; align-items: center; gap: 8px; margin-top: 8px; flex-wrap: wrap; }
-.refgo .hint { flex: 1; min-width: 120px; }
-#refList { display: flex; flex-direction: column; gap: 6px; margin-top: 10px; }
-.rp { display: flex; gap: 6px; align-items: flex-start; }
-.rp .n { font-size: .7rem; font-weight: 800; color: var(--dim); width: 16px; padding-top: 7px; text-align: right; flex: none; }
-.rp textarea { flex: 1; min-height: 58px; font-size: .78rem; line-height: 1.35; resize: vertical; }
-.rp .x { flex: none; }
-.rpfoot { display: flex; gap: 8px; align-items: center; margin-top: 4px; }
-.refn .stepper { width: 96px; }
 .tk .mini { position: absolute; left: 0; right: 0; bottom: 0; height: 3px; background: rgba(255,255,255,.08); }
 .tk .mini i { display: block; height: 100%; background: var(--accent); width: 30%; animation: indet 1.4s ease-in-out infinite; }
 @keyframes indet { 0% { margin-left: -30%; } 100% { margin-left: 100%; } }
@@ -489,7 +466,6 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
 .libmore { display: flex; justify-content: center; padding: 16px 0 4px; }
 .libfoot { border-top: 1px solid var(--line); padding: 10px 16px; display: flex; gap: 8px; align-items: center; background: #17171b; flex-wrap: wrap; }
 .libfoot .grow { flex: 1; }
-#libSize { width: auto; padding: 4px 26px 4px 8px; font-size: .74rem; }
 /* the viewer: one take, big, with what made it */
 .libview { position: absolute; inset: 0; background: rgba(8,8,10,.97); display: grid; grid-template-columns: minmax(0, 1fr) 330px; grid-template-rows: minmax(0, 1fr); z-index: 2; }
 .libview .vm { position: relative; padding: 18px; min-height: 0; }
@@ -555,21 +531,12 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
 {% include "_superstock.html" %}
 <header>
   <a class="homebtn" href="{{ '/home' if front == 'director' else '/' }}" title="Home: every tool"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3 2 11.5h3V21h5.5v-6h3v6H19v-9.5h3z"/></svg>Home</a>
-{% if stills %}
-  <h1>Content Generator<span class="pill">Stills</span></h1>
-  <input class="reelname" id="reelName" value="Untitled session" aria-label="Session name" maxlength="80">
-{% else %}
-  <a class="back" href="{{ api }}/stills">&larr; Content Generator</a>
   <h1>Gobo<span class="pill">Beta</span></h1>
   <input class="reelname" id="reelName" value="Untitled reel" aria-label="Reel name" maxlength="80">
-{% endif %}
-  <button class="chipbtn" id="libBtn" title="Everything you've made, across every {% if stills %}session{% else %}reel{% endif %}">Library</button>
-  <button class="chipbtn" id="reelsBtn">{% if stills %}Sessions{% else %}Reels{% endif %}</button>
-  <button class="chipbtn" id="newReelBtn">{% if stills %}New session{% else %}New reel{% endif %}</button>
+  <button class="chipbtn" id="libBtn" title="Everything you've made, across every reel">Library</button>
+  <button class="chipbtn" id="reelsBtn">Reels</button>
+  <button class="chipbtn" id="newReelBtn">New reel</button>
   <span class="grow"></span>
-{% if stills %}
-  <a class="chipbtn" href="{{ api }}" title="Video, camera moves and the full cinematic toolset">🎬 Studio</a>
-{% endif %}
   <a class="chipbtn" href="{{ api }}/guide" target="_blank" rel="noopener" title="How everything works: searchable" id="guideBtn">Guide</a>
   <a class="chipbtn" href="/about" target="_blank" rel="noopener" title="Who made Gobo, why, and how it's built">About</a>
   <span id="credits"></span>
@@ -580,7 +547,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
   <!-- ── settings ──────────────────────────────────────────────────── -->
   <aside id="panel" aria-label="Shot settings">
     <!-- the first choice, so nobody shoots stills while expecting a movie -->
-    <div class="seg big {% if stills %}hidden{% endif %}" role="tablist" aria-label="What to make">
+    <div class="seg big" role="tablist" aria-label="What to make">
       <button id="modeImage" role="tab">🖼&nbsp; Still image</button>
       <button id="modeVideo" class="on" role="tab">🎬&nbsp; Video clip</button>
     </div>
@@ -590,7 +557,6 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
       <div class="bmodels" id="bModels"></div>
       <div class="shootout hidden" id="shootChips"></div>
     </section>
-{% if not stills %}
     <!-- a spot's kit: what stays the same in every shot -->
     <section class="card" id="kitCard">
       <p class="sectitle">Kit <span class="r hint">the same in every shot</span></p>
@@ -602,7 +568,6 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
         <span class="hint">Each shot runs on this plus its number, so a retake repeats it. The faces and products come from the kit, not the seed.</span>
       </div>
     </section>
-{% endif %}
 
     <section class="card" id="sceneCard">
       <p class="sectitle">Scene <span class="r hint" id="sceneHint"></span></p>
@@ -619,27 +584,6 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
       </div>
     </section>
 
-{% if stills %}
-    <!-- Content Generator: prompts written from a reference image, or a whole folder of them -->
-    <section class="card" id="refCard">
-      <p class="sectitle">From a reference <span class="r hint">GPT-4o writes the prompts</span></p>
-      <div class="refdrop" id="refDrop">
-        <input type="file" id="refImg" accept="image/jpeg,image/png,image/webp" hidden>
-        <input type="file" id="refFolder" webkitdirectory multiple hidden>
-        <div class="refthumb" id="refThumb"></div>
-        <div class="refwhat"><b id="refName">Drop an image here</b><small id="refSub">or pick one, or a whole folder to batch</small></div>
-        <div class="refbtns"><button class="btn small" id="refPickImg">Image</button><button class="btn small" id="refPickFolder">Folder</button></div>
-      </div>
-      <div class="refopts">
-        <div class="seg" id="refStyle" aria-label="Reference style"><button data-s="photography" class="on">Photo</button><button data-s="illustration">Illustration</button></div>
-        <label class="refn">Prompts <span class="stepper"><button id="rnMinus" aria-label="Fewer">−</button><span id="rnN">4</span><button id="rnPlus" aria-label="More">+</button></span></label>
-      </div>
-      <label class="refvar"><span>Variation <b id="refVarV">5</b>/10</span><input type="range" id="refVar" min="1" max="10" value="5"></label>
-      <textarea id="refNotes" class="field" rows="2" placeholder="Art direction for every prompt (optional) — e.g. diverse cast, winter light, no text"></textarea>
-      <div class="refgo"><button class="btn primary" id="refWrite" disabled>Write prompts</button><button class="btn hidden" id="refStop">Stop</button><span class="hint" id="refStatus"></span></div>
-      <div id="refList"></div>
-    </section>
-{% endif %}
     <section class="card">
       <p class="sectitle">Shot <span class="r"><button class="btn small ghost" id="resetDir" title="Back to the default look">Reset</button></span></p>
       <div id="shotlist"></div>
@@ -675,13 +619,11 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
 
   <!-- ── stage ─────────────────────────────────────────────────────── -->
   <div id="stagewrap">
-{% if not stills %}
     <div class="viewbar">
       <div class="seg" id="viewSeg" role="tablist" aria-label="View"><button data-v="shot" role="tab">Shot</button><button data-v="board" role="tab">Board</button></div>
       <span class="hint" id="viewHint"></span>
     </div>
     <div id="board" aria-label="Board"></div>
-{% endif %}
     <div id="stage">
       <div id="frame"></div>
       <div id="takebar" class="hidden"></div>
@@ -693,12 +635,10 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
         <span class="hint" id="seqCount"></span>
         <span style="flex:1"></span>
         <span class="hint hidden" id="stitchHint">Click takes to select · they stitch in the order shown</span>
-{% if not stills %}
         <button class="btn small" id="footBtn" title="Bring in a clip you shot: change it, extend it, lead into it, cut it with AI shots">＋ Footage</button>
-{% endif %}
         <button class="btn small hidden" id="clearFails">Clear failed</button>
         <button class="btn small" id="selBtn" title="Select takes to stitch, download or delete (or ⌘/Shift-click a take)">Select</button>
-        <button class="btn small {% if stills %}hidden{% endif %}" id="stitchBtn" title="Join takes into one video: clips play, stills hold">Stitch</button>
+        <button class="btn small" id="stitchBtn" title="Join takes into one video: clips play, stills hold">Stitch</button>
         <button class="btn small hidden" id="stitchAll">Select all</button>
         <label class="hint hidden" id="holdWrap">Stills hold <select class="field" id="holdSel"><option value="2">2s</option><option value="3" selected>3s</option><option value="5">5s</option><option value="8">8s</option></select></label>
         <button class="btn small primary hidden" id="stitchGo">Stitch</button>
@@ -706,12 +646,6 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
         <button class="btn small danger hidden" id="selDel">Delete</button>
         <button class="btn small hidden" id="stitchCancel">Done</button>
         <a class="btn small primary hidden" id="dlFilm" href="#" title="The video you stitched last">Download stitched</a>
-{% if stills %}
-        <select class="field" id="dlSize" title="Stills at this long side, sharpened, 300 dpi">
-          <option value="0">Original size</option><option value="2000">2K · 300 dpi</option>
-          <option value="4000">4K · 300 dpi</option><option value="8000">8K · 300 dpi</option>
-        </select>
-{% endif %}
         <a class="btn small" id="dlAll" href="#" title="Every finished take, as separate files in a zip">All takes (.zip)</a>
         <a class="btn small" id="dlStar" href="#" title="Only the takes you starred, as separate files in a zip">Starred (.zip)</a>
       </div>
@@ -732,7 +666,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
         <span><i style="background:var(--s-reference)"></i>Reference</span>
       </div>
       <div class="hint" id="directNotes" style="margin-top:8px"></div>
-      <div style="margin-top:10px"><button class="btn small" id="shotComfy" title="This shot in your own ComfyUI as Gobo's nodes: the Gobo Director with these choices, writing the prompt for this model's own node (shift-click to change where ComfyUI is)">Open in ComfyUI ↗</button></div>
+      <div style="margin-top:10px"><button class="btn small" id="shotComfy" title="This shot as a ComfyUI workflow of Gobo's nodes, to drop on ComfyUI: the Gobo Director with these choices, writing the prompt for this model's own node (shift-click: how to set it up)">Open in ComfyUI</button></div>
     </section>
     <section class="card" id="takeInfo">
       <p class="sectitle">This take</p>
@@ -760,31 +694,27 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
 const CAT = {{ catalogue|safe }};
 const MODELS = {{ models|safe }};
 const API = "{{ api }}";
-// the Content Generator: this page and engine, stills only, with the batch tools
-const STILLS = {{ 'true' if stills else 'false' }};
 // the Director (static/director.js): open on it, and whether the studio offers it at all
 const DIRECTOR = {{ 'true' if director else 'false' }};
-const DIRECTOR_ON = {{ 'true' if (director or front == 'director') and not stills else 'false' }};
+const DIRECTOR_ON = {{ 'true' if director or front == 'director' else 'false' }};
 const SIGN_IN = {{ 'true' if sign_in else 'false' }};
 const $ = (s, el) => (el || document).querySelector(s);
 const $$ = (s, el) => Array.from((el || document).querySelectorAll(s));
 const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
 const LS = {
-  // the two pages keep their own working shot and current reel
-  p: STILLS ? "cg." : "studio.",
+  p: "studio.",
   get(k, d) { try { const v = localStorage.getItem(this.p + k); return v == null ? d : JSON.parse(v); } catch (e) { return d; } },
   set(k, v) { try { localStorage.setItem(this.p + k, JSON.stringify(v)); } catch (e) {} },
 };
 
 // ── state ──────────────────────────────────────────────────────────────
 const S = {
-  mode: STILLS ? "image" : "video",
+  mode: "video",
   model: { image: null, video: null },
   shootout: { image: [], video: [] },      // extra models run on the same shot
   scene: "",
-  pmode: STILLS ? "plain" : "cinematic",    // plain | cinematic | director
-  // the Content Generator sends your prompt as written until you direct it
-  direction: STILLS ? Object.fromEntries(Object.keys(CAT.defaults).map(k => [k, "auto"])) : Object.assign({}, CAT.defaults),
+  pmode: "cinematic",    // plain | cinematic | director
+  direction: Object.assign({}, CAT.defaults),
   colors: [], mainColor: null,
   aspect: "16:9", resolution: "", ntakes: 1, duration: null, audio: false,
   refs: [],                                 // [{name,url,kind}]

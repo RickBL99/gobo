@@ -46,7 +46,7 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 router = APIRouter(prefix=PREFIX, dependencies=[Depends(_switched_on)])
 templates = Jinja2Templates(directory=os.path.join(HERE, "templates"))
 
-MAX_TAKES = 20            # stills: the Content Generator runs batches; the studio's own stepper stops at 4
+MAX_TAKES = 4             # the studio's stepper and the board's variants both stop at 4
 MAX_SHOOTOUT = 4
 MAX_REF_BYTES = 15 * 1024 * 1024
 MAX_VIDEO_BYTES = 100 * 1024 * 1024
@@ -252,22 +252,18 @@ def _who(request: Request) -> str:
 
 # ── page ────────────────────────────────────────────────────────────────────
 @router.get("", response_class=HTMLResponse)
-async def studio_page(request: Request, stills: int = 0, director: bool = False):
-    """The studio, or with stills=1 the Content Generator: the same engine and
-    page limited to still models, with the batch tools (variations, prompts
-    from a reference image or a whole folder, upsized downloads). director:
-    open on the Director (static/director.js), the one-line front door."""
+async def studio_page(request: Request, director: bool = False):
+    """The studio. director: open on the Director (static/director.js), the
+    one-line front door."""
     models = M.public_models()
-    if stills:
-        models = [m for m in models if m["kind"] in ("image", "upscale")]
     return templates.TemplateResponse(request, "studio.html", {
         "catalogue": json.dumps(D.catalogue()),
         "models": json.dumps(models),
-        "stills": bool(stills),
         "api": PREFIX,
-        "director": bool(director) and not stills,
+        "director": bool(director),
         "front": settings.FRONT,
         "sign_in": settings.sign_in_on(),
+        "visitor": settings.VISITOR_KEYS,
     })
 
 
@@ -326,8 +322,8 @@ async def direct(request: Request):
 
 # ── reels ───────────────────────────────────────────────────────────────────
 @router.get("/reels", response_class=JSONResponse)
-async def reels(app: str = ""):
-    return {"reels": [r for r in J.list_reels(app=app) if V.owns(r)]}
+async def reels():
+    return {"reels": [r for r in J.list_reels() if V.owns(r)]}
 
 
 @router.post("/reels", response_class=JSONResponse)
@@ -336,8 +332,7 @@ async def create_reel(request: Request):
         b = await request.json()
     except Exception:
         b = {}
-    app = b.get("app") if b.get("app") in ("studio", "cg") else "studio"
-    return J.new_reel(b.get("name", ""), app=app, owner=_who(request))
+    return J.new_reel(b.get("name", ""), owner=_who(request))
 
 
 @router.patch("/reels/{reel}", response_class=JSONResponse)
@@ -735,26 +730,14 @@ async def run_shot(reel: str, request: Request):
             return _err(f"{m} is not a {mode} model.")
     scene = (b.get("scene") or "").strip()
     prompt = (b.get("prompt_override") or "").strip()
-    # A batch of written prompts (variations, a folder of references): one take
-    # each, every one directed the same way, each with its own negative.
-    items = []
-    for x in (b.get("prompts") or [])[:MAX_TAKES]:
-        x = x if isinstance(x, dict) else {"scene": x}
-        if str(x.get("scene") or "").strip():
-            items.append({"scene": str(x["scene"]).strip(),
-                          "negative_prompt": str(x.get("negative_prompt") or "").strip()})
-    if items and (mode != "image" or len(models) > 1):
-        return _err("A batch of prompts runs on one still model.")
-    if not scene and not prompt and not items:
+    if not scene and not prompt:
         return _err("Write a scene first.")
-    if not prompt and not items:
+    if not prompt:
         kw = _shot_inputs(b)
         prompt = D.compile_prompt(kw.pop("scene"), kw.pop("direction"), **kw)
     takes_n = 1 if mode == "video" else max(1, min(MAX_TAKES, int(b.get("takes") or 1)))
     if len(models) > 1:
         takes_n = 1                        # a shootout is one take per model
-    if items:
-        takes_n = len(items)
     req = {
         "prompt": prompt, "negative_prompt": (b.get("negative_prompt") or "").strip(),
         "aspect": b.get("aspect") or "16:9", "resolution": b.get("resolution") or "",
@@ -811,12 +794,6 @@ async def run_shot(reel: str, request: Request):
             if m in lengths:
                 r["duration"] = lengths[m]
             p, st = prompt, settings
-            if items:
-                kw = _shot_inputs({**b, "scene": items[i]["scene"]})
-                p = D.compile_prompt(kw.pop("scene"), kw.pop("direction"), **kw)
-                r["prompt"] = p
-                r["negative_prompt"] = items[i]["negative_prompt"] or r["negative_prompt"]
-                st = {**settings, "scene": items[i]["scene"], "negative_prompt": r["negative_prompt"], "takes": 1}
             # several takes of one shot vary by seed; a locked seed is honoured
             # on take A and stepped for the rest so they still differ
             if r.get("seed") not in (None, "") and i:
@@ -1086,21 +1063,6 @@ def _deliverable(reel: str, name: str, path: str, t: Dict):
     except Exception as e:
         print(f"[studio] transcode skipped: {e}")
     return name, path, None
-
-
-def _resized_still(path: str, size: int) -> bytes:
-    """Long side = size, lightly sharpened, JPEG q95 tagged 300 dpi — what the
-    Content Generator has always delivered for filing."""
-    from PIL import ImageFilter
-    with Image.open(path) as im:
-        im = im.convert("RGB")
-        w, h = im.size
-        k = size / max(w, h)
-        im = im.resize((max(1, round(w * k)), max(1, round(h * k))), Image.Resampling.LANCZOS)
-        im = im.filter(ImageFilter.SHARPEN)
-        buf = io.BytesIO()
-        im.save(buf, "JPEG", quality=95, dpi=(300, 300))
-        return buf.getvalue()
 
 
 def _gray(path: str, at: float) -> Optional[bytes]:
@@ -1774,11 +1736,9 @@ async def delete_takes(reel: str, request: Request):
 
 
 @router.get("/reels/{reel}/download")
-async def download_reel(reel: str, starred: int = 0, takes: str = "", size: int = 0):
+async def download_reel(reel: str, starred: int = 0, takes: str = ""):
     """Every finished take as a zip — or only the starred ones, or only the
-    ones named in `takes` (the bin's selection, comma-separated). `size`
-    (2000 / 4000 / 8000) delivers stills at that long side, lightly sharpened
-    and tagged 300 dpi, ready to file; clips go as they are."""
+    ones named in `takes` (the bin's selection, comma-separated)."""
     r = _reel_or_404(reel)
     if not r:
         return _err("No such reel.", 404)
@@ -1787,18 +1747,16 @@ async def download_reel(reel: str, starred: int = 0, takes: str = "", size: int 
              and (not starred or t.get("starred")) and (not only or t["id"] in only)]
     if not takes:
         return _err("Nothing finished to download yet.")
-    buf = await run_in_threadpool(_zip_takes, [(t, "") for t in takes], size)
-    return _zip_response(buf, r.get("name", "reel"), size)
+    buf = await run_in_threadpool(_zip_takes, [(t, "") for t in takes])
+    return _zip_response(buf, r.get("name", "reel"))
 
 
 def _slug(s: str, n: int = 40) -> str:
     return "".join(c if c.isalnum() else "-" for c in s)[:n].strip("-")
 
 
-def _zip_takes(items: List[tuple], size: int) -> io.BytesIO:
-    """(take, folder) pairs as one zip, with shots.json saying what each file is.
-    `size` (2000 / 4000 / 8000) delivers stills at that long side, lightly
-    sharpened and tagged 300 dpi, ready to file; clips go as they are."""
+def _zip_takes(items: List[tuple]) -> io.BytesIO:
+    """(take, folder) pairs as one zip, with shots.json saying what each file is."""
     buf = io.BytesIO()
     with zipfile.ZipFile(buf, "w", zipfile.ZIP_DEFLATED) as z:
         manifest = []
@@ -1807,11 +1765,7 @@ def _zip_takes(items: List[tuple], size: int) -> io.BytesIO:
             if not os.path.exists(p):
                 continue
             name = t["file"]
-            if size in (2000, 4000, 8000) and t.get("kind") == "image":
-                name = os.path.splitext(name)[0] + ".jpg"
-                z.writestr(folder + name, _resized_still(p, size))
-            else:
-                z.write(p, folder + name)
+            z.write(p, folder + name)
             manifest.append({"file": folder + name, **{k: t.get(k) for k in (
                 "shot", "letter", "kind", "label", "model", "prompt", "aspect", "action")}})
         z.writestr("shots.json", json.dumps(manifest, indent=2))
@@ -1819,10 +1773,8 @@ def _zip_takes(items: List[tuple], size: int) -> io.BytesIO:
     return buf
 
 
-def _zip_response(buf: io.BytesIO, name: str, size: int) -> StreamingResponse:
+def _zip_response(buf: io.BytesIO, name: str) -> StreamingResponse:
     safe = _slug(name) or "reel"
-    if size in (2000, 4000, 8000):
-        safe += f"-{size // 1000}k"
     return StreamingResponse(buf, media_type="application/zip",
                              headers={"Content-Disposition": f'attachment; filename="{safe}.zip"'})
 
@@ -1835,10 +1787,10 @@ LIB_PAGE = 60
 
 
 @router.get("/library", response_class=JSONResponse)
-async def library(request: Request, app: str = "studio", who: str = "mine", kind: str = "",
+async def library(request: Request, who: str = "mine", kind: str = "",
                   starred: int = 0, q: str = "", offset: int = 0, limit: int = LIB_PAGE):
     me = _who(request)
-    every = await run_in_threadpool(J.library, app if app in ("studio", "cg") else "studio")
+    every = await run_in_threadpool(J.library)
     if V.on():                                   # the demo: a visitor's library is only their own
         every = [t for t in every if t["owner"] == me]
     mine = [t for t in every if me and t["owner"] == me]
@@ -2014,7 +1966,7 @@ async def library_to_board(request: Request):
         return _err("Nothing finished to put on a board.")
     picked.sort(key=lambda p: (first[p[0]], p[0], p[1], p[2].get("created", 0)))
     if tr is None:
-        tr = J.new_reel(str(b.get("name") or "").strip()[:80] or "From the library", app="studio", owner=me)
+        tr = J.new_reel(str(b.get("name") or "").strip()[:80] or "From the library", owner=me)
     rid = tr["id"]
     board = J.get_board(rid, known=bool(tr.get("board")))
     if board is None:
@@ -2053,7 +2005,7 @@ async def library_to_board(request: Request):
 
 
 @router.get("/library/download")
-async def library_download(items: str = "", size: int = 0):
+async def library_download(items: str = ""):
     """Takes from any reels as one zip, a folder per reel."""
     picked = []
     for reel, tid in _lib_pairs([x for x in items.split(",") if x][:200]):
@@ -2062,8 +2014,8 @@ async def library_download(items: str = "", size: int = 0):
             picked.append((t, f"{_slug(r.get('name') or 'reel')}-{reel[:4]}/"))
     if not picked:
         return _err("Nothing finished to download.")
-    buf = await run_in_threadpool(_zip_takes, picked, size)
-    return _zip_response(buf, "library", size)
+    buf = await run_in_threadpool(_zip_takes, picked)
+    return _zip_response(buf, "library")
 
 
 # ── the balance ─────────────────────────────────────────────────────────────

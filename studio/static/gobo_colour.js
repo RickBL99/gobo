@@ -124,7 +124,7 @@ body.colouropen { overflow: hidden; }
     <button class="btn small" id="cCube" title="Everything here but grain, halation and the vignette, as one LUT for Resolve, Premiere or Final Cut">Download .cube</button>
     <button class="btn small" id="cStill">Download graded still</button><span style="flex:1"></span>
     <button class="btn small" id="cMatch" title="An extension, another angle, a retake: matched to this take's colour, then given this grade">Grade others to match</button>
-    <button class="btn small" id="cComfy" title="Your ComfyUI, with this take and its look as Gobo's own nodes (shift-click: change where it is)">Open in ComfyUI</button>
+    <button class="btn small" id="cComfy" title="This take and its look as a ComfyUI workflow of Gobo's own nodes, to drop on ComfyUI (shift-click: how to set it up)">Open in ComfyUI</button>
     <span class="hint" id="cNote"></span><button class="btn small" id="cDone">Done</button></footer>`;
   document.body.appendChild(el);
 

@@ -9,6 +9,7 @@
 <link rel="apple-touch-icon" href="/static/icons/icon-180.png">
 <link rel="manifest" href="/static/icons/site.webmanifest">
 <meta name="theme-color" content="#0b0b0d">
+{% include "_og.html" %}
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
@@ -87,7 +88,7 @@ section { max-width: 1400px; margin: 0 auto; padding: 26px clamp(16px, 4vw, 48px
 .sh { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .sh h2 { margin: 0; font-size: 1.2rem; letter-spacing: -.01em; }
 .sh a { color: var(--muted); font-size: .86rem; } .sh a:hover { color: var(--text); }
-.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 14px; }
+.tools { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; }
 .tool { position: relative; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 18px 16px;
   transition: border-color .15s, transform .12s, background .15s; overflow: hidden; }
 .tool:hover { border-color: var(--line2); background: var(--panel2); transform: translateY(-2px); }
@@ -138,7 +139,6 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
   <nav>
     <a href="{{ '/' if front == 'director' else '/direct' }}">Make a film</a>
     <a href="{{ api }}">Studio</a>
-    <a href="{{ api }}/stills">Content Generator</a>
     <a href="{{ api }}?open=board">Board</a>
     <a href="{{ api }}/guide">Guide</a>
   </nav>
@@ -205,12 +205,9 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
     <a class="tool" href="{{ api }}"><span class="arrow">&rarr;</span>
       <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 7h11a2 2 0 0 1 2 2v6a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V9a2 2 0 0 1 2-2z"/><path d="m17 10 5-3v10l-5-3"/></svg></div>
       <h3>Footage</h3><p>Bring in a clip you shot, then restyle it, swap something in it, or make it longer.</p></a>
-    <a class="tool" href="{{ api }}/stills"><span class="arrow">&rarr;</span>
-      <div class="ic"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m3 16 5-5 4 4 3-3 6 5"/><circle cx="15.5" cy="8.5" r="1.5"/></svg></div>
-      <h3>Content Generator</h3><p>Stills in batches: variations, prompts from a reference or a folder, upsized downloads.</p></a>
     <a class="tool" href="{{ api }}?open=library"><span class="arrow">&rarr;</span>
       <div class="ic"><svg viewBox="0 0 24 24"><path d="M4 4h4v16H4zM10 4h4v16h-4z"/><path d="m16 5 3.5-1 3 15.5-3.5 1z"/></svg></div>
-      <h3>Library</h3><p>Everything you've made, across every reel and session, searchable and ready to download.</p></a>
+      <h3>Library</h3><p>Everything you've made, across every reel, searchable and ready to download.</p></a>
   </div>
 </section>
 
@@ -225,7 +222,6 @@ footer { max-width: 1400px; margin: 30px auto 0; padding: 22px clamp(16px, 4vw, 
     <span class="chip {{ 'ok' if keys.comfy else 'off' }}">Comfy Router <b>{{ 'connected' if keys.comfy else 'no key' }}</b></span>
     <span class="chip {{ 'ok' if keys.claude else 'off' }}">Director · planner <b>{{ ('on' + (' via Comfy' if not keys.anthropic else '')) if keys.claude else 'no key' }}</b></span>
     <span class="chip ok">Rust <b>scrim · flag · dingle · direction</b></span>
-    <span class="chip {{ 'ok' if keys.openai or keys.claude else 'off' }}">Prompts from a reference <b>{{ 'GPT-4o' if keys.openai else ('on' if keys.claude else 'off') }}</b></span>
     <span class="chip {{ 'ok' if sign_in else 'off' }}">Sign-in <b>{{ 'on' if sign_in else 'off' }}</b></span>
   </div>
   {% if not keys.comfy %}<div class="warn">No model key: nothing can be generated. Add <code>COMFY_API_KEY</code> to <code>.env</code> (platform.comfy.org) and restart.</div>{% endif %}
@@ -253,11 +249,10 @@ const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&": "&amp;", "<": "
 (async () => {
   const box = document.getElementById("recent");
   try {
-    const get = app => fetch(`${API}/library?app=${app}&who=mine&limit=12`).then(r => r.json()).catch(() => ({items: []}));
-    const [studio, cg] = await Promise.all([get("studio"), get("cg")]);
-    const items = [...(studio.items || []), ...(cg.items || [])].sort((a, b) => (a.id < b.id ? 1 : -1)).slice(0, 12);
+    const lib = await fetch(`${API}/library?who=mine&limit=12`).then(r => r.json()).catch(() => ({items: []}));
+    const items = lib.items || [];
     if (!items.length) {
-      box.innerHTML = `<div class="empty" style="grid-column:1/-1">Nothing yet. <a href="${API}">Direct your first shot</a> or start a batch in the <a href="${API}/stills">Content Generator</a>.</div>`;
+      box.innerHTML = `<div class="empty" style="grid-column:1/-1">Nothing yet. <a href="${API}">Direct your first shot</a>.</div>`;
       return;
     }
     box.innerHTML = items.map(t => `<a class="tk" href="${esc(t.url)}" target="_blank" rel="noopener" title="${esc(t.label || t.prompt || "")}">

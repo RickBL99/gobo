@@ -7,17 +7,18 @@ and grades. They run the same Rust the Gobo app runs (`direction.wasm` and
 here is the prompt Gobo sends, and a take graded here is the grade Gobo
 showed, pixel for pixel.
 
-In Gobo, **Open in ComfyUI** (the Lab's Grade tab, or the Colour page) opens
-your ComfyUI with the take on screen and its look already laid out as these
-nodes. Change anything and queue it.
+In Gobo, **Open in ComfyUI** (the Lab's Grade tab, or the Colour page)
+downloads the take and its look as a workflow of these nodes; drop it on
+ComfyUI and it's all wired up. Change anything and run it.
 
 ## Install (once)
 
 1. Get the nodes: **Download the Gobo nodes** in Gobo (`gobo.zip`; open it
    and you have a folder called `gobo`), or the `comfyui/` folder of this repo.
-2. Put the `gobo` folder in ComfyUI's `custom_nodes` folder. In the ComfyUI
-   desktop app, **Help › Open Folder › Open Custom Nodes Folder** opens it;
-   otherwise it's `ComfyUI/custom_nodes/`.
+2. Put the `gobo` folder in ComfyUI's `custom_nodes` folder. With the Comfy
+   Desktop app it's in your home folder:
+   `~/ComfyUI-Installs/<your install's name>/ComfyUI/custom_nodes/`. A
+   ComfyUI you run yourself: `ComfyUI/custom_nodes/`.
 3. Quit ComfyUI and start it again. The first start installs the one thing
    Gobo adds, `wasmtime`, into ComfyUI's own Python (`install.py`; ComfyUI
    already has torch, numpy, PyAV and Pillow), so it takes a little longer.
@@ -27,12 +28,11 @@ Offline, or a Python that won't let it install? The console says so and gives
 the one command to run: `pip install -r custom_nodes/gobo/requirements.txt` in
 ComfyUI's Python.
 
-Gobo needs to know where your ComfyUI is: it asks the first time (the desktop
-app is usually `http://127.0.0.1:8000`, a ComfyUI you run yourself
-`http://127.0.0.1:8188`); shift-click **Open in ComfyUI** to change it.
-ComfyUI doesn't have to be running when you click: the tab Gobo opens waits for
-it and goes there as soon as it answers. The first time, Chrome may ask whether
-the site may look for apps on your device; allow it.
+Then **Open in ComfyUI** in Gobo downloads a workflow (`Gobo · Shot 7A.json`):
+drag it onto your ComfyUI window, or open it with **File › Open** in ComfyUI's
+menu, and click **Run**. The nodes lay themselves out left to right. It's a
+file because ComfyUI turns away any page another website sends it to, which
+keeps sites from running workflows on your machine.
 
 ## A workflow to start from
 

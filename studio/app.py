@@ -5,8 +5,7 @@
 
 The studio itself is one router (routes.py) under settings.PREFIX; this file
 adds what a standalone server needs around it: the home page and sign-in
-(shell.py), the reference-to-prompts tool (prompts.py), the sample tiles and a
-health check.
+(shell.py), the sample tiles and a health check.
 """
 import os
 import re
@@ -16,7 +15,7 @@ from fastapi.responses import FileResponse, JSONResponse, RedirectResponse
 from fastapi.staticfiles import StaticFiles
 from starlette.middleware.sessions import SessionMiddleware
 
-from . import accounts, jobs as J, prompts, settings, shell, visitors
+from . import accounts, jobs as J, settings, shell, visitors
 from .routes import router
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -41,7 +40,7 @@ async def signed_in(request: Request, call_next):
         if not settings.sign_in_on():
             request.session["user_name"] = "local"
         elif not shell.is_open(request.url.path):
-            if shell.wants_page(request):
+            if shell.wants_page(request) or shell.is_page(request):
                 return RedirectResponse(shell.login_url(request), status_code=303)
             return JSONResponse({"error": "Sign in first."}, status_code=401)
     if settings.VISITOR_KEYS:
@@ -60,7 +59,7 @@ async def _as_visitor(request: Request, call_next):
     path = request.url.path
     if vid and not visitors.key_for(vid) and not shell.is_open(path):
         # a restart forgot the key: the sign-in page sends a remembered one straight back
-        if shell.wants_page(request):
+        if shell.wants_page(request) or shell.is_page(request):
             return RedirectResponse(shell.login_url(request), status_code=303)
         return JSONResponse({"error": "Sign in again with your Comfy key.", "signin": True}, status_code=401)
     with visitors.acting_for(vid):
@@ -81,7 +80,6 @@ app.add_middleware(SessionMiddleware, secret_key=settings.session_secret(), sess
                    https_only=settings.SECURE_COOKIES)
 
 app.include_router(shell.router)
-app.include_router(prompts.router)
 app.include_router(router)
 class _Static(StaticFiles):
     """The page's scripts and Gobo's Rust, checked with the server on every load

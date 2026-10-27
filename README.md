@@ -38,7 +38,7 @@ Built for Comfy's **Open Source Higgsfield** challenge (October 2026), and inspi
   - **Continuity:** compares where one take ends with where the next begins. A straight cut must keep the grade. A shot that continues the last one must match the picture too.
   - **Draw the Move:** draw a loop and get a 360° orbit, a line toward the subject and get a push-in, a zigzag and get handheld.
 - **Grade the take.** The server puts every frame of a clip through the look with the same Rust module, one frame per core, keeps the sound, and saves the result as a new take. It matches the Lab's preview byte for byte, and it runs in the background, showing which frame it's on.
-- **Gobo's own ComfyUI nodes.** **Gobo Director** is Gobo's Rust shot compiler as a node: the scene in plain words and a cinematographer's choices become the prompt for any video or image model in ComfyUI, shown live as you change them; **Open in ComfyUI ↗** under the prompt opens the shot you're directing that way, wired to the model's own node. **Gobo Steal Look** reads any frame's look and the choices behind it, so new footage is shot and graded in a film's look. And in the Lab, **Open in ComfyUI** opens your ComfyUI with the take and its look laid out as Gobo's nodes (Load Take, Look with every slider, LUT, Shot Match, Grade), graded there by the same Rust. The nodes live in [`comfyui/`](comfyui) and Gobo serves them as a download. See [Gobo in ComfyUI](comfyui/README.md).
+- **Gobo's own ComfyUI nodes.** **Gobo Director** is Gobo's Rust shot compiler as a node: the scene in plain words and a cinematographer's choices become the prompt for any video or image model in ComfyUI, shown live as you change them; **Open in ComfyUI** under the prompt downloads the shot you're directing that way, wired to the model's own node, to drop on ComfyUI. **Gobo Steal Look** reads any frame's look and the choices behind it, so new footage is shot and graded in a film's look. And in the Lab, **Open in ComfyUI** downloads the take and its look as a workflow of Gobo's nodes to drop on ComfyUI (Load Take, Look with every slider, LUT, Shot Match, Grade), graded there by the same Rust. The nodes live in [`comfyui/`](comfyui) and Gobo serves them as a download. See [Gobo in ComfyUI](comfyui/README.md).
 - **Open in ComfyUI.** Any take, or a whole film, downloads as a ComfyUI workflow. Each keyframe node is wired into the clip it starts, and the result runs in ComfyUI on the same partner nodes.
 - **And:** a public share link for any take, a model shootout, a library (pick takes from any reel and put them on a board, in film order, to cut them), accounts an admin adds with their own passwords, frame grabs, extending, changing and leading into a clip, upscaling, and stitching mixed models into one file.
 
@@ -65,7 +65,7 @@ Sign in with any name and the password you set.
 
 Some typical prices: a FLUX 3 keyframe is about 7¢, and Nano Banana about 6¢. Clips are priced per second: Wan 3.0 and Veo 3.1 Fast about 10¢, LTX 2.5 Fast and MiniMax H3 about 13¢, LTX 2.5 Pro about 17¢, Seedance 2.0 Fast about 17¢. A ten-second Autopilot film costs roughly $0.80 to $3, depending on the models.
 
-That one key runs everything, including the Director and the planner. `ANTHROPIC_API_KEY` and `OPENAI_API_KEY` are optional extras (see [Settings](#settings)).
+That one key runs everything, including the Director and the planner. `ANTHROPIC_API_KEY` is an optional extra (see [Settings](#settings)).
 
 ### Without Docker
 
@@ -104,7 +104,6 @@ Everything lives in `.env` (see [.env.example](.env.example)). The ones that mat
 | `STUDIO_KEYS=visitor` | Public-demo mode: see below. |
 | `STUDIO_DIR` | Where reels live (`/data` in Docker). Reels untouched for `STUDIO_REEL_TTL_DAYS` (60) are cleared. |
 | `ANTHROPIC_API_KEY` | Optional: the Director and the planner straight from Anthropic, instead of through Comfy Router. |
-| `OPENAI_API_KEY` | Optional: GPT-4o writes "prompts from a reference". |
 | `STUDIO_COMFY_SYNC=1` | Run every take on Router's direct route. Gobo switches to it on its own when Router's queue stops moving. |
 | `STUDIO_SOURCE_URL` | Where the sign-in and About pages say the code lives. Defaults to this repo; a fork points it at its own. |
 | `STUDIO_CONTACT` | The address the pages give for questions. Defaults to help@gobo.video; a fork sets its own, or empty to show none. |

@@ -132,17 +132,16 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <div class="chapter" id="start">
   <h2>Start here</h2>
-  <p class="lede">Two pages share one engine. The <b>studio</b> makes stills and video clips and plans TV spots; the <b>Content Generator</b> is the same tool limited to stills, with batch tools. Pick what you want to do:</p>
+  <p class="lede">The <b>studio</b> makes stills and video clips and plans TV spots. Pick what you want to do:</p>
   <section class="topic" id="paths" data-keys="overview quick start what can i do">
     <h3>What do you want to make?</h3>
     <div class="paths">
       <a href="#director"><b>A whole film from one line</b><span>Make a film: write one line, pick a look, a length and a shape, and Gobo makes the film. Share it with a link.</span></a>
-      <a href="#first-still"><b>A still image</b><span>One picture, or 20 variations, on any image model.</span></a>
+      <a href="#first-still"><b>A still image</b><span>One picture, or up to four variations, on any image model.</span></a>
       <a href="#first-clip"><b>A video clip</b><span>Direct a shot like a cinematographer and run it on any video model.</span></a>
       <a href="#lab"><b>A look of my own</b><span>The Lab: steal the look of any frame, grade a take like film, check continuity, draw a camera move.</span></a>
       <a href="#board"><b>A TV spot</b><span>Brief → shot list → keyframes → clips → the cut, on the Board.</span></a>
       <a href="#footage-in"><b>Something with your own footage</b><span>Restyle it, swap in a product, extend it, lead into it.</span></a>
-      <a href="#cg"><b>A batch of stills from a reference</b><span>The Content Generator writes prompts from a picture or a whole folder.</span></a>
       <a href="#library"><b>Find something I made</b><span>The Library has everything, across every reel.</span></a>
       <a href="#choose"><b>Pick the right model</b><span>The Model directory: what each of {{ dir.count }} models is good at, and where it falls down.</span></a>
     </div>
@@ -152,7 +151,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <ul>
       <li><b>Take</b>: one result: a still or a clip. Every Generate makes one or more takes.</li>
       <li><b>Shot</b>: a group of takes of the same idea (shot 3, takes A, B, C).</li>
-      <li><b>Reel</b>: a project, holding all its shots and takes. (On the Content Generator it's called a <b>session</b>.)</li>
+      <li><b>Reel</b>: a project, holding all its shots and takes.</li>
       <li><b>Board</b>: a reel planned as a spot: one <b>card</b> per shot, in order, with a running time.</li>
       <li><b>Kit</b>: the cast, products and places that must look the same in every shot of a spot.</li>
     </ul>
@@ -221,16 +220,16 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes gobo nodes custom node pack grade colour director prompt steal look">
     <h3>Open in ComfyUI</h3>
     <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>
-      <p><b>A take's colour, in your own ComfyUI.</b> <span class="ui">Open in ComfyUI</span> in the Lab's <span class="ui">Grade</span> (and on the Colour page) opens your ComfyUI with the take on screen and its look laid out as Gobo's own nodes:</p>
+      <p><b>A take's colour, in your own ComfyUI.</b> <span class="ui">Open in ComfyUI</span> in the Lab's <span class="ui">Grade</span> (and on the Colour page) downloads the take and its look as a ComfyUI workflow of Gobo's own nodes. Drag the file onto your ComfyUI window (or <span class="ui">File › Open</span> in ComfyUI's menu) and it's laid out like this:</p>
     <ul>
       <li><span class="ui">Gobo Load Take</span> fetches the take from Gobo by a link that works for a week, without signing in.</li>
       <li><span class="ui">Gobo Look</span>: the film stock and grade with every slider set as in the Lab (picking another stock fills the sliders with its numbers, as the Lab does); wheels, curves and a CDL ride in its colour box.</li>
       <li><span class="ui">Gobo LUT</span> for a LUT on the look, and <span class="ui">Gobo Shot Match</span> with the reference take, for a take matched to another.</li>
       <li><span class="ui">Gobo Grade</span> puts every frame through the look with the same Rust as Gobo (the grain moving, the sound kept), then <span class="ui">Save Video</span>.</li>
     </ul>
-    <p><b>This shot, in ComfyUI.</b> <span class="ui">Open in ComfyUI ↗</span> under the prompt opens your ComfyUI with the shot on the panel as Gobo's nodes: the <span class="ui">Gobo Director</span> holding your scene and every choice, its prompt wired into the model's own ComfyUI node (Kling, Seedance, MiniMax, LTX, Veo, Wan, FLUX…) with your starting frame fetched from Gobo, then a save. For a model ComfyUI has no node for, you get the Director and its prompt, to wire into any.</p>
+    <p><b>This shot, in ComfyUI.</b> <span class="ui">Open in ComfyUI</span> under the prompt downloads the shot on the panel as a workflow of Gobo's nodes, to drop on ComfyUI: the <span class="ui">Gobo Director</span> holding your scene and every choice, its prompt wired into the model's own ComfyUI node (Kling, Seedance, MiniMax, LTX, Veo, Wan, FLUX…) with your starting frame fetched from Gobo, then a save. For a model ComfyUI has no node for, you get the Director and its prompt, to wire into any.</p>
     <p><b>Directing ComfyUI's models.</b> <span class="ui">Gobo Director</span> is Gobo's shot compiler as a node: write the scene in plain words, pick the camera, lens, framing, move, light, film stock, look, grade and composition, and it writes the prompt for any video or image node in ComfyUI (Kling, Seedance, MiniMax, Wan, LTX, FLUX…), the same prompt Gobo sends, shown live as you change it. Its <span class="ui">look</span> goes to <span class="ui">Gobo Grade</span>, so the footage is graded the way the prompt asked. Wire <span class="ui">Gobo Steal Look</span>'s <span class="ui">direction</span> into it and a frame from any film sets the focus, composition, stock and grade: new footage shot in that film's look. <span class="ui">Gobo Draw the Move</span> is the Lab's drawing as a node: draw the camera's path and the subject's on the frame, and the Director shoots it. <span class="ui">Gobo Sequence Match</span> then takes the clips the models made, in order, matches every one to the hero shot's colour, grades them with one look and cuts them together as one film, checking every cut.</p>
-    <p>Change anything there and queue it. The nodes are part of Gobo, and the first time <span class="ui">Open in ComfyUI</span> walks you through adding them: <span class="ui">Download the Gobo nodes</span> and open the file (you get a folder called <b>gobo</b>), move that folder into ComfyUI's <b>custom_nodes</b> folder (in the ComfyUI app, <span class="ui">Help › Open Folder › Open Custom Nodes Folder</span> opens it), then quit ComfyUI and open it again. Its first start takes a minute longer while Gobo sets itself up. It also asks where your ComfyUI is (the app is usually <code>http://127.0.0.1:8000</code>). Shift-click <span class="ui">Open in ComfyUI</span> to change the address. ComfyUI doesn't have to be running when you click: the tab waits for it and opens it as soon as it answers (the first time, your browser may ask whether Gobo may look for apps on your device: allow it). There are more nodes to build with: <span class="ui">Gobo Steal Look</span>, <span class="ui">Gobo Grade Images</span> and <span class="ui">Gobo Continuity</span>.</p>
+    <p>Change anything there and run it. The nodes are part of Gobo, and the first time <span class="ui">Open in ComfyUI</span> walks you through adding them: <span class="ui">Download the Gobo nodes</span> and open the file (you get a folder called <b>gobo</b>), move that folder into ComfyUI's <b>custom_nodes</b> folder (with the Comfy Desktop app it's in your home folder: <b>ComfyUI-Installs › your install's name › ComfyUI › custom_nodes</b>), then quit ComfyUI and open it again. Its first start takes a minute longer while Gobo sets itself up. Shift-click <span class="ui">Open in ComfyUI</span> to see the steps again. Why a file? ComfyUI turns away any page another website sends it to, which keeps sites from running workflows on your machine; a file you drop in is yours. There are more nodes to build with: <span class="ui">Gobo Steal Look</span>, <span class="ui">Gobo Grade Images</span> and <span class="ui">Gobo Continuity</span>.</p>
   </section>
   <section class="topic" id="users" data-keys="users people accounts add user password admin sign in team access remove">
     <h3>Who can sign in</h3>
@@ -332,7 +331,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <h3>Format</h3>
     <ul>
       <li><b>Aspect</b> (frame shape) and <b>Resolution</b>: only what the chosen model supports.</li>
-      <li><b>Takes</b> (stills): 1–4 in the studio, up to 20 in the Content Generator. Each take is a different variation.</li>
+      <li><b>Takes</b> (stills): 1–4. Each take is a different variation.</li>
       <li><b>Duration</b> and <b>Audio</b> (video): the lengths the model can make; sound only on models that make it. Sound is off unless you turn it on, and Gobo keeps it that way: a model that adds a soundtrack anyway (some have no switch) has it taken off when the clip lands. Footage you bring in keeps its own sound.</li>
     </ul>
   </section>
@@ -416,7 +415,6 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <ul>
       <li><span class="ui">All takes (.zip)</span> or <span class="ui">Starred (.zip)</span>: separate files in one zip, with a list of what each is.</li>
       <li><span class="ui">Download stitched</span>: the last stitched film. Any take also has <span class="ui">Download</span> on the stage.</li>
-      <li>Content Generator: pick <b>Original</b>, <b>2K</b>, <b>4K</b> or <b>8K at 300 dpi</b> before downloading; stills are resized and sharpened for filing.</li>
     </ul>
   </section>
   <section class="topic" id="share" data-keys="share link public page unshare send watch social">
@@ -429,7 +427,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <div class="chapter" id="organising">
   <h2>Reels and the Library</h2>
   <p class="lede">Nothing you make is lost until you delete it.</p>
-  <section class="topic" id="reels" data-keys="reel session project new rename switch open kept saved storage expire 60 days">
+  <section class="topic" id="reels" data-keys="reel project new rename switch open kept saved storage expire 60 days">
     <h3>Reels</h3>
     <ul>
       <li><span class="ui">New reel</span> starts a fresh one; your first Generate creates it. Click the name in the header to rename it.</li>
@@ -439,7 +437,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
   </section>
   <section class="topic" id="library" data-keys="library find everything mine everyone search filter clips stills starred all reels">
     <h3>The Library</h3>
-    <p><span class="ui">Library</span> shows every finished take from every reel (or every session, on the Content Generator), grouped by day.</p>
+    <p><span class="ui">Library</span> shows every finished take from every reel, grouped by day.</p>
     <ul>
       <li><span class="ui">Mine</span> is what you made; <span class="ui">Everyone</span> is the whole team's.</li>
       <li>Filter by <span class="ui">Clips</span> or <span class="ui">Stills</span>, <span class="ui">★ Starred</span>, or search prompts, models and reel names.</li>
@@ -634,38 +632,6 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     </ul>
   </section>
 </div>
-
-<!-- ═══════════════════════════════════════════════════════════════════ -->
-<div class="chapter" id="cg">
-  <h2>The Content Generator</h2>
-  <p class="lede">At <a href="{{ api }}/stills">{{ api }}/stills</a>: the same engine, stills only, with batch tools. Your prompt is sent exactly as written unless you direct it.</p>
-  <section class="topic" id="cg-batch" data-keys="content generator batch 20 images stills plain variations sessions">
-    <h3>Batches of stills</h3>
-    <p>Every still model is in the picker with its price. Set up to 20 <b>Images</b> under Format and click Generate. The camera and look controls are there whenever you want to direct a shot.</p>
-  </section>
-  <section class="topic" id="cg-reference" data-keys="from a reference image prompts gpt variation photo illustration notes art direction write">
-    <h3>Prompts from a reference picture</h3>
-    <ol>
-      <li>In <b>From a reference</b>, drop an image or click <span class="ui">Image</span>.</li>
-      <li>Choose <span class="ui">Photo</span> or <span class="ui">Illustration</span>, how many <b>Prompts</b>, and the <b>Variation</b> (1 = close to the picture, 10 = loose).</li>
-      <li>Add art direction for every prompt if you like ("diverse cast, winter light, no text").</li>
-      <li>Click <span class="ui">Write N prompts</span>. GPT-4o writes them in a few seconds.</li>
-      <li>Edit or drop any (✕), <span class="ui">Use</span> one as the Scene, or generate them all at once.</li>
-    </ol>
-  </section>
-  <section class="topic" id="cg-folder" data-keys="folder batch many images directory run all">
-    <h3>A whole folder</h3>
-    <p>Click <span class="ui">Folder</span> and pick a folder of pictures. <span class="ui">Run N images × M</span> writes prompts for each picture and generates them, at most 8 at a time. <span class="ui">Stop</span> finishes the current picture and stops.</p>
-  </section>
-  <section class="topic" id="cg-more" data-keys="sessions download size">
-    <h3>Sessions and sizes</h3>
-    <ul>
-      <li><b>Sessions</b> are the Content Generator's reels; they're kept apart from the studio's.</li>
-      <li>Download at <b>Original</b>, <b>2K</b>, <b>4K</b> or <b>8K</b> (300 dpi) with the size menu.</li>
-    </ul>
-  </section>
-</div>
-
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <div class="chapter" id="reference">
   <h2>Reference</h2>
@@ -730,7 +696,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <tr><td><b>Footage</b></td><td>A clip someone shot with a camera, brought in.</td></tr>
       <tr><td><b>Keyframe</b></td><td>The still a clip starts from.</td></tr>
       <tr><td><b>Kit</b></td><td>The named cast, products and places a spot keeps the same.</td></tr>
-      <tr><td><b>Reel / session</b></td><td>A project: all its shots and takes.</td></tr>
+      <tr><td><b>Reel</b></td><td>A project: all its shots and takes.</td></tr>
       <tr><td><b>Seed</b></td><td>The number behind a result's randomness; the same seed repeats it.</td></tr>
       <tr><td><b>Shot</b></td><td>A group of takes of one idea.</td></tr>
       <tr><td><b>Take</b></td><td>One result: a still or a clip.</td></tr>
