@@ -110,7 +110,9 @@ class Bodies(unittest.TestCase):
         b = self.body("byteplus/dreamina-seedance-2-5-260628", first_frame="f.png", duration=6, resolution="720p")
         self.assertEqual(b["content"][0], {"type": "text", "text": "a lighthouse in a storm"})
         self.assertEqual(b["content"][1], {"type": "image_url", "image_url": {"url": HOSTED}, "role": "first_frame"})
-        self.assertEqual((b["duration"], b["ratio"], b["watermark"]), (6, "16:9", False))
+        self.assertEqual((b["duration"], b["watermark"]), (6, False))
+        self.assertNotIn("ratio", b)              # Seedance 2.5 refuses a ratio with a frame: the frame sets the shape
+        self.assertEqual(self.body("byteplus/dreamina-seedance-2-5-260628", duration=6)["ratio"], "16:9")
 
     def test_veo_sends_frames_as_base64(self):
         b = self.body("veo/veo-3.1-fast-generate-001", first_frame="f.png", duration=5, audio=True)

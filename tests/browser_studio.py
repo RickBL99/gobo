@@ -875,6 +875,9 @@ def main():
                "$('#dShape [data-v=\"9:16\"]').click(); $('#dQual [data-v=best]').click(); 1")
         c1 = tab.js("$('#dCost').textContent")
         check("director: Best and 30 seconds cost more", float(c1.split("$")[1].split()[0]) > float(c0.split("$")[1].split()[0]), f"{c0} → {c1}")
+        # LTX is the core video model (the contest's LTX prize): every quality films on it
+        clips = tab.js("director.quality.map(q => director.models(q).clip.id).join()")
+        check("director: every quality films on LTX", clips == "ltx/ltx-2-5-fast,ltx/ltx-2-5-pro,ltx/ltx-2-5-pro", clips)
         tab.js("window._runs = []; window.autopilot.run = (o, ui) => { _runs.push(o); window._ui = ui; return new Promise(r => { window._fin = r; }); }; 1")
         # Roll camera won't start a film the balance can't pay for: the test's balance, not the real account's
         tab.js("""window._cf = window.fetch; window.fetch = (u, o) => String(u).endsWith('/credits')

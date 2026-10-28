@@ -37,14 +37,16 @@
   const LENGTHS = [10, 15, 30];
   const SHAPES = [["16:9", "Wide", "Screens and YouTube"], ["9:16", "Tall", "Phones, Reels and TikTok"], ["1:1", "Square", "Feeds"]];
   // the first of each list that this server offers wins. LTX is Gobo's core
-  // video model: Draft and Standard (the default) film on it
+  // video model and every quality films on it: Draft on LTX 2.5 Fast,
+  // Standard (the default) and Best on LTX 2.5 Pro. Best's difference is
+  // its first frames, painted by Nano Banana Pro
   const QUALITY = [
     { id: "draft", label: "Draft", note: "Cheapest. For trying an idea.",
-      clips: ["ltx/ltx-2-5-fast", "wan/wan3.0-video"], keys: ["vertexai/gemini-nano-banana-2.1", "bfl/flux-3-image"] },
+      clips: ["ltx/ltx-2-5-fast"], keys: ["vertexai/gemini-nano-banana-2.1", "bfl/flux-3-image"] },
     { id: "standard", label: "Standard", note: "Good and quick.",
-      clips: ["ltx/ltx-2-5-pro", "byteplus/dreamina-seedance-2-0-fast-260128"], keys: ["bfl/flux-3-image", "vertexai/gemini-nano-banana-2.1"] },
-    { id: "best", label: "Best", note: "The finest clips. Costs more.",
-      clips: ["byteplus/dreamina-seedance-2-5-260628", "byteplus/dreamina-seedance-2-0-fast-260128"], keys: ["bfl/flux-3-image"] },
+      clips: ["ltx/ltx-2-5-pro"], keys: ["bfl/flux-3-image", "vertexai/gemini-nano-banana-2.1"] },
+    { id: "best", label: "Best", note: "Sharper first frames. Costs a little more.",
+      clips: ["ltx/ltx-2-5-pro"], keys: ["vertexai/gemini-3-pro-image", "bfl/flux-3-image"] },
   ];
   const IDEAS = [
     "A golden retriever's first day at the beach: waves, wet sand, pure joy.",

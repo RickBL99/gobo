@@ -134,6 +134,7 @@ PRICES = {
     "byteplus/dreamina-seedance-2-0-fast-260128": (0.173, "second"),
     "byteplus/dreamina-seedance-2-5-260628": (0.33, "second"),
     "bfl/flux-3-image": (0.07, "run"), "vertexai/gemini-nano-banana-2.1": (0.06, "run"),
+    "vertexai/gemini-3-pro-image": (0.14, "run"),
 }
 HERO_LABELS = {mid: label for groups in HEROES.values() for _, items in groups for mid, label in items}
 
@@ -689,6 +690,8 @@ def shape(rec: Dict, P: Dict) -> Dict:
     fam = rec.get("family", "flat")
     P = dict(P)
     if fam == "content":
+        if P.get("first_frame") or P.get("last_frame"):
+            P.pop("ratio", None)          # the frame sets the shape; Seedance 2.5 refuses a ratio with one
         items = [{"type": "text", "text": P.pop("prompt", "")}]
         for role, key in (("first_frame", "first_frame"), ("last_frame", "last_frame")):
             if P.get(key):
