@@ -598,6 +598,61 @@ def main():
         check("board: back to the Shot view", tab.js("!boardOn() && $('#stage').offsetParent !== null"))
         tab.js("window.fetch = window._bf; newReel(); localStorage.removeItem('studio.view'); localStorage.removeItem('studio.reel'); 1")
 
+        # ── casting: who and what recurs is painted once, and every keyframe draws from it (stubbed) ─
+        # The Last Croissant (2026-10-28): 20 keyframes, a new businessman, woman and café in each
+        tab.js("""window._cf = window.fetch; window._cs = {runs: [], frames: [], copies: 0, saved: null};
+          window.fetch = async (u, o) => {
+            const j = d => new Response(JSON.stringify(d), {headers: {'Content-Type': 'application/json'}});
+            u = String(u); const m = (o && o.method) || 'GET', body = o && o.body && typeof o.body === 'string' ? JSON.parse(o.body) : null;
+            if (u.endsWith('/reels') && m === 'POST') return j({id: 'cast0000', name: 'Croissant', app: 'studio'});
+            if (u.endsWith('/reels/cast0000/board') && m === 'PUT') { _cs.saved = body; return j({board: body}); }
+            if (u.endsWith('/reels/cast0000') && m === 'GET') return j({reel: {id: 'cast0000', name: 'Croissant', board: true}, takes: S.takes, board: _cs.saved});
+            if (u.endsWith('/board/plan')) return j({title: 'The Last Croissant', notes: '', total: 12, target: 15,
+              cast: [{name: 'The businessman', kind: 'cast', look: 'Mid-40s, navy suit, burgundy tie.'}, {name: 'The café', kind: 'place', look: 'A symmetrical Paris café.'}],
+              shots: [{scene: 'The businessman walks into The café.', shot: 'wide', move: 'static', duration: 4, elements: ['The businessman', 'The café'], start: 'cut', vo: '', super: ''},
+                      {scene: 'The businessman eyes the croissant.', shot: 'close', move: 'push', duration: 4, elements: ['The Businessman', 'The café'], start: 'cut', vo: '', super: ''},
+                      {scene: 'He reaches for it.', shot: 'close', move: 'static', duration: 4, elements: ['The businessman'], start: 'continue', vo: '', super: ''}]});
+            if (u.endsWith('/refs/copy')) { _cs.copies++; return j({name: `ref-cast${_cs.copies}.png`, kind: 'image', url: IMG}); }
+            if (u.endsWith('/run')) { _cs.runs.push(body); const n = _cs.runs.length;
+              return j({takes: [{id: `17940000000${String(n).padStart(2, '0')}-cs${n}`, reel: 'cast0000', shot: body.shot || 90 + n, letter: 'A', kind: body.mode,
+                status: 'done', board: body.board, role: body.role, action: body.action, file: body.mode === 'video' ? `c${n}.mp4` : `k${n}.png`,
+                url: body.mode === 'video' ? '/nowhere/c.mp4' : IMG, thumb_url: IMG, seconds: body.mode === 'video' ? 4 : null}]}); }
+            if (u.includes('/frame')) { _cs.frames.push(body); return j({take: {id: '17949999999999-frame2', reel: 'cast0000', shot: body.shot, letter: 'A', kind: 'image',
+              status: 'done', board: body.board, role: 'key', file: 'f2.png', url: IMG, thumb_url: IMG}}); }
+            return window._cf(u, o);
+          }; 1""".replace("IMG", json.dumps(img)))
+        tab.js("newReel(); $('#viewSeg [data-v=board]').click(); S.model.image = 'bfl/flux-3-image'; S.model.video = 'ltx/ltx-2-5-pro'; onShotChange(); 1"); time.sleep(0.6)
+        tab.js("const b = $('#bBrief'); b.value = 'Two strangers, one croissant.'; b.dispatchEvent(new Event('input')); $('#bPlan').click(); 1"); time.sleep(1.0)
+        check("casting: the planner's cast joins the kit, still to paint", tab.js("B.elements.map(e => [e.name, e.kind, e.file]).join('|')")
+              == "The businessman,cast,|The café,place," and tab.js("$$('#kitList .kt.todo').length") == 2
+              and tab.js("B.shots.map(s => s.elements.length).join()") == "2,2,1", tab.js("JSON.stringify(B.elements)"))
+        check("casting: the button counts the cast", tab.js("$('#bKeyAll').textContent").startswith("Cast 2 + keyframe 2 shots"), tab.js("$('#bKeyAll').textContent"))
+        check("casting: the seed note says FLUX 3 and LTX pick their own", "FLUX 3 and LTX 2.5 Pro pick their own seed" in tab.js("$('#kitSeedHint').textContent"),
+              tab.js("$('#kitSeedHint').textContent"))
+        tab.js("$('#bKeyAll').click(); 1"); time.sleep(5.5)
+        runs = tab.js("_cs.runs") or []
+        cast_runs = [r for r in runs if r.get("action") == "cast"]
+        keys = [r for r in runs if r.get("action") == "keyframe"]
+        check("casting: each is painted once, before any keyframe", len(cast_runs) == 2 and runs[:2] == cast_runs and tab.js("_cs.copies") == 2
+              and all(e for e in tab.js("B.elements.map(e => e.file)")), [r.get("action") for r in runs])
+        check("casting: a person is painted as a portrait, a place as a plate", "Character reference portrait" in cast_runs[0]["scene"] and "navy suit" in cast_runs[0]["scene"]
+              and "Location reference" in cast_runs[1]["scene"] and cast_runs[0]["aspect"] == "3:4", [c.get("aspect") for c in cast_runs])
+        check("casting: the wide draws on the cast and the place", len(keys) == 2 and keys[0]["refs"] == ["ref-cast1.png", "ref-cast2.png"]
+              and keys[0]["ref_names"] == ["The businessman", "The café"] and keys[0]["ref_kinds"] == ["cast", "place"], keys[:1])
+        check("casting: a close-up takes the cast alone: the place's picture would set its framing", keys[1]["refs"] == ["ref-cast1.png"]
+              and keys[1]["ref_kinds"] == ["cast"], keys[1:2])
+        # shot 3 continues shot 2, which has no clip yet: Animate never films it from words alone
+        n = len(runs)
+        tab.js("$$('#board .bcard')[2].querySelector('[data-act=clip]').click(); 1"); time.sleep(0.8)
+        check("casting: a continuing shot waits for the clip before it", len(tab.js("_cs.runs")) == n and tab.js("_cs.frames.length") == 0,
+              tab.js("_cs.runs.slice(-1)"))
+        tab.js("$$('#board .bcard')[1].querySelector('[data-act=clip]').click(); 1"); time.sleep(0.8)
+        tab.js("$$('#board .bcard')[2].querySelector('[data-act=clip]').click(); 1"); time.sleep(1.0)
+        last = tab.js("_cs.runs[_cs.runs.length - 1]") or {}
+        check("casting: then it starts on that clip's last frame", tab.js("_cs.frames.length") == 1 and last.get("mode") == "video"
+              and last.get("first_frame") == "f2.png", last)
+        tab.js("window.fetch = window._cf; newReel(); localStorage.removeItem('studio.view'); localStorage.removeItem('studio.reel'); 1")
+
         # ── footage: a clip someone shot, changed, extended, led into (stubbed) ─
         tab.js("""window._ff = window.fetch; window._ft = {runs: [], frames: [], plan: null, up: null};
           const IMGX = __IMG__;

@@ -1066,7 +1066,8 @@ _PLANNER_SYSTEM = """You are a commercial director and storyboard artist. You tu
 Rules:
 - The durations must add up to the target length, within one second. Every duration must be one of the allowed values given.
 - One clear action per shot. `scene` says what the camera sees, in present tense, 1-3 concrete sentences: who, where, what happens, how the shot ends. Make each shot stand alone: a model reading only that card must be able to draw it.
-- Name kit elements exactly as written in the kit whenever they appear, and list them in `elements`. Never introduce a named character or product that isn't in the kit; unnamed extras and props are fine.
+- Continuity: every shot is drawn on its own, so a person, place or product only looks the same from shot to shot if it comes from one reference picture. Name kit elements exactly as written in the kit whenever they appear, and list them in `elements`.
+- `cast`: whoever and whatever recurs across shots and isn't in the kit: the people who carry the story, the main location, a hero product or prop. Each gets a short `name` ("The businessman", "The café"), its `kind` (cast, product or place) and `look`: one precise description a still model paints as the reference picture (a person: age, build, face, hair and exactly what they wear; a place: its layout, materials and light; a product: shape, colour, material). Use the name in every scene it's in, without describing them differently from `look`, and list it in that shot's `elements`; a shot set in a cast place lists the place too. At most 6. One-off extras and props stay unnamed in the scene. Never introduce a named character or product that is in neither the kit nor the cast.
 - No on-screen text, captions, logos-as-text or dialogue in `scene`: spoken words go in `vo`, on-screen words in `super`.
 - `shot` is the framing id and `move` the camera movement id, from the lists given. Vary them the way an editor would: establish, then come in close, a hero product angle, a wide release.
 - `start` is "cut" for a new setup. Use "continue" only when the shot picks up at the exact moment the previous one ended, same place, the camera carrying on.
@@ -1106,20 +1107,42 @@ def plan_spot(brief: str, target: float, model_id: str, elements: List[Dict], di
                            "elements": {"type": "array", "items": {"type": "string"}},
                            "start": {"type": "string", "enum": ["cut", "continue"]},
                            "vo": {"type": "string"}, "super": {"type": "string"}, "footage": {"type": "string"}}}
+    cast = {"type": "object", "additionalProperties": False, "required": ["name", "kind", "look"],
+            "properties": {"name": {"type": "string"}, "kind": {"type": "string", "enum": ["cast", "product", "place"]},
+                           "look": {"type": "string"}}}
     out = _claude_json(_PLANNER_SYSTEM, user, {
-        "type": "object", "additionalProperties": False, "required": ["title", "notes", "shots"],
+        "type": "object", "additionalProperties": False, "required": ["title", "notes", "cast", "shots"],
         "properties": {"title": {"type": "string"}, "notes": {"type": "string"},
+                       "cast": {"type": "array", "items": cast},
                        "shots": {"type": "array", "items": shot}}},
         effort=os.getenv("STUDIO_PLANNER_EFFORT", "medium"), max_tokens=12000)
     return _fit_plan(out, durations, names, target, footage)
+
+
+CAST_MAX = 6
+
+
+def _new_cast(out: Dict, names: List[str]) -> List[Dict]:
+    """The planner's cast, minus what the kit already has: at most CAST_MAX,
+    each named once, with a look to paint."""
+    have, cast = {n.lower() for n in names}, []
+    for c in out.get("cast") or []:
+        name, look = str(c.get("name") or "").strip()[:60], str(c.get("look") or "").strip()[:600]
+        if not name or not look or name.lower() in have:
+            continue
+        have.add(name.lower())
+        cast.append({"name": name, "kind": c.get("kind") if c.get("kind") in ("cast", "product", "place") else "cast", "look": look})
+    return cast[:CAST_MAX]
 
 
 def _fit_plan(out: Dict, durations: List[int], names: List[str], target: float,
               footage: Optional[List[Dict]] = None) -> Dict:
     """Hold the planner to what can be shot: durations the model makes, kit
     names only, the first shot a cut, every piece of footage exactly once at
-    its own length — and say how far off the target it is."""
-    by = {n.lower(): n for n in names}
+    its own length — and say how far off the target it is. The planner's cast
+    joins the kit's names, to be painted before the keyframes."""
+    cast = _new_cast(out, names)
+    by = {n.lower(): n for n in [*names, *(c["name"] for c in cast)]}
     real = {f["id"]: f for f in (footage or [])}
     shots, placed = [], set()
     for x in (out.get("shots") or [])[:40]:
@@ -1147,5 +1170,5 @@ def _fit_plan(out: Dict, durations: List[int], names: List[str], target: float,
                           "elements": [by[e.lower()] for e in (x.get("elements") or []) if str(e).lower() in by],
                           "start": "cut" if i == 0 else (x.get("start") if x.get("start") in ("cut", "continue") else "cut")})
     total = round(sum(s["duration"] for s in out_shots), 2)
-    return {"title": out.get("title") or "", "notes": out.get("notes") or "", "shots": out_shots,
+    return {"title": out.get("title") or "", "notes": out.get("notes") or "", "cast": cast, "shots": out_shots,
             "total": total, "target": target}

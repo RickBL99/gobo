@@ -65,10 +65,12 @@
   const stillModels = () => byKind("image").filter(m => m.featured && m.engine === "comfy");
   const startsFromFrame = m => !!(m && (m.i2v || m.first_frame));
 
+  // the planner casts who and what recurs (about four: people, the place, a hero prop), each painted once
+  const CAST_GUESS = 4;
   function estimate(clip, key, seconds) {
     const shots = Math.max(1, Math.round(seconds / 5));
     const c = clip && clip.price != null ? (clip.price_per === "second" ? clip.price * seconds : clip.price * shots) : null;
-    const k = startsFromFrame(clip) && key && key.price != null ? key.price * shots : 0;
+    const k = startsFromFrame(clip) && key && key.price != null ? key.price * (shots + CAST_GUESS) : 0;
     return c == null ? null : c + k + 0.02;
   }
 
@@ -207,6 +209,12 @@
 
     // keyframes for every new setup, together
     if (fromFrame) {
+      // the cast first: one picture each, which every keyframe then draws from
+      const cast = unpainted().filter(e => shots.some(s => shotRefs(s).includes(e)));
+      if (cast.length) {
+        ui.step("keys", "now", `Casting ${cast.map(e => e.name).join(", ")}: one picture each, so every shot shows the same ${cast.some(e => e.kind === "place") ? "people and places" : "people"}.`);
+        await Promise.all(cast.map(paintElement));
+      }
       ui.step("keys", "now", "Every new setup gets its keyframe, all at once.");
       show();
       await Promise.all(shots.filter(s => s.start !== "continue").map(async s => {

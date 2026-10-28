@@ -1433,7 +1433,7 @@ function renderPmode() {
 function onShotChange() {
   if (boardOn() && S.mode !== "video" && $("#modelSheet").classList.contains("hidden")) S.mode = "video";
   if (boardOn() && B) { saveBoard(); renderBoard(); }
-  renderModelBtn(); renderRefs(); renderShotList(); renderFormat(); renderPmode(); updateGen(); scheduleCompile(); saveLocal();
+  renderModelBtn(); renderRefs(); renderShotList(); renderFormat(); renderPmode(); updateGen(); scheduleCompile(); saveLocal(); seedHint();
   if (!cur()) renderStage();
   $("#sceneHint").textContent = S.mode === "video" ? "Action + camera movement" : "";
 }
@@ -1658,12 +1658,14 @@ async function retryBoard(id, n) {
 // ── board: the kit ─────────────────────────────────────────────────────
 function renderKit() {
   const els = B ? B.elements : [];
-  $("#kitList").innerHTML = els.length ? els.map(e => `<div class="kit" data-e="${e.id}"><span class="kt" style="background-image:url('${esc(elThumb(e))}')"></span>
+  $("#kitList").innerHTML = els.length ? els.map(e => `<div class="kit" data-e="${e.id}">${e.file ? `<span class="kt" style="background-image:url('${esc(elThumb(e))}')"></span>`
+      : `<span class="kt todo" title="${esc(e.look || "")}">${painting.has(e.id) ? "◐" : "to paint"}</span>`}
       <input class="field" value="${esc(e.name)}" placeholder="Name — e.g. Maya" aria-label="Name">
       <select class="field" aria-label="Kind">${[["cast", "Cast"], ["product", "Product"], ["place", "Place"]].map(([v, l]) => `<option value="${v}" ${e.kind === v ? "selected" : ""}>${l}</option>`).join("")}</select>
       <button class="btn small ghost" data-rm title="Take out of the kit">✕</button></div>`).join("")
     : `<span class="hint">Cast, products and places, each from one good picture. Upload them, bring them from the Library, or drag a keyframe here. Name them, then tick who's in each shot.</span>`;
   $("#kitSeed").value = B && B.seed ? B.seed : "";
+  seedHint();
   $$("#kitList .kit").forEach(row => {
     const e = elById(row.dataset.e);
     $("input", row).oninput = ev => { e.name = ev.target.value; saveBoard(); $$(`[data-el="${e.id}"]`).forEach(b => b.textContent = e.name || "Untitled"); };
@@ -1674,6 +1676,14 @@ function renderKit() {
       saveBoard(); renderKit(); renderBoard();
     };
   });
+}
+// FLUX 3 and LTX take no seed (their own ComfyUI nodes say so), so a spot seed can't hold their shots steady
+function seedHint() {
+  const h = $("#kitSeedHint"); if (!h) return;
+  const deaf = [keyModel(), clipModel()].filter(m => m && !m.seed).map(m => m.label);
+  h.textContent = deaf.length
+    ? `${deaf.join(" and ")} ${deaf.length > 1 ? "pick their" : "picks its"} own seed, so the seed can't hold ${deaf.length > 1 ? "them" : "it"} steady. The kit does: the cast is painted once and every shot draws from it.`
+    : "Each shot runs on this plus its number, so a retake repeats it. The faces and products come from the kit, not the seed.";
 }
 function addElement(file, name) {
   B.elements.push({ id: rid(), name: (name || "").trim() || `Element ${B.elements.length + 1}`, kind: "cast", file });
@@ -1796,7 +1806,7 @@ function frameHtml(s) {
   const clip = pickOf(s, "clip"), key = pickOf(s, "key");
   const show = s._view === "key" ? (key || clip) : (clip || key);
   const waiting = [...cardTakes(s, "clip"), ...cardTakes(s, "key")].find(t => lineNote(t));
-  const busy = waiting ? lineShort(waiting) : busyOf(s, "clip") ? (s.type === "footage" ? "Changing" : (cardTakes(s, "clip").find(t => t.status === "running" || t.status === "queued") || {}).action === "extend" ? "Extending" : "Animating") : busyOf(s, "key") ? (s.start === "continue" ? "Reading the frame" : "Keyframing") : "";
+  const busy = s._casting ? "Casting" : waiting ? lineShort(waiting) : busyOf(s, "clip") ? (s.type === "footage" ? "Changing" : (cardTakes(s, "clip").find(t => t.status === "running" || t.status === "queued") || {}).action === "extend" ? "Extending" : "Animating") : busyOf(s, "key") ? (s.start === "continue" ? "Reading the frame" : "Keyframing") : "";
   const all = S.takes.filter(t => t.board === s.id), last = all[all.length - 1];
   let h = "";
   if (show) {
@@ -1865,7 +1875,8 @@ function refreshBoard() {
   // an extension that came back with the original attached plays only its new seconds
   B.shots.forEach(s => { const c = pickOf(s, "clip"); if (c && +c.new_from > 0 && s.trim_for !== c.id) { s.trim = [+c.new_from, +c.seconds]; s.trim_for = c.id; saveBoard(); } });
   const k = $("#bKeyAll"), a = $("#bAnimAll");
-  k.textContent = needKey.length ? `Keyframe ${needKey.length} shot${needKey.length > 1 ? "s" : ""} · ${costOf(needKey.map(keyCost))}` : "Keyframes made";
+  const toCast = unpainted().filter(e => needKey.some(s => shotRefs(s).includes(e)));
+  k.textContent = needKey.length ? `${toCast.length ? `Cast ${toCast.length} + keyframe` : "Keyframe"} ${needKey.length} shot${needKey.length > 1 ? "s" : ""} · ${costOf([...needKey.map(keyCost), ...toCast.map(() => keyCost() / Math.max(1, B.variants))])}` : "Keyframes made";
   k.disabled = !needKey.length;
   a.textContent = needClip.length ? `Animate ${needClip.length} shot${needClip.length > 1 ? "s" : ""} · ${costOf(needClip.map(clipCost))}` : "Animate";
   a.disabled = !needClip.length;
@@ -2052,19 +2063,70 @@ async function runCard(s, body) {
   mergeTakes(r.takes); poll(); saveBoard();
   return r.takes;
 }
+// ── board: casting ─────────────────────────────────────────────────────
+// Every shot is drawn on its own, so a face, a coat or a room only stays the
+// same from shot to shot if it comes from one picture. The planner names who
+// and what recurs; each is painted once, here, before the first keyframe that
+// needs it, and goes in the kit like any other reference. (FLUX 3 and LTX
+// pick their own seed, so the spot seed can't do this.)
+const CAST_FRAME = {
+  cast: "Character reference portrait, from the knees up, facing the camera, neutral expression, even soft light, plain light-grey background.",
+  product: "Product reference: the object alone, centred, on a plain light-grey background, even soft light.",
+  place: "Location reference, no people: the place seen straight on, in its own light.",
+};
+const unpainted = () => (B ? B.elements : []).filter(e => !e.file && e.look);
+const painting = new Map();
+function waitTake(id, minutes) {
+  const t0 = Date.now();
+  return new Promise(ok => {
+    const tick = setInterval(() => {
+      const t = S.takes.find(x => x.id === id);
+      if (t && t.status === "done") { clearInterval(tick); ok(t); }
+      else if ((t && (t.status === "failed" || t.status === "cancelled")) || Date.now() - t0 > minutes * 60000) { clearInterval(tick); ok(null); }
+    }, 1500);
+  });
+}
+function paintElement(e) {         // → true once it has its picture
+  if (e.file) return Promise.resolve(true);
+  if (!painting.has(e.id)) painting.set(e.id, (async () => {
+    const m = keyModel(); if (!m) { toast("No still model is available.", true); return false; }
+    const aspects = m.aspects && m.aspects.length ? m.aspects : CAT.aspects.map(a => a.id);
+    const r = await api(`/reels/${S.reel.id}/run`, { method: "POST", json: { mode: "image", model: m.id, models: [m.id],
+      scene: `${CAST_FRAME[e.kind] || CAST_FRAME.cast} ${e.look}`, direction: {}, enhance: false,
+      aspect: snapAspect(e.kind === "place" ? S.aspect : "3:4", aspects), takes: 1, seed: m.seed && B.seed ? String(B.seed) : "", action: "cast" } });
+    if (r.error) { refused(r.error, m.id); return false; }
+    mergeTakes(r.takes); poll();
+    const t = await waitTake(r.takes[0].id, 20);
+    if (!t) { toast(`${e.name} couldn't be painted, so the shots with ${e.name} wait. Try Keyframe again.`, true); return false; }
+    const c = await api(`/reels/${S.reel.id}/refs/copy`, { method: "POST", json: { item: `${S.reel.id}:${t.id}` } });
+    if (c.error) { toast(c.error, true); return false; }
+    e.file = c.name; saveBoard(); renderKit(); renderBoard();
+    return true;
+  })().finally(() => painting.delete(e.id)));
+  return painting.get(e.id);
+}
+// a place's picture sets the room on a wide; closer in, it takes over the framing, so the cast goes alone
+const placeFits = s => ["auto", "xwide", "wide"].includes(s.shot || "auto");
+const shotRefs = s => s.elements.map(elById).filter(e => e && (e.kind !== "place" || placeFits(s)));
 async function keyframe(s) {
   if (s.start === "continue") return continueFrom(s);
   if (!s.scene.trim()) return toast("Write what the camera sees first.");
   const m = keyModel(); if (!m) return toast("No still model is available.", true);
-  const els = s.elements.map(elById).filter(Boolean), cap = m.refs || 0;
+  const els = shotRefs(s), cap = m.refs || 0;
   if (els.length && !cap) return toast(`${m.label} takes no reference images, so the kit can't reach this keyframe. Pick a keyframe model that does — Nano Banana Pro, GPT Image, Seedream.`, true);
   if (!els.length && m.requires_ref) return toast(`${m.label} edits a picture. Tick a kit element on this shot, or pick another keyframe model.`, true);
   if (els.length > cap) toast(`${m.label} takes ${cap} reference${cap > 1 ? "s" : ""}; using the first ${cap}.`);
   const use = els.slice(0, cap);
+  if (use.some(e => !e.file)) {
+    s._casting = true; refreshBoard();
+    const ok = (await Promise.all(use.map(paintElement))).every(Boolean);
+    s._casting = false; refreshBoard();
+    if (!ok) return null;
+  }
   const aspects = use.length && m.ref_aspects ? m.ref_aspects : (m.aspects && m.aspects.length ? m.aspects : CAT.aspects.map(a => a.id));
   const res = (m.resolutions || []).length ? (m.default_resolution && m.resolutions.includes(m.default_resolution) ? m.default_resolution : m.resolutions[m.resolutions.length > 1 ? 1 : 0]) : "";
   return runCard(s, { mode: "image", model: m.id, models: [m.id], scene: s.scene, direction: cardDirection(s), enhance: S.pmode !== "plain",
-    refs: use.map(e => e.file), ref_names: use.map(e => e.name), colors: S.colors, main_color: S.mainColor,
+    refs: use.map(e => e.file), ref_names: use.map(e => e.name), ref_kinds: use.map(e => e.kind), colors: S.colors, main_color: S.mainColor,
     aspect: snapAspect(S.aspect, aspects), resolution: res, takes: B.variants, seed: m.seed ? shotSeed(s) : "",
     negative_prompt: m.negative ? S.negative : "", action: "keyframe", role: "key" });
 }
@@ -2081,6 +2143,8 @@ async function continueFrom(s) {
 async function animate(s) {
   const m = clipModel(); if (!m) return toast("No video model is available.", true);
   if (!s.scene.trim()) return toast("Write what the camera sees first.");
+  // a shot that picks up where the one before ends starts on that clip's last frame, never on words alone
+  if (s.start === "continue" && !pickOf(s, "key") && !await continueFrom(s)) return null;
   const key = pickOf(s, "key");
   if (key && !(m.i2v || m.first_frame)) return toast(`${m.label} can't start from a keyframe. Pick a clip model that can — Seedance, Veo, Kling.`, true);
   if (!key && m.requires_frame) return toast(`${m.label} starts from a keyframe. Make one first.`, true);
@@ -2088,10 +2152,10 @@ async function animate(s) {
   const nextKey = next && s.land ? (next.type === "footage" ? await landFrame(next) : pickOf(next, "key")) : null;
   if (s.land && !nextKey) toast(`Shot ${i + 2} has no keyframe yet, so this clip won't end on it.`);
   // the keyframe carries the kit into the clip; without one, a model that takes references gets them
-  const els = key ? [] : s.elements.map(elById).filter(Boolean).slice(0, m.refs || 0);
+  const els = key ? [] : shotRefs(s).filter(e => e.file).slice(0, m.refs || 0);
   const durs = v.durations || [];
   return runCard(s, { mode: "video", model: m.id, models: [m.id], scene: s.scene, direction: cardDirection(s), enhance: S.pmode !== "plain",
-    refs: els.map(e => e.file), ref_names: els.map(e => e.name), first_frame: key ? key.file : null,
+    refs: els.map(e => e.file), ref_names: els.map(e => e.name), ref_kinds: els.map(e => e.kind), first_frame: key ? key.file : null,
     last_frame: s.land && nextKey && v.last_frame ? nextKey.file : null, aspect: S.aspect, resolution: S.resolution,
     duration: durs.length ? nearest(+s.duration || 5, durs) : null, audio: S.audio, seed: m.seed ? shotSeed(s) : "",
     negative_prompt: m.negative ? S.negative : "", takes: 1, action: "animate", role: "clip" });
@@ -2141,7 +2205,7 @@ async function runTool(s) {
   } else if (!m.source_max && len > 10.05 && !confirm(`This stretch is ${len.toFixed(1)} s, and most change models take up to 10 s. Run it anyway? (Set In and Out to work on a shorter piece.)`)) return;
   const named = els.length ? ` Reference images: ${els.map((e, i) => `image ${i + 1} is ${e.name}`).join(", ")}.` : "";
   const body = { mode: "video", model: m.id, models: [m.id], scene: text || m.label, prompt_override: m.takes_prompt ? text + named : null,
-    enhance: false, direction: {}, refs: els.map(e => e.file), ref_names: els.map(e => e.name), source_video: src.file,
+    enhance: false, direction: {}, refs: els.map(e => e.file), ref_names: els.map(e => e.name), ref_kinds: els.map(e => e.kind), source_video: src.file,
     source_trim: trim, aspect: src.aspect || S.aspect, resolution: "", duration, audio: false, takes: 1, seed: "", negative_prompt: "" };
   if (!ext) return runCard(s, Object.assign(body, { role: "clip", action: "change" }));
   const nc = Object.assign(newShot(), { scene: text, start: "continue", duration: body.duration || 5 });
@@ -2163,6 +2227,11 @@ async function landFrame(next) {
 }
 async function keyAll() {
   const list = B.shots.filter(s => s.type !== "footage" && s.start !== "continue" && s.scene.trim() && !pickOf(s, "key") && !busyOf(s, "key"));
+  const cast = unpainted().filter(e => list.some(s => shotRefs(s).includes(e)));
+  if (cast.length) {
+    toast(`Casting ${cast.map(e => e.name).join(", ")} first: one picture each, so every shot shows the same ${cast.some(e => e.kind === "place") ? "people and places" : "people"}.`);
+    if (!(await Promise.all(cast.map(paintElement))).every(Boolean)) return;
+  }
   for (const s of list) if (!await keyframe(s)) break;
 }
 async function animAll() {
@@ -2202,13 +2271,19 @@ async function planSpot(auto) {
     footage: real.map(s => ({ id: s.id, seconds: lenOf(s), notes: s.scene })) } });
   b.disabled = false;
   if (r.error) { b.textContent = B.shots.length ? "Rewrite the shot list" : "Write the shot list"; toast(r.error, true); return auto ? r : undefined; }
+  // the planner's cast joins the kit, to be painted before the first keyframe that needs it
+  (r.cast || []).forEach(c => {
+    if (!B.elements.some(e => e.name.toLowerCase() === c.name.toLowerCase())) B.elements.push({ id: rid(), name: c.name, kind: c.kind || "cast", file: "", look: c.look });
+  });
   const byName = new Map(B.elements.map(e => [e.name.toLowerCase(), e.id]));
   let n = nextN();
   B.shots = (r.shots || []).map(x => real.find(f => f.id === x.footage) || Object.assign(newShot(), { n: n++, scene: x.scene || "", shot: x.shot || "auto", move: x.move || "auto",
     duration: +x.duration || 5, elements: (x.elements || []).map(nm => byName.get(String(nm).toLowerCase())).filter(Boolean),
     start: x.start === "continue" ? "continue" : "cut", vo: x.vo || "", super: x.super || "" }));
   B.title = r.title || ""; B.notes = r.notes || "";
-  saveBoard(true); renderBoard();
+  // an earlier plan's cast that was never painted and this one doesn't use goes
+  B.elements = B.elements.filter(e => e.file || B.shots.some(x => x.elements.includes(e.id)));
+  saveBoard(true); renderKit(); renderBoard();
   toast(`${B.shots.length} shots · ${fmtSec(r.total)} of ${fmtSec(r.target)}. Check the cards, then Keyframe.`);
   return r;
 }

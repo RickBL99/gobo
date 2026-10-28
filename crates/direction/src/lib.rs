@@ -205,6 +205,11 @@ pub fn segments(vocab: &Vocabulary, body: &Value) -> Vec<(String, &'static str)>
         Some(v) if truthy(v) => py_items(Some(v)),
         _ => Vec::new(),
     };
+    // what each reference is: "cast", "product" or "place" (a kit's own words)
+    let ref_kinds = match b.get("ref_kinds") {
+        Some(v) if truthy(v) => py_items(Some(v)),
+        _ => Vec::new(),
+    };
 
     let frame = vocab.phrases(&FRAMING, d);
     let cam = vocab.phrases(&CAMERA, d);
@@ -251,7 +256,27 @@ pub fn segments(vocab: &Vocabulary, body: &Value) -> Vec<(String, &'static str)>
     if !comp.is_empty() {
         out.push((sentence(comp), "direction"));
     }
-    if named {
+    // a place's picture is its look, not the shot: copied as it is, every
+    // keyframe came out as that picture's framing
+    let place = |i: usize| ref_kinds.get(i).map(|k| py_strip(&py_str(k)) == "place").unwrap_or(false);
+    let places: Vec<&String> = names.iter().enumerate().filter(|(i, _)| place(*i)).map(|(_, n)| n).collect();
+    if named && !places.is_empty() {
+        let who: Vec<String> = names
+            .iter()
+            .enumerate()
+            .map(|(i, n)| format!("image {} is {}", i + 1, n))
+            .collect();
+        let mut t = format!("Reference images: {}.", who.join(", "));
+        if places.len() < names.len() {
+            t.push_str(" Keep the people and products exactly as shown.");
+        }
+        for n in places {
+            t.push_str(&format!(
+                " {n} is the place: match its design, materials and light, but frame the shot as described, not as in its picture."
+            ));
+        }
+        out.push((t, "reference"));
+    } else if named {
         let who: Vec<String> = names
             .iter()
             .enumerate()
@@ -404,6 +429,20 @@ mod tests {
         assert_eq!(named["prompt"], "Reference images: image 1 is Maya, image 2 is the bottle. Keep them exactly as shown.");
         let short = compile(&v, &json!({"refs": [1, 2], "ref_names": ["Maya", "  "], "enhance": 0}));
         assert_eq!(short["prompt"], "Keep the characters and products from the reference images.");
+    }
+
+    #[test]
+    fn a_place_is_matched_but_not_copied() {
+        let v = vocab();
+        let mixed = compile(&v, &json!({"refs": [1, 2], "ref_names": ["Maya", "The café"], "ref_kinds": ["cast", "place"], "enhance": 0}));
+        assert_eq!(mixed["prompt"], "Reference images: image 1 is Maya, image 2 is The café. Keep the people and products exactly as shown. \
+The café is the place: match its design, materials and light, but frame the shot as described, not as in its picture.");
+        let only = compile(&v, &json!({"refs": [1], "ref_names": ["The café"], "ref_kinds": ["place"], "enhance": 0}));
+        assert_eq!(only["prompt"], "Reference images: image 1 is The café. \
+The café is the place: match its design, materials and light, but frame the shot as described, not as in its picture.");
+        // no kinds, or no place among them: the words are what they always were
+        let cast = compile(&v, &json!({"refs": [1, 2], "ref_names": ["Maya", "Leo"], "ref_kinds": ["cast", "cast"], "enhance": 0}));
+        assert_eq!(cast["prompt"], "Reference images: image 1 is Maya, image 2 is Leo. Keep them exactly as shown.");
     }
 
     #[test]

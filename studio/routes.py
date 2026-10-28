@@ -293,7 +293,8 @@ def _shot_inputs(b: Dict) -> Dict:
     return dict(scene=b.get("scene") or "", direction=b.get("direction") or {},
                 enhance=bool(b.get("enhance", True)), video=b.get("mode") == "video",
                 refs=len(b.get("refs") or []), colors=b.get("colors") or None,
-                main_color=b.get("main_color"), ref_names=b.get("ref_names") or None)
+                main_color=b.get("main_color"), ref_names=b.get("ref_names") or None,
+                ref_kinds=b.get("ref_kinds") or None)
 
 
 @router.post("/compile", response_class=JSONResponse)
@@ -380,10 +381,12 @@ def _clean_board(b: Dict) -> Dict:
 
     els = []
     for e in (b.get("elements") or [])[:BOARD_ELEMENTS]:
-        if isinstance(e, dict) and e.get("id") and e.get("file"):
+        # a kit item is a picture, or the planner's cast still to be painted from its look
+        if isinstance(e, dict) and e.get("id") and (e.get("file") or s(e.get("look"))):
             els.append({"id": s(e["id"], 40), "name": s(e.get("name"), 60) or "Untitled",
                         "kind": e.get("kind") if e.get("kind") in ("cast", "product", "place") else "cast",
-                        "file": os.path.basename(s(e["file"], 120))})
+                        "file": os.path.basename(s(e.get("file"), 120)),
+                        **({"look": s(e.get("look"), 600)} if s(e.get("look")) else {})})
     ids = {e["id"] for e in els}
     shots = []
     for x in (b.get("shots") or [])[:BOARD_SHOTS * 3]:
@@ -773,7 +776,7 @@ async def run_shot(reel: str, request: Request):
     settings = {k: b.get(k) for k in ("mode", "scene", "direction", "enhance", "colors",
                                       "main_color", "aspect", "resolution", "takes", "duration",
                                       "audio", "negative_prompt", "seed", "refs", "first_frame",
-                                      "last_frame", "source_video", "prompt_override", "ref_names", "source_trim")}
+                                      "last_frame", "source_video", "prompt_override", "ref_names", "ref_kinds", "source_trim")}
     _ensure_pump()
     # a board card shoots onto its own shot number; its takes letter on from the last
     try:

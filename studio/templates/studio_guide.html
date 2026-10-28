@@ -495,13 +495,15 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Upload</span> a picture, <span class="ui">From library</span> (open a still, then <span class="ui">Add to kit</span>), or drag a keyframe from a card onto the Kit.</li>
       <li>Name it ("Maya", "the Icebox bottle") and set it to Cast, Product or Place.</li>
       <li>On each card, tick who and what is in that shot. Their pictures go to the keyframe, and the prompt names them ("image 1 is Maya").</li>
+      <li><b>Gobo casts the film for you.</b> When it writes the shot list, it names who and what recurs (the people, the main place, a hero prop) with one exact description each, and ticks them on the cards. They wait in the Kit as <i>to paint</i>; the first <span class="ui">Keyframe</span> paints each one once, and every shot draws from that picture, so the businessman in shot 1 is the businessman in shot 20. Upload your own picture instead and Gobo uses yours.</li>
+      <li>A place sets the room on wide shots. Closer in, the cast goes alone: a place's picture would otherwise set the shot's framing.</li>
     </ul>
     <div class="tip">Pick a Keyframes model that takes several references: Nano Banana Pro, GPT Image or Seedream. The keyframe carries the kit into the clip.</div>
   </section>
   <section class="topic" id="spot-seed" data-keys="seed spot repeat retake look panel same">
     <h3>Spot seed and the look</h3>
     <ul>
-      <li>The <b>Spot seed</b> (in the Kit) gives every shot its own fixed seed, so a retake of a shot repeats it. Faces and products come from the kit, not the seed.</li>
+      <li>The <b>Spot seed</b> (in the Kit) gives every shot its own fixed seed, so a retake of a shot repeats it, on the models that take a seed (Nano Banana, Seedance). FLUX 3 and LTX 2.5 pick their own seed whatever you send (ComfyUI's own nodes say so), and the Kit says so when they're chosen. Faces and products come from the kit, not the seed.</li>
       <li>On the Board, the left panel is the spot's look: camera, light, film, look and grade apply to every card. Framing, movement and length are set on each card.</li>
     </ul>
   </section>

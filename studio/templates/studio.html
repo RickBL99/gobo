@@ -338,6 +338,8 @@ main.boardview #inspector { display: none !important; }
 .kitlist.drop { outline: 1.5px dashed var(--accent); outline-offset: 3px; }
 .kit { display: flex; align-items: center; gap: 8px; }
 .kit .kt { width: 44px; height: 44px; border-radius: 8px; background: #222 center / cover no-repeat; flex: none; }
+.kit .kt.todo { display: flex; align-items: center; justify-content: center; text-align: center; font-size: .6rem; line-height: 1.1;
+  color: var(--muted); background: none; border: 1px dashed var(--line2); }
 .kit input { flex: 1; min-width: 0; }
 .kit select { width: auto; padding: 5px 22px 5px 7px; font-size: .74rem; }
 .kitadd { display: flex; gap: 6px; margin-top: 8px; }
@@ -565,7 +567,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
       <div class="kitseed">
         <label class="hint" for="kitSeed">Spot seed</label>
         <div class="seedrow"><input id="kitSeed" class="field" inputmode="numeric" placeholder="random"><button class="btn small" id="kitDice" title="A new seed for the spot">🎲</button></div>
-        <span class="hint">Each shot runs on this plus its number, so a retake repeats it. The faces and products come from the kit, not the seed.</span>
+        <span class="hint" id="kitSeedHint">Each shot runs on this plus its number, so a retake repeats it. The faces and products come from the kit, not the seed.</span>
       </div>
     </section>
 

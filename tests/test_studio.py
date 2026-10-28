@@ -1086,14 +1086,17 @@ class Flow(unittest.TestCase):
         b = self.c.put(f"/studio/reels/{reel}/board", json={
             "brief": "A :30 for a water bottle.", "target": 30, "seed": "1234", "variants": 9, "junk": 1,
             "look": {"direction": {"light": "golden"}, "aspect": "16:9", "evil": 1},
-            "elements": [{"id": "e1", "name": "Maya", "kind": "cast", "file": "../../ref-a.jpg"}, {"id": "e2", "name": "no file"}],
-            "shots": [{"id": "s1", "n": 1, "scene": "Maya runs.", "elements": ["e1", "ghost"], "start": "continue",
+            "elements": [{"id": "e1", "name": "Maya", "kind": "cast", "file": "../../ref-a.jpg"}, {"id": "e2", "name": "no file"},
+                         {"id": "e3", "name": "The café", "kind": "place", "file": "", "look": "A Paris café."}],
+            "shots": [{"id": "s1", "n": 1, "scene": "Maya runs.", "elements": ["e1", "ghost", "e3"], "start": "continue",
                        "trim": [0.5, 3], "duration": 5}, {"nope": True}] + [{"id": f"x{i}", "n": i} for i in range(60)]}).json()["board"]
         self.assertEqual((b["seed"], b["variants"], b["target"]), (1234, 4, 30))
         self.assertNotIn("junk", b)
         self.assertEqual(b["look"], {"direction": {"light": "golden"}, "aspect": "16:9"})
-        self.assertEqual(b["elements"], [{"id": "e1", "name": "Maya", "kind": "cast", "file": "ref-a.jpg"}])
-        self.assertEqual((b["shots"][0]["elements"], b["shots"][0]["trim"]), (["e1"], [0.5, 3.0]))
+        # a picture, or the planner's cast still to be painted from its look; neither is nothing
+        self.assertEqual(b["elements"], [{"id": "e1", "name": "Maya", "kind": "cast", "file": "ref-a.jpg"},
+                                         {"id": "e3", "name": "The café", "kind": "place", "file": "", "look": "A Paris café."}])
+        self.assertEqual((b["shots"][0]["elements"], b["shots"][0]["trim"]), (["e1", "e3"], [0.5, 3.0]))
         self.assertEqual(len(b["shots"]), studio.BOARD_SHOTS)
         r = self.c.get(f"/studio/reels/{reel}").json()
         self.assertTrue(r["reel"]["board"])
@@ -1362,6 +1365,30 @@ class Planner(unittest.TestCase):
         self.assertIn("- The bottle (product)", seen["user"])
         self.assertIn("low golden-hour sun", seen["user"].lower())
         self.assertIn("insert", seen["schema"]["properties"]["shots"]["items"]["properties"]["shot"]["enum"])
+
+
+class PlannerCast(unittest.TestCase):
+    def test_the_planner_casts_what_recurs(self):
+        """The Last Croissant: every keyframe drew a new businessman, a new woman in yellow and a new café,
+        because nothing tied the shots together. The planner names who and what recurs, to be painted once."""
+        def fake(system, user, schema, effort="low", max_tokens=4000):
+            self.assertIn("cast", schema["required"])
+            return {"title": "The Last Croissant", "notes": "n", "cast": [
+                {"name": "The businessman", "kind": "cast", "look": "Mid-40s, navy suit, burgundy tie."},
+                {"name": "The café", "kind": "place", "look": "A symmetrical Paris café, dark-wood counter."},
+                {"name": "maya", "kind": "cast", "look": "Already in the kit."},
+                {"name": "No look", "kind": "cast", "look": " "},
+                {"name": "The plate", "kind": "prop", "look": "White porcelain."},
+                *({"name": f"Extra {i}", "kind": "cast", "look": "x"} for i in range(9))],
+                "shots": [{"scene": "The businessman and Maya at the counter of The café.", "shot": "two", "move": "static", "duration": 4,
+                           "elements": ["The Businessman", "Maya", "The café", "Nobody"], "start": "cut", "vo": "", "super": "", "footage": ""}]}
+        with mock.patch.object(M, "_claude_json", fake):
+            out = M.plan_spot("Two strangers, one croissant.", 4, "ltx/ltx-2-5-pro", [{"name": "Maya", "kind": "cast"}], {})
+        names = [c["name"] for c in out["cast"]]
+        self.assertEqual(names[:3], ["The businessman", "The café", "The plate"])     # the kit's Maya and the one with no look are left out
+        self.assertEqual(len(names), M.CAST_MAX)
+        self.assertEqual(out["cast"][2]["kind"], "cast")                                # an unknown kind is a cast member
+        self.assertEqual(out["shots"][0]["elements"], ["The businessman", "Maya", "The café"])
 
 
 class PlannerFootage(unittest.TestCase):

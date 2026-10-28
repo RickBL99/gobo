@@ -251,13 +251,14 @@ def phrases(groups: List[str], direction: Optional[Dict]) -> List[str]:
 
 def segments(scene: str, direction: Optional[Dict] = None, enhance: bool = True,
              video: bool = False, refs: int = 0, colors=None, main_color=None,
-             ref_names: Optional[List[str]] = None) -> List[Dict[str, str]]:
+             ref_names: Optional[List[str]] = None, ref_kinds: Optional[List[str]] = None) -> List[Dict[str, str]]:
     """The prompt in labelled pieces, so the page can show which control wrote
     which words: framing, scene, enhance, camera, movement, look, composition,
     references, palette. Written by the Rust shot compiler."""
     return rust.compile_shot({"scene": scene or "", "direction": direction or {}, "enhance": enhance,
                               "mode": "video" if video else "image", "refs": list(range(refs or 0)),
-                              "colors": colors, "main_color": main_color, "ref_names": ref_names},
+                              "colors": colors, "main_color": main_color, "ref_names": ref_names,
+                              "ref_kinds": ref_kinds},
                              GROUPS)["segments"]
 
 
