@@ -1,0 +1,70 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The 2-minute demo · Gobo</title>
+<meta name="description" content="Gobo in two minutes: say the film in one line and Gobo shoots it, then direct it yourself, grade it like film in Rust, and open it in ComfyUI.">
+{% with og_title="Gobo · Say the film. Gobo shoots it.",
+        og_desc="The 2-minute demo: one line in, a finished film out. Gobo writes the shots, films them on LTX 2.5, checks continuity and grades it like film, in Rust. Open source, built on ComfyUI.",
+        og_image="/static/demo/og-demo.jpg", og_image_alt="Gobo's 2-minute demo: an old lighthouse keeper in the lantern room, from a film Gobo made from one line.",
+        og_video="/static/demo/gobo-demo.mp4" %}{% include "_og.html" %}{% endwith %}
+<link rel="icon" href="/static/icons/favicon.svg" type="image/svg+xml">
+<link rel="icon" href="/favicon.ico" sizes="48x48">
+<link rel="apple-touch-icon" href="/static/icons/icon-180.png">
+<meta name="theme-color" content="#0b0b0d">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap">
+<style>
+:root { --bg: #0b0b0d; --panel: #131316; --line: #2a2a31; --line2: #3a3a44; --text: #ecebe8; --muted: #9a98a0; --dim: #6c6a73;
+  --accent: #f2c14e; --accent-ink: #1b1505; }
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.6 Inter, system-ui, sans-serif; }
+a { color: var(--accent); text-decoration: none; } a:hover { text-decoration: underline; }
+header { display: flex; align-items: center; gap: 14px; padding: 14px 24px; border-bottom: 1px solid var(--line); }
+.logo { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 1.02rem; color: var(--text); }
+.logo svg { width: 28px; height: 28px; }
+header .grow { flex: 1; }
+header nav { display: flex; gap: 18px; font-size: .92rem; } header nav a { color: var(--muted); } header nav a:hover { color: var(--text); }
+main { max-width: 1120px; margin: 0 auto; padding: 34px 24px 56px; }
+h1 { font-size: clamp(2rem, 4.6vw, 3.3rem); line-height: 1.05; letter-spacing: -.035em; margin: 0 0 10px; font-weight: 800; }
+h1 em { font-style: normal; background: linear-gradient(90deg, #f2c14e, #f08a4b 60%, #e05a6a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.lede { color: var(--muted); font-size: 1.08rem; max-width: 760px; margin: 0 0 24px; }
+video { width: 100%; aspect-ratio: 16/9; display: block; background: #000; border-radius: 16px; border: 1px solid var(--line); }
+.go { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 22px; align-items: center; }
+.btn { display: inline-flex; align-items: center; gap: 8px; border-radius: 99px; padding: 12px 22px; font-weight: 700; border: 1px solid var(--line2);
+  color: var(--text); background: var(--panel); }
+.btn.primary { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.btn:hover { text-decoration: none; filter: brightness(1.08); }
+.small { color: var(--dim); font-size: .85rem; margin-top: 26px; }
+@media (max-width: 600px) { header nav { display: none; } main { padding: 22px 16px 40px; } }
+</style>
+</head>
+<body>
+{% include "_superstock.html" %}
+<header>
+  <a class="logo" href="/"><svg viewBox="0 0 64 64" aria-hidden="true"><rect x="7" y="15" width="50" height="34" rx="6" fill="none" stroke="#f2c14e" stroke-width="4.5"/>
+    <circle cx="32" cy="32" r="10" fill="none" stroke="#ecebe8" stroke-width="4.5"/><circle cx="32" cy="32" r="3.6" fill="#f2c14e"/>
+    <rect x="12.5" y="20" width="6" height="3.6" rx="1.2" fill="#ecebe8"/></svg>Gobo</a>
+  <span class="grow"></span>
+  <nav><a href="/about">About</a><a href="{{ source }}" target="_blank" rel="noopener">Source on GitHub</a></nav>
+</header>
+<main>
+  <h1>Say the film. <em>Gobo shoots it.</em></h1>
+  <p class="lede">Two minutes on Gobo: one line in, a finished film out, written, filmed on LTX 2.5, checked for continuity and graded like film.
+    Then direct it yourself, grade it in Rust right in the browser, and open any shot in ComfyUI.</p>
+  <video controls playsinline preload="metadata" poster="/static/demo/gobo-demo.jpg" aria-label="Gobo: the 2-minute demo">
+    <source src="/static/demo/gobo-demo.mp4" type="video/mp4">
+    <track kind="captions" src="/static/demo/gobo-demo.vtt" srclang="en" label="English" default>
+  </video>
+  <div class="go">
+    <a class="btn primary" href="/">{{ "Try it with your own Comfy key" if visitor else "Open Gobo" }} &rarr;</a>
+    <a class="btn" href="{{ source }}" target="_blank" rel="noopener">Source on GitHub</a>
+    <a class="btn" href="/about">About Gobo</a>
+  </div>
+  <p class="small">Open source · MIT or Apache 2.0 · Built for Comfy's Open Source Higgsfield challenge. Inspired by Higgsfield's Cinema Studio;
+    not affiliated with Comfy Org or Higgsfield.</p>
+</main>
+</body>
+</html>

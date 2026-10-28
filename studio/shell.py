@@ -26,7 +26,7 @@ router = APIRouter()
 
 # Paths anyone may load: the sign-in page itself, the About page it links to,
 # the health check, the static files they are drawn with, and shared films.
-OPEN_PATHS = ("/login", "/logout", "/about", "/healthz", "/favicon.ico", "/comfyui/gobo-nodes.zip")
+OPEN_PATHS = ("/login", "/logout", "/about", "/demo", "/healthz", "/favicon.ico", "/comfyui/gobo-nodes.zip")
 # /t/: a take or LUT by a signed, expiring link, for a ComfyUI that can't sign in (comfy_colour.py)
 OPEN_PREFIXES = ("/static/", "/f/", "/t/")
 TOUR = "/static/tour/gobo-tour.mp4"
@@ -151,6 +151,13 @@ async def logout(request: Request):
     # ?bye: the sign-in page forgets a key this browser remembered, too
     return RedirectResponse(("/login?bye=1" if settings.VISITOR_KEYS else "/login") if settings.sign_in_on() else "/",
                             status_code=303)
+
+
+@router.get("/demo", response_class=HTMLResponse)
+async def demo(request: Request):
+    """The two-minute demo, with captions. Open to anyone: it's the page a shared link plays,
+    and its preview card (_og.html) carries the video."""
+    return templates.TemplateResponse(request, "demo.html", _page(request))
 
 
 @router.get("/about", response_class=HTMLResponse)

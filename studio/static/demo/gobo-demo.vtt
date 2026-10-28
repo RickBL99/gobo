@@ -1,0 +1,88 @@
+WEBVTT
+
+00:00.750 --> 00:05.130
+This is Gobo,
+an open-source AI film studio built on ComfyUI.
+
+00:05.590 --> 00:08.270
+You say the film, Gobo shoots it.
+
+00:09.730 --> 00:15.530
+We first built Gobo as an in-house AI cinema
+system for SuperStock and VistaLab.ai.
+
+00:15.950 --> 00:18.550
+It was designed for real commercial work.
+
+00:19.130 --> 00:24.370
+For Comfy's challenge, we took it standalone,
+put it on Comfy Router, and opened the code.
+
+00:25.730 --> 00:28.990
+Type one line, pick a look,
+a length, and a shape.
+
+00:29.490 --> 00:36.100
+Gobo's planner writes the shot list,
+paints a keyframe for every shot, and LTX 2.5, our core video model,
+
+00:36.150 --> 00:37.530
+brings each one to life.
+
+00:38.380 --> 00:41.580
+A script supervisor checks
+every cut for continuity.
+
+00:41.840 --> 00:45.000
+Then the film is cut, graded,
+and ready to share with a link.
+
+00:49.630 --> 00:50.670
+Want control?
+
+00:51.210 --> 00:54.940
+Direct it yourself, camera, lens,
+light, film stock, and the move.
+
+00:54.990 --> 00:57.610
+Compiled into the prompt,
+a cinematographer would write.
+
+00:58.380 --> 01:02.380
+The Lab steals the look of any frame
+and grades your takes like film.
+
+01:02.960 --> 01:07.040
+Using Rust,
+compiled to WebAssembly right in your browser.
+
+01:14.370 --> 01:15.780
+Ready for the graph?
+
+01:15.830 --> 01:23.450
+Open in ComfyUI hands you the same shot as Gobo's own nodes,
+and the same Rust code grades it there pixel for pixel.
+
+01:28.550 --> 01:34.730
+Under the hood, Python and FastAPI, plain JavaScript,
+four Rust crates running in the browser and on the server,
+
+01:34.970 --> 01:36.510
+and ffmpeg for the cut.
+
+01:37.360 --> 01:44.760
+One Comfy key reaches every model, LTX, FLUX 3,
+Seedance, and Nano Banana, with Claude planning the shots.
+
+01:48.420 --> 01:51.940
+Most AI video tools give you
+a prompt box or a node graph.
+
+01:52.590 --> 01:54.960
+Gobo gives you a crew and a door into ComfyUI.
+
+01:55.010 --> 01:57.170
+It's It's open source.
+
+01:57.410 --> 01:58.410
+Go make a film.

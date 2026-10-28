@@ -155,6 +155,22 @@ class SignIn(unittest.TestCase):
             self.assertIn('<meta property="og:title" content="Try Gobo · direct AI film like a cinematographer">',
                           self.c.get("/login").text)
 
+    def test_the_demo_is_open_and_shares_as_a_video(self):
+        bot = {"accept": "*/*", "user-agent": "facebookexternalhit/1.1"}
+        page = self.c.get("/demo", headers=bot, follow_redirects=False)
+        self.assertEqual(page.status_code, 200)                         # no sign-in, for a person or a preview bot
+        for tag in ('<meta property="og:type" content="video.other">',
+                    '<meta property="og:video" content="http://testserver/static/demo/gobo-demo.mp4">',
+                    '<meta property="og:video:type" content="video/mp4">',
+                    '<meta property="og:image" content="http://testserver/static/demo/og-demo.jpg">',
+                    '<track kind="captions" src="/static/demo/gobo-demo.vtt"'):
+            self.assertIn(tag, page.text)
+        part = self.c.get("/static/demo/gobo-demo.mp4", headers={"range": "bytes=0-1023"})
+        self.assertEqual((part.status_code, part.headers["content-type"], len(part.content)), (206, "video/mp4", 1024))
+        self.assertTrue(self.c.get("/static/demo/gobo-demo.vtt").text.startswith("WEBVTT"))
+        self.assertIn('href="/demo"', self.c.get("/login").text)
+        self.assertIn('href="/demo"', self.c.get("/about").text)
+
     def test_open_paths(self):
         self.assertEqual(self.c.get("/login").status_code, 200)
         self.assertEqual(self.c.get("/healthz").json()["sign_in"], True)
