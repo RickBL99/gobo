@@ -217,6 +217,21 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <p>The order is the one a colourist uses: a camera LUT, the CDL, the wheels, the curves, the stock and grade, a creative LUT, then grain, halation and the vignette. <span class="ui">Download .cube</span> carries all of it except those last three, which need the whole picture.</p>
     <div class="tip">Grade by the scopes, not your screen: on the waveform, keep the blacks just above 0 and the brightest whites just under 100; a neutral grey should sit in the middle of the vectorscope.</div>
   </section>
+  <section class="topic" id="phone" data-keys="phone iphone android mobile touch grade colour on the go layout desktop layout photo camera roll match">
+    <h3>On a phone</h3>
+    <p>On a phone the studio lays itself out for a thumb: one row of buttons along the top that scrolls, and a <span class="ui">Grade</span> button under every finished take. <span class="ui">Desktop layout</span>, at the end of that row, gives you the whole page; <span class="ui">Phone layout</span> brings this back.</p>
+    <p><span class="ui">Grade</span> opens Colour made for the phone, on the same look as the Lab and the Colour page:</p>
+    <ul>
+      <li><b>The picture</b>: hold it to see the original, drag across it to move the control you're on, tap it to play or pause. The phone's Back gesture closes it.</li>
+      <li><b>Looks</b>: your own shot in every film stock and every grade; tap one. <span class="ui">LUT</span> lists the reel's LUTs and imports a .cube or a CDL from Files.</li>
+      <li><b>Light</b>, <b>Colour</b> and <b>Film</b>: one control a row; <b>↺</b> puts it back to the stock and grade's.</li>
+      <li><b>Wheels</b>: one at a time (Lift, Gamma, Gain, Offset). <b>Curves</b>: tap to add a point, drag to bend.</li>
+      <li><b>Match</b>: <span class="ui">Choose a photo</span> (a film still, a sunset, the shot it cuts with) and the take is matched to its colour. The stock and grade go on top; <span class="ui">Just the photo's colour</span> takes them off. <span class="ui">Grade other takes to match</span> is the Lab's.</li>
+      <li><span class="ui">Scope</span> puts a waveform on the picture. <b>⋯</b> saves a graded still (to Photos, from the share sheet), downloads the .cube, starts the grade over, or opens the full Colour page.</li>
+      <li><span class="ui">Grade the take</span> grades every frame on the server, as it does on a computer.</li>
+    </ul>
+    <div class="warn">A phone's screen is bright and colourful, and True Tone and Night Shift move its colour. Find the look on the phone; check it on a proper screen before it goes out.</div>
+  </section>
   <section class="topic" id="comfyui" data-keys="comfyui workflow export open in comfyui api json nodes gobo nodes custom node pack grade colour director prompt steal look">
     <h3>Open in ComfyUI</h3>
     <p>A take made on a model ComfyUI has a node for shows <span class="ui">Open in ComfyUI</span>. It downloads a zip with <code>workflow_api.json</code>, any keyframes the graph loads (they go in ComfyUI's <code>input</code> folder), and a short read-me. Autopilot's <span class="ui">Open in ComfyUI</span> exports the whole film as one graph, with every keyframe node wired into its clip. Drag the JSON onto ComfyUI, sign in to your Comfy account, and queue it.</p>

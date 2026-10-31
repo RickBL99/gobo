@@ -92,6 +92,99 @@ def check(name, ok, detail=""):
     RESULTS.append((name, bool(ok), detail))
 
 
+def phone_checks(tab):
+    """The phone layout and its grader (gobo_phone.js), on the finished clip on the stage."""
+    tab.js("goboPhone.choose('phone'); setView('shot'); select(S.takes.find(t => t.status === 'done' && t.kind === 'video' && t.action !== 'grade').id); 1")
+    time.sleep(0.6)
+    check("phone: the layout is on, with a Grade button on the take", tab.js("document.body.classList.contains('phone')")
+          and tab.js("!!$('#actions [data-pg]')") and tab.js("$('#layoutBtn').textContent") == "Desktop layout")
+    tab.js("$('#actions [data-pg]').click(); 1"); time.sleep(3)
+    check("phone: Grade opens the grader on the take, the picture graded", tab.js("!$('#pg').classList.contains('hidden') && $('#pgCv').width > 0")
+          and "1A" in tab.js("$('#pgWhat').textContent") and tab.js("history.state && history.state.goboPhone") == 1, tab.js("$('#pgWhat').textContent"))
+    n_film = tab.js("CAT.groups.film.options.filter(o => o.id !== 'auto').length")
+    drawn = "$$('#pgLooks canvas').filter(c => c.width > 0).length"
+    for _ in range(20):
+        if tab.js(drawn) == n_film:
+            break
+        time.sleep(0.3)
+    check("phone: Looks shows this shot in every film stock", tab.js("$$('#pgLooks [data-look]').length") == n_film and tab.js(drawn) == n_film, tab.js(drawn))
+    tab.js("$('#pgLooks [data-look=bw400]').click(); 1"); time.sleep(0.5)
+    check("phone: a tap on one takes that stock, the rest of the look kept", tab.js("goboGrade.preset().film") == "bw400"
+          and tab.js("$('#pgLooks [data-look=bw400]').classList.contains('on')") and tab.js("!!goboGrade.look.wheels"))
+    tab.js("$('#pgTabs [data-tab=light]').click(); 1"); time.sleep(0.3)
+    tab.js("const i = $('#pgTool input[data-k=exposure]'); i.value = '0.5'; i.dispatchEvent(new Event('input', {bubbles: true})); 1"); time.sleep(0.2)
+    check("phone: a slider moves the look, and ↺ appears", tab.js("goboGrade.look.exposure") == 0.5
+          and tab.js("!$('#pgTool [data-rs=exposure]').classList.contains('hidden')"))
+    tab.js("$('#pgTool [data-rs=exposure]').click(); 1"); time.sleep(0.2)
+    check("phone: ↺ puts it back to the stock and grade's", tab.js("goboGrade.look.exposure") != 0.5
+          and tab.js("$('#pgTool [data-rs=exposure]').classList.contains('hidden')"))
+    tab.js("$('#pgTool .pgsl[data-k=contrast] .top').click(); 1")
+    before = tab.js("goboGrade.look.contrast")
+    tab.js("""const v = $('#pgView'), b = v.getBoundingClientRect(), y = b.top + b.height / 2;
+      const ev = (t, x) => v.dispatchEvent(new PointerEvent(t, {clientX: x, clientY: y, pointerId: 21, bubbles: true}));
+      ev('pointerdown', b.left + 100); ev('pointermove', b.left + 140); ev('pointermove', b.left + 500); ev('pointerup', b.left + 500); 1""")
+    time.sleep(0.2)
+    check("phone: a drag across the picture moves the control picked", tab.js("goboGrade.look.contrast") > before + 0.05
+          and "Contrast" in tab.js("$('#pgTag').textContent"), [before, tab.js("goboGrade.look.contrast")])
+    tab.js("""const v = $('#pgView'), b = v.getBoundingClientRect();
+      v.dispatchEvent(new PointerEvent('pointerdown', {clientX: b.left + 50, clientY: b.top + 50, pointerId: 22, bubbles: true})); 1""")
+    time.sleep(0.5)
+    held = tab.js("$('#pgTag').textContent") == "Original" and tab.js("!$('#pgTag').classList.contains('hidden')")
+    tab.js("const v = $('#pgView'); v.dispatchEvent(new PointerEvent('pointerup', {pointerId: 22, bubbles: true})); 1"); time.sleep(0.2)
+    check("phone: holding the picture shows the original, letting go the grade", held and tab.js("$('#pgTag').classList.contains('hidden')"))
+    tab.js("$('#pgTabs [data-tab=wheels]').click(); $('#pgTool [data-wk=gain]').click(); 1"); time.sleep(0.3)
+    tab.js("""const c = $('#pgTool .pgwheel canvas'), b = c.getBoundingClientRect(), r = b.width / 2;
+      const at = (t, f) => c.dispatchEvent(new PointerEvent(t, {clientX: b.left + r + f[0] * r, clientY: b.top + r + f[1] * r, pointerId: 23, bubbles: true}));
+      at('pointerdown', [0.85, 0.1]); at('pointerup', [0.85, 0.1]); 1""")
+    gain = tab.js("goboGrade.look.wheels && goboGrade.look.wheels.gain")
+    check("phone: one big wheel, dragged toward blue", bool(gain) and gain[2] > 0.05, gain)
+    tab.js("$('#pgTabs [data-tab=curves]').click(); $('#pgTool [data-ch=r]').click(); 1"); time.sleep(0.3)
+    tab.js("""const c = $('#pgTool .pgcurve canvas'), b = c.getBoundingClientRect(), pad = 22 * b.width / c.width, span = b.width - 2 * pad;
+      const ev = t => c.dispatchEvent(new PointerEvent(t, {clientX: b.left + pad + 0.5 * span, clientY: b.top + pad + 0.3 * span, pointerId: 24, bubbles: true}));
+      ev('pointerdown'); ev('pointerup'); 1""")
+    added = tab.js("goboGrade.look.curves && goboGrade.look.curves.r && goboGrade.look.curves.r.length") == 3
+    tab.js("$('#pgPtOff').click(); 1")
+    check("phone: a tap adds a curve point, and it can be taken out", added and not tab.js("goboGrade.look.curves && goboGrade.look.curves.r"))
+    tab.js("$('#pgTabs [data-tab=match]').click(); 1"); time.sleep(0.3)
+    was = tab.js("JSON.stringify(goboGrade.look.cdl || null)")
+    tab.js("""(async () => { const c = document.createElement('canvas'); c.width = 320; c.height = 200; const x = c.getContext('2d');
+      const g = x.createLinearGradient(0, 0, 320, 200); g.addColorStop(0, '#2a1404'); g.addColorStop(.5, '#d0762a'); g.addColorStop(1, '#ffe2a8');
+      x.fillStyle = g; x.fillRect(0, 0, 320, 200); const b = await new Promise(ok => c.toBlob(ok, 'image/jpeg', .9));
+      const dt = new DataTransfer(); dt.items.add(new File([b], 'sunset.jpg', {type: 'image/jpeg'}));
+      const i = $('#pgPhotoFile'); i.files = dt.files; i.dispatchEvent(new Event('change')); return 1; })()""")
+    for _ in range(30):
+        if "Matched to the photo" in (tab.js("$('#pgMatched').textContent") or ""):
+            break
+        time.sleep(0.3)
+    cdl = tab.js("goboGrade.look.cdl")
+    check("phone: Match grades the take to a photo (a CDL, and how far apart)", bool(cdl) and cdl["slope"][2] < cdl["slope"][0]
+          and "→" in tab.js("$('#pgMatched').textContent"), [cdl, tab.js("$('#pgMatched').textContent")])
+    tab.shot("37-phone-match", w=390, h=844)
+    check("phone: no sideways scroll", tab.js("$('#pg').scrollWidth <= innerWidth + 1 && $('#pgTabs').scrollWidth <= $('#pgTabs').clientWidth + 1"),
+          [tab.js("$('#pgTabs').scrollWidth"), tab.js("$('#pgTabs').clientWidth")])
+    tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
+    tab.js("$('#pgUnmatch').click(); 1")
+    check("phone: Undo the match puts the grade back", tab.js("JSON.stringify(goboGrade.look.cdl || null)") == was)
+    tab.js("history.back(); 1"); time.sleep(0.6)
+    check("phone: Back closes the grader and keeps the grade", tab.js("$('#pg').classList.contains('hidden')")
+          and tab.js("goboGrade.preset().film") == "bw400" and tab.js("!!(goboGrade.look.wheels || {}).gain"))
+    tab.js("$('#labBtn').click(); $('#lab [data-tab=grade]').click(); 1"); time.sleep(1.5)
+    tab.js("$('#gAdv').click(); 1"); time.sleep(2)
+    check("phone: the Lab's Advanced opens the grader, not the desktop page", tab.js("!$('#pg').classList.contains('hidden')")
+          and tab.js("$('#colour').classList.contains('hidden')"))
+    n = tab.js("S.takes.filter(t => t.action === 'grade').length")
+    tab.js("$('#pgBake').click(); 1")
+    for _ in range(40):
+        time.sleep(0.5)
+        if tab.js("S.takes.filter(t => t.action === 'grade').length") > n:
+            break
+    check("phone: Grade the take grades it on the server, and shows the graded take", tab.js("S.takes.filter(t => t.action === 'grade').length") == n + 1
+          and tab.js("$('#pg').classList.contains('hidden') && !document.body.classList.contains('pgopen')"))
+    tab.js("goboPhone.choose('desktop'); 1"); time.sleep(0.3)
+    check("phone: Desktop layout turns it off", not tab.js("document.body.classList.contains('phone')") and not tab.js("$('#actions [data-pg]')")
+          and tab.js("localStorage.getItem('gobo.layout')") is None)
+
+
 def main():
     os.makedirs(SHOTS, exist_ok=True)
     prof = tempfile.mkdtemp(prefix="studio-chrome-")
@@ -1061,6 +1154,7 @@ def main():
         check("colour: no sideways scroll on a phone", tab.js("$('#colour').scrollWidth <= innerWidth + 1"))
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
         tab.js("$('#cDone').click(); 1")
+        phone_checks(tab)
 
         # ── several takes, one grade: a drifted take matched to take A, then graded alike ──
         tab.js(f"""(async () => {{

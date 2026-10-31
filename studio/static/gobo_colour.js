@@ -472,5 +472,7 @@ body.colouropen { overflow: hidden; }
     if (e.key === "Escape") { e.stopPropagation(); close(); }
     if (e.key === " " && !/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)) { e.preventDefault(); q("#cPlay", el).click(); }
   }, true);
-  window.goboColour = { open, close, render };
+  // the tools' own maths, for another face on the same look (gobo_phone.js)
+  const tools = { WHEELS, CURVES, CONTROLS: [...BASICS, ...FILM], toRgb, toCbCr, ringImage, monotone, curveOf, setCurve, wheelsOf, tidyWheels };
+  window.goboColour = { open, close, render, tools };
 })();

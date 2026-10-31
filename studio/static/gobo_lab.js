@@ -600,13 +600,19 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
     }
     return { pic: t, graded: null };
   }
-  async function gradeSetup() {
-    stopVideo();
-    const { pic: t, graded } = gradeSource();
+  // the look for the take on screen: a graded take's own, else the one in hand
+  async function takeLook() {
+    const { graded } = gradeSource();
     if (graded && graded.look && fromGraded !== graded.id) {
       gradeLook = JSON.parse(JSON.stringify(graded.look)); gradeFrom = "lab"; fromGraded = graded.id;
       await ensureLut(gradeLook); syncSliders();
     } else if (!gradeLook || gradeFrom === "shot") await fromShot(); else syncSliders();
+    return gradeLook;
+  }
+  async function gradeSetup() {
+    stopVideo();
+    const { pic: t } = gradeSource();
+    await takeLook();
     if (!t || t.status !== "done") { gsrc = null; gctx.clearRect(0, 0, gcv.width, gcv.height); q("#gPerf", lab).textContent = "Pick a finished take to grade it."; return; }
     if (t.kind === "video") {
       vid = document.createElement("video");
@@ -861,6 +867,9 @@ body.labopen #fails { right: calc(min(440px, 100vw) + 16px); }
       gradeLook = keepTools(await baseLook(film, grade), gradeLook); gradeFrom = "lab"; return gradeLook;
     },
     preset: () => ({ film: q("#gFilm", lab).value, grade: q("#gGrade", lab).value }),
+    // what a stock and grade would make of this look (its wheels, curves and LUT kept), without taking it
+    lookWith: async (film, grade) => keepTools(await baseLook(film, grade), gradeLook),
+    take: takeLook,
     reset: fromShot, ensureLut, listLuts, importGrade, useLut, lutNote, lutAction, bake, saveCube, saveStill, name: gradeName,
     source: () => gradeSource().pic, matchOpen, openInComfy,
     reopen() { open("grade"); },
