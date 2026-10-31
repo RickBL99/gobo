@@ -1,9 +1,9 @@
 // Gobo on a phone. A phone (a small screen you touch) gets body.phone:
 //
-//   the studio    one row of header buttons that scrolls, and a Grade button
-//                 on every finished take. "Desktop layout" at the end of the
-//                 row turns it off; a small screen that isn't a phone gets
-//                 "Phone layout" to turn it on.
+//   the studio    smaller header buttons, all of them in sight (links to the
+//                 rest of the studio first), and a Grade button on every
+//                 finished take. "Desktop layout" in the header turns it off;
+//                 a small screen that isn't a phone gets "Phone layout".
 //   the grader    the Colour page rebuilt for a thumb, on the same look, the
 //                 same gobo.wasm and the same Grade the take: the picture full
 //                 width (hold it for the original, drag across it to move the
@@ -33,12 +33,16 @@
 
   const style = document.createElement("style");
   style.textContent = `
-body.phone header { flex-wrap: nowrap; overflow-x: auto; gap: 8px; padding: 8px 12px; scrollbar-width: none; }
-body.phone header::-webkit-scrollbar { display: none; }
-body.phone header > * { flex: none; }
-body.phone header .grow, body.phone header .back, body.phone #inspBtn { display: none; }
+body.phone header { position: static; gap: 6px; padding: 8px 12px; }
+body.phone header .grow, body.phone #inspBtn { display: none; }
 body.phone header h1 { font-size: .95rem; }
-body.phone header .reelname { width: 8.5em; }
+body.phone header h1 .pill { display: none; }
+body.phone header .reelname { flex: 0 1 9em; width: 9em; min-width: 0; }
+body.phone header .chipbtn, body.phone header .homebtn, body.phone header .back { padding: 5px 10px; font-size: .78rem; }
+/* every button in sight, and the way to the rest of the studio on the first line */
+body.phone header .homebtn, body.phone header h1 { order: -3; }
+body.phone header .back, body.phone header a.chipbtn:not([target]) { order: -2; }
+body.phone header .back { border: 1px solid var(--line); border-radius: 99px; color: var(--text); white-space: nowrap; }
 body.pgopen { overflow: hidden; }
 #pg { position: fixed; inset: 0; z-index: 75; background: #000; color: var(--text); display: flex; flex-direction: column;
   height: 100dvh; padding-top: env(safe-area-inset-top); -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
