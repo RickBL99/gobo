@@ -1016,6 +1016,47 @@ def director_rewrite(brief: str, model_id: str, video: bool = False, notes: str 
     return out
 
 
+_WORKSHOP_SYSTEM = """You are a director of photography helping someone work out the prompt for one AI image or video shot, before the final rewrite. You work in rounds.
+
+You receive: the model (and its dialect), the person's scene in their words, the brief the studio compiled from their direction choices (framing, lens, light, film, look…), and the conversation so far (your earlier questions, their answers, and what they asked to change).
+
+Each round, answer with:
+- `questions`: at most three short questions whose answers would change the shot (who it is, the one action, how it ends, the mood, what must be in frame, what to avoid). Ask only what the scene leaves open; an empty list when nothing is.
+- `proposals`: three versions of the prompt, each with a two-word `name` and one sentence of `why`:
+  1. literal: the scene as written, tidied for the model, nothing added;
+  2. cinematic: the same shot told as a cinematographer would, light and motion made concrete;
+  3. bold: a stronger idea for the same brief, one clear change that makes it a better picture.
+  Every proposal keeps every direction choice in the brief, keeps the subject, action and setting, uses the answers given, and fits the model's dialect. No equipment names, no artist names, no filler tags, under 160 words. For video: one continuous shot, what moves, how the camera moves, how it ends.
+- `note`: one sentence to the person on what the round did."""
+
+
+def workshop(scene: str, brief: str, model_id: str, video: bool = False, history: Optional[List[Dict]] = None) -> Dict:
+    """The prompt workshop: questions and three proposals for a shot, given what
+    was said so far ([{role: "you"|"gobo", text}])."""
+    m = MODELS.get(model_id) or {}
+    slug = (m.get("slugs") or {}).get("t", model_id)
+    dialect = next((v for k, v in DIALECTS.items() if slug.startswith(k) or k in slug), "")
+    said = "\n".join(f"{'Gobo' if h.get('role') == 'gobo' else 'Person'}: {str(h.get('text', '')).strip()}"
+                     for h in (history or [])[-16:] if str(h.get("text", "")).strip())
+    user = (f"Model: {m.get('label', model_id)} ({'video' if video else 'still image'})\n"
+            f"Dialect: {dialect or 'Plain descriptive prose.'}\n\nScene, in their words:\n{scene.strip()}\n\n"
+            f"Compiled brief:\n{brief}\n\n" + (f"So far:\n{said}\n" if said else "First round.\n"))
+    out = _claude_json(_WORKSHOP_SYSTEM, user, {
+        "type": "object", "additionalProperties": False, "required": ["questions", "proposals", "note"],
+        "properties": {"questions": {"type": "array", "items": {"type": "string"}},
+                       "proposals": {"type": "array", "items": {
+                           "type": "object", "additionalProperties": False, "required": ["name", "prompt", "why"],
+                           "properties": {"name": {"type": "string"}, "prompt": {"type": "string"}, "why": {"type": "string"}}}},
+                       "note": {"type": "string"}}},
+        effort=os.getenv("STUDIO_DIRECTOR_EFFORT", "low"), max_tokens=4000)
+    out["questions"] = [str(x).strip() for x in (out.get("questions") or []) if str(x).strip()][:3]
+    out["proposals"] = [{"name": str(p.get("name", "")).strip()[:40], "prompt": str(p.get("prompt", "")).strip(), "why": str(p.get("why", "")).strip()}
+                        for p in (out.get("proposals") or []) if str(p.get("prompt", "")).strip()][:3]
+    out["note"] = str(out.get("note", "")).strip()
+    out["brief"] = brief
+    return out
+
+
 def claude_on() -> bool:
     """Claude is reachable: with its own key, or through Comfy Router."""
     if settings.VISITOR_KEYS:

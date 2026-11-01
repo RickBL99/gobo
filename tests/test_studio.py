@@ -636,6 +636,18 @@ class Flow(unittest.TestCase):
                          json={"look": {"lut3d": {"id": up["id"]}, "wheels": {"lift": [0, 0, 0, 0]}}}).json()
         r, g, b = Image.open(J.out_path(reel, gs["take"]["file"])).getpixel((32, 32))
         self.assertTrue(b > 180 and r < 60, f"red and blue swapped: {(r, g, b)}")
+        # the graded take carries its broadcast check: measured, legal, nothing clipped on a mid-tone still
+        bc = gs["take"]["broadcast"]
+        self.assertEqual((bc["frames"], bc["legal"], bc["clipped"], bc["crushed"]), (1, True, 0, 0), bc)
+        # a white still clips flat; Broadcast safe folds it in
+        white = self.c.post(f"/studio/reels/{reel}/run", json={"mode": "image", "model": "byteplus/seedream-5-0-260128", "scene": "Snow."}).json()["takes"][0]
+        self.finish(reel, white["id"], jpeg((64, 64), (255, 255, 255)), ".jpg")
+        hard = self.c.post(f"/studio/reels/{reel}/takes/{white['id']}/grade", json={"look": {"exposure": 0.5}}).json()["take"]["broadcast"]
+        soft = self.c.post(f"/studio/reels/{reel}/takes/{white['id']}/grade", json={"look": {"exposure": 0.5, "legal": True}}).json()["take"]
+        self.assertGreater(hard["clipped"], 0.9, hard)
+        self.assertEqual(soft["broadcast"]["clipped"], 0, soft["broadcast"])
+        self.assertLessEqual(soft["broadcast"]["rgb_max"], 0.99)
+        self.assertTrue(soft["look"]["legal"])
         gone = self.c.post(f"/studio/reels/{reel}/takes/{still['id']}/grade", json={"look": {"lut3d": {"id": "lut-0123456789ab"}}})
         self.assertIn("isn't in this reel", gone.json()["error"])
         # a LUT's rest (what the sliders can't show, worked out in the page) says whose rest it is
@@ -1332,6 +1344,42 @@ class Flow(unittest.TestCase):
         with mock.patch.object(M, "plan_spot", lambda brief, target, model, els, d, footage=None: {"shots": [{"scene": brief}], "total": 5, "target": target}):
             r = self.c.post(f"/studio/reels/{reel}/board/plan", json={"brief": "Bottle", "target": 15}).json()
         self.assertEqual((r["shots"][0]["scene"], r["target"]), ("Bottle", 15.0))
+
+    def test_workshop_endpoint(self):
+        seen = {}
+        def fake(scene, brief, model, video=False, history=None):
+            seen.update(scene=scene, brief=brief, model=model, video=video, history=history)
+            return {"questions": ["Who is on the boat?"], "proposals": [{"name": "literal", "prompt": "P1 " + brief[:8], "why": "w"},
+                    {"name": "cinematic", "prompt": "P2", "why": "w"}, {"name": "bold", "prompt": "P3", "why": "w"}], "note": "n", "brief": brief}
+        with mock.patch.object(M, "workshop", fake):
+            r = self.c.post("/studio/workshop", json={"scene": "A boat.", "direction": D.DEFAULTS, "model": "veo/veo-3.1-generate-001", "mode": "video",
+                                                    "history": [{"role": "you", "text": "A fisherman."}, "junk"]}).json()
+            empty = self.c.post("/studio/workshop", json={"scene": "  ", "direction": D.DEFAULTS, "model": "x", "mode": "video"})
+        self.assertEqual([p["name"] for p in r["proposals"]], ["literal", "cinematic", "bold"])
+        self.assertTrue(r["proposals"][0]["prompt"].startswith("P1 Medium s"))
+        self.assertEqual((seen["scene"], seen["video"], seen["history"]), ("A boat.", True, [{"role": "you", "text": "A fisherman."}]))
+        self.assertIn("continuous motion", seen["brief"])
+        self.assertEqual(empty.status_code, 400)
+
+    def test_workshop_shapes_claudes_answer(self):
+        with mock.patch.object(M, "_claude_json", lambda *a, **k: {"questions": [" Q1 ", "", "Q2", "Q3", "Q4"],
+                "proposals": [{"name": "a" * 60, "prompt": " one ", "why": "x"}, {"name": "b", "prompt": "", "why": ""}], "note": " n "}):
+            out = M.workshop("Scene", "Brief", "veo/veo-3.1-generate-001", True, [{"role": "gobo", "text": "hello"}])
+        self.assertEqual(out["questions"], ["Q1", "Q2", "Q3"])
+        self.assertEqual(out["proposals"], [{"name": "a" * 40, "prompt": "one", "why": "x"}])
+        self.assertEqual((out["note"], out["brief"]), ("n", "Brief"))
+
+    def test_broadcast_verdicts_fold_frames_and_parts(self):
+        from studio import rust as R
+        f = lambda clipped=0.0, crushed=0.0, legal=True: {"legal": legal, "clipped": clipped, "crushed": crushed, "luma_min": 0.1, "luma_max": 0.9, "rgb_min": 0.05, "rgb_max": 0.95, "out_rgb": 0, "out_luma": 0}
+        self.assertIsNone(R.broadcast_of([]))
+        b = R.broadcast_of([f(), f(0.3, 0.0), f(0.1, 0.5, False)])
+        self.assertEqual((b["frames"], b["legal"], b["unsafe_frames"], b["worst_frame"], b["worst_clipped"], b["worst_crushed"]), (3, False, 1, 3, 0.3, 0.5))
+        self.assertAlmostEqual(b["clipped"], 0.4 / 3, places=4)
+        j = R.broadcast_join([b, R.broadcast_of([f()])])
+        self.assertEqual((j["frames"], j["legal"], j["unsafe_frames"], j["worst_clipped"], j["worst_frame"]), (4, False, 1, 0.3, None))
+        self.assertAlmostEqual(j["clipped"], 0.4 / 4, places=4)
+        self.assertIsNone(R.broadcast_join([b, None]))
 
     def test_director_endpoint(self):
         with mock.patch.object(M, "director_rewrite", lambda brief, model, video=False, notes="": {

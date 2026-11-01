@@ -1066,6 +1066,31 @@ def main():
         tab.js("window.fetch = window._cf; 1")
         tab.call("Emulation.setDeviceMetricsOverride", width=1600, height=1000, deviceScaleFactor=1, mobile=False)
 
+        # ── the prompt workshop: questions and three versions before the Director ──
+        tab.call("Page.navigate", url=f"{BASE}/studio"); time.sleep(3)
+        tab.js("""window._wf = window.fetch; window._wsCalls = [];
+          window.fetch = (u, o) => { if (String(u).endsWith('/workshop')) { const b = JSON.parse(o.body); window._wsCalls.push(b);
+            const r = b.history && b.history.length ? {questions: [], proposals: [{name: 'literal', prompt: 'LIT2 ' + b.scene, why: 'w'}, {name: 'cinematic', prompt: 'CIN2', why: 'w'}, {name: 'bold', prompt: 'BOLD2', why: 'w'}], note: 'Round two.'}
+              : {questions: ['Who is she?', 'How does it end?'], proposals: [{name: 'literal', prompt: 'LIT ' + b.scene, why: 'as written'}, {name: 'cinematic', prompt: 'CIN', why: 'light'}, {name: 'bold', prompt: 'BOLD', why: 'idea'}], note: 'Round one.'};
+            return Promise.resolve(new Response(JSON.stringify(r), {headers: {'Content-Type': 'application/json'}})); }
+            return window._wf(u, o); }; 1""")
+        tab.js("$('#scene').value = 'A woman on a pier.'; $('#scene').dispatchEvent(new Event('input')); $('#workBtn').click(); 1"); time.sleep(0.4)
+        tab.js("$('#wsGo').click(); 1"); time.sleep(0.8)
+        check("workshop: Work it out asks Gobo and shows the questions and three versions", tab.js("$$('#wsBody [data-q]').length") == 2
+              and tab.js("$$('#wsBody .prop').length") == 3 and "Round one" in tab.js("$('#wsBody').textContent")
+              and tab.js("window._wsCalls[0].scene") == "A woman on a pier." and tab.js("window._wsCalls[0].history.length") == 0)
+        tab.js("$('#wsBody [data-q=\"0\"]').value = 'A lighthouse keeper.'; $('#wsTweak').value = 'at dusk'; $('#wsAgain').click(); 1"); time.sleep(0.8)
+        check("workshop: answers and a tweak go into the next round", "Round two" in tab.js("$('#wsBody').textContent")
+              and tab.js("window._wsCalls[1].history.map(h => h.role)") == ["gobo", "you"]
+              and "A lighthouse keeper." in tab.js("window._wsCalls[1].history[1].text") and "Change: at dusk" in tab.js("window._wsCalls[1].history[1].text"))
+        tab.js("$$('#wsBody [data-use]')[1].click(); 1"); time.sleep(0.4)
+        check("workshop: Use this makes the version the prompt, in Director mode", tab.js("S.pmode") == "director" and tab.js("S.override") == "CIN2"
+              and tab.js("$('#override').value") == "CIN2" and tab.js("$('#pop').classList.contains('hidden')")
+              and "Workshop: the cinematic version" in tab.js("$('#directNotes').textContent"))
+        tab.js("$('#workBtn').click(); 1"); time.sleep(0.3)
+        check("workshop: reopening shows the exchange, not a blank slate", tab.js("$$('#wsBody .prop').length") == 3 and tab.js("window._wsCalls.length") == 2)
+        tab.js("closePop(); window.fetch = window._wf; setOverride(null); S.pmode = 'cinematic'; renderPmode(); 1")
+
         # ── Colour: the Lab's Grade, advanced, on a real clip the server keeps ──
         tab.call("Page.navigate", url=f"{BASE}/studio"); time.sleep(3)
         made = tab.js(f"""(async () => {{
@@ -1092,6 +1117,16 @@ def main():
         check("colour: a click on the curve adds a point", tab.js("goboGrade.look.curves && goboGrade.look.curves.y.length") == 3, tab.js("JSON.stringify(goboGrade.look.curves)"))
         tab.js("$('#cScopes [data-scope=vector]').click(); 1"); time.sleep(0.8)
         check("colour: the vectorscope", tab.js("$('#cScope').width") == 220 and tab.js(lit) > 50)
+        check("broadcast: the Colour page measures the frame against EBU R 103", "Broadcast: legal" in tab.js("$('#cBcastV').textContent")
+              and "luma" in tab.js("$('#cBcastD').textContent"), tab.js("$('#cBcastV').textContent + $('#cBcastD').textContent"))
+        tab.js("$('#cLegal').click(); 1"); time.sleep(0.5)
+        check("broadcast: Broadcast safe goes on the look and into its .cube", tab.js("goboGrade.look.legal === true")
+              and tab.js("(() => { const g = window._gobo; return !g; })()") in (True, False)
+              and tab.js("(async () => { const g = await goboReady; return Math.max(...g.cube(goboGrade.look, 5).split('\\n').filter(l => /^[0-9]/.test(l)).map(l => +l.split(' ')[0])); })()") <= 0.981)
+        tab.js("$('#cZebra').click(); 1"); time.sleep(0.4)
+        check("broadcast: zebra draws on the picture", tab.js("$('#cZebra').checked"))
+        tab.js("$('#cZebra').click(); $('#cLegal').click(); 1"); time.sleep(0.3)
+        check("broadcast: off again", tab.js("!goboGrade.look.legal"))
         swap = "TITLE \\\"Swap\\\"\\nLUT_3D_SIZE 2\\n" + "".join(f"{b} {g} {r}\\n" for b in (0, 1) for g in (0, 1) for r in (0, 1))
         tab.js(f"""const dt = new DataTransfer(); dt.items.add(new File(["{swap}"], 'swap.cube'));
           $('#cLutFile').files = dt.files; $('#cLutFile').dispatchEvent(new Event('change')); 1""")
@@ -1153,6 +1188,9 @@ def main():
             tab.js("loadReel(S.reel.id); 1")
         g = tab.js("JSON.stringify(S.takes.find(t => t.action === 'grade') || {})")
         check("colour: Grade the take grades it on the server with the LUT and the wheels", graded == "done" and '"lut3d"' in g and '"wheels"' in g, g[:300])
+        tab.js("select(S.takes.find(t => t.action === 'grade').id); 1"); time.sleep(0.3)
+        check("broadcast: the graded take says what the server measured, frame by frame", '"broadcast"' in g and '"legal"' in g
+              and "Broadcast" in tab.js("$('#takeMeta').textContent") and "EBU R 103" in tab.js("$('#takeMeta').textContent"), tab.js("$('#takeMeta').textContent")[:300])
         tab.js("$('#gAdv').click(); 1"); time.sleep(2)
         tab.shot("34-colour-phone", w=390, h=844)
         check("colour: no sideways scroll on a phone", tab.js("$('#colour').scrollWidth <= innerWidth + 1"))

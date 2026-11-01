@@ -254,6 +254,21 @@ pre.payload { background: #08080a; border: 1px solid var(--line); border-radius:
   padding: 14px; max-height: min(78vh, 720px); overflow-y: auto; }
 .pop h3 { margin: 0 0 10px; font-size: .95rem; display: flex; align-items: center; gap: 8px; }
 .pop h3 .r { margin-left: auto; }
+/* the prompt workshop */
+.ws { display: flex; flex-direction: column; gap: 10px; max-height: calc(100vh - 160px); overflow: auto; }
+.ws textarea { width: 100%; min-height: 64px; }
+.ws .qs { display: flex; flex-direction: column; gap: 6px; }
+.ws .qs label { font-size: .82rem; color: var(--muted); }
+.ws .qs input { width: 100%; margin-top: 3px; }
+.ws .props { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 8px; }
+.ws .prop { background: var(--panel2); border: 1px solid var(--line); border-radius: 10px; padding: 10px; display: flex; flex-direction: column; gap: 6px; }
+.ws .prop b { font-size: .84rem; }
+.ws .prop .why { font-size: .74rem; color: var(--muted); }
+.ws .prop .ptext { font-size: .8rem; line-height: 1.45; white-space: pre-wrap; flex: 1; }
+.ws .prop .btn { align-self: flex-start; }
+.ws .note { font-size: .78rem; color: var(--muted); }
+.ws .tweak { display: flex; gap: 6px; }
+.ws .tweak input { flex: 1; }
 .tiles { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .tiles.three { grid-template-columns: repeat(3, 1fr); }
 .tile { background: var(--panel2); border: 1.5px solid var(--line); border-radius: 10px; padding: 0; overflow: hidden; cursor: pointer; text-align: left; }
@@ -582,6 +597,7 @@ body.cardmoving, body.cardmoving * { cursor: grabbing !important; }
           <button data-p="director" title="The Director rewrites the whole brief for the model you picked">Director</button>
         </div>
         <button class="btn small hidden" id="directBtn">Direct it</button>
+        <button class="btn small" id="workBtn" title="Work the prompt out first: Gobo asks what the scene leaves open and offers three versions; pick one and it goes to the Director">Work it out</button>
         <span class="hint" id="pmodeHint"></span>
       </div>
     </section>

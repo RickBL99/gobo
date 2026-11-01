@@ -63,6 +63,8 @@
         const join = imgs => { const n = imgs.reduce((a, i) => a + i.data.length, 0), out = new Uint8Array(n); let at = 0; imgs.forEach(i => { out.set(i.data, at); at += i.data.length; }); return { data: out }; };
         return withPixels(join(take), (pa, na) => withPixels(join(ref), (pb, nb) => obj(x.scrim_match(pa, na, pb, nb))));
       },
+      /** Is a frame deliverable? EBU R 103 levels and how much is clipped: {legal, clipped, crushed, luma_min…}. */
+      legal: img => withPixels(img, (p, n) => obj(x.scrim_legal(p, n, img.width, img.height))),
       /** Does B pick up where A stopped? (A's last frame, B's first.) */
       compare(a, b, continuous) {
         return withPixels(a, (pa, na) => withPixels(b, (pb, nb) =>

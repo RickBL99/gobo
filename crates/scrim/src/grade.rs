@@ -6,6 +6,7 @@
 //! and a vignette.
 
 use crate::color::{smoothstep, to_linear, to_srgb};
+use crate::legal::{limit, LEGAL_HI, LEGAL_LO};
 use crate::look::Look;
 
 #[derive(Debug)]
@@ -35,7 +36,12 @@ pub fn lut(look: &Look, n: usize) -> Lut {
                 }
                 // a partial look mixes with the picture as shot, as a colourist's key gain does
                 let m = look.amount;
-                data.push([0, 1, 2].map(|k| d[k] + (o[k] - d[k]) * m));
+                let mut v = [0, 1, 2].map(|k| d[k] + (o[k] - d[k]) * m);
+                // broadcast safe: the limiter last, in the table, so the .cube carries it
+                if look.legal {
+                    v = v.map(limit);
+                }
+                data.push(v);
             }
         }
     }
@@ -179,6 +185,8 @@ pub fn grade_with(px: &mut [u8], w: usize, h: usize, look: &Look, table: &Lut, s
         let d = (i as f32 / VT as f32 * 1.0).sqrt();
         (1.0 - vignette * smoothstep(0.35, 1.05, d)).max(0.0).powf(1.0 / 2.4)
     }).collect();
+    // with the limiter on, what grain and glow add is held inside its range too
+    let (lo, hi) = if look.legal { (LEGAL_LO, LEGAL_HI) } else { (0.0, 1.0) };
     let amp = look.grain * look.amount * 0.085;
     let size = look.grain_size * (w.max(h) as f32 / 1920.0).max(0.5);
     for y in 0..h {
@@ -200,7 +208,7 @@ pub fn grade_with(px: &mut [u8], w: usize, h: usize, look: &Look, table: &Lut, s
                 }
             }
             for j in 0..3 {
-                px[i * 4 + j] = (c[j].clamp(0.0, 1.0) * 255.0 + 0.5) as u8;
+                px[i * 4 + j] = (c[j].clamp(lo, hi) * 255.0 + 0.5) as u8;
             }
         }
     }
@@ -288,6 +296,21 @@ mod tests {
         assert!(before[0] > after[0] && before[2] < after[2], "{before:?} {after:?}");
         let half = lut(&Look { ext: Some(Ext { mix: 0.5, ..swap(false).unwrap() }), ..Look::default() }, 33).sample(c);
         assert!((half[0] - 0.4).abs() < 4e-3, "a half mix is halfway");
+    }
+
+    #[test]
+    fn broadcast_safe_folds_the_ends_in_table_and_pixels() {
+        let safe = Look { legal: true, ..Look::default() };
+        let t = lut(&safe, 33);
+        assert!(t.sample([1.0, 1.0, 1.0])[0] <= LEGAL_HI + 1e-3 && t.sample([0.0, 0.0, 0.0])[0] >= LEGAL_LO - 1e-3);
+        let mid = t.sample([0.5, 0.5, 0.5]);
+        assert!((mid[0] - 0.5).abs() < 4e-3, "the middle is untouched");
+        assert!(t.cube("x").lines().filter(|l| l.starts_with("1.0")).count() == 0, "no 100% in the .cube");
+        let mut px: Vec<u8> = (0..32 * 32).flat_map(|i| if i % 2 == 0 { [255u8, 255, 255, 255] } else { [0, 0, 0, 255] }).collect();
+        grade_rgba(&mut px, 32, 32, &Look { grain: 0.9, ..safe }, 4);
+        let l = crate::legal::check(&px, 32, 32);
+        assert!(l.clipped == 0.0 && l.crushed == 0.0, "{l:?}");
+        assert!(l.rgb_max <= LEGAL_HI + 2.0 / 255.0 && l.rgb_min >= LEGAL_LO - 2.0 / 255.0);
     }
 
     #[test]

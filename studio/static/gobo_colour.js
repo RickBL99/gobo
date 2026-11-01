@@ -69,6 +69,10 @@ body.colouropen { overflow: hidden; }
 #colour .sl output { text-align: right; color: var(--muted); font-variant-numeric: tabular-nums; }
 #colour .row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; margin: 6px 0; }
 #colour .curvebox canvas { width: 100%; aspect-ratio: 1; display: block; background: #0d0d10; border-radius: 10px; border: 1px solid var(--line); touch-action: none; cursor: crosshair; }
+#colour .bcast { display: flex; align-items: center; gap: 12px; flex-wrap: wrap; font-size: .76rem; color: var(--muted); padding: 2px 2px 0; }
+#colour .bcast b { color: var(--text); }
+#colour .bcast b.bad { color: #ffb36b; }
+#colour .bcast .switch { margin-left: auto; }
 #colour .cfoot { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; padding: 10px 16px; border-top: 1px solid var(--line); }
 #colour .hint { font-size: .72rem; }
 @media (max-width: 900px) {
@@ -95,7 +99,10 @@ body.colouropen { overflow: hidden; }
         <span>Wipe</span><input type="range" id="cWipe" min="0" max="100" value="0" title="Left of the line is the original" style="flex:0 0 120px">
         <span id="cPerf"></span></div>
       <div class="scopes"><div class="seg" id="cScopes">${SCOPES.map(([k, l], i) => `<button data-scope="${k}" class="${i ? "" : "on"}">${l}</button>`).join("")}</div>
-        <div class="scopebox"><canvas id="cScope" width="560" height="200"></canvas></div></div>
+        <div class="scopebox"><canvas id="cScope" width="560" height="200"></canvas></div>
+        <div class="bcast" id="cBcast" title="EBU R 103: every RGB component within −5…105% and luma within −1…103%, at most 1% of pixels outside. Clipped: flat at white or black, where detail is gone."><b id="cBcastV">Broadcast: —</b><span id="cBcastD"></span>
+          <label class="switch" title="Stripe what is flat at white (magenta) or black (cyan)"><input type="checkbox" id="cZebra"><i></i> Zebra</label>
+          <label class="switch" title="A soft limiter at the end of the look: white rolls off at 98%, black holds at 1%, nothing clips flat. It goes into the LUT and the .cube too."><input type="checkbox" id="cLegal"><i></i> Broadcast safe</label></div></div>
     </div>
     <div class="cside">
       <h3>Look</h3>
@@ -160,7 +167,8 @@ body.colouropen { overflow: hidden; }
       const r = g.grade(out, L(), vid ? ++frameNo : 7);
       const ms = performance.now() - t0;
       if (r && r.error) { q("#cPerf", el).textContent = r.error; return; }
-      if (!vid || frameNo % 2 === 0) drawScope(g, out);
+      if (!vid || frameNo % 2 === 0) { drawScope(g, out); showBroadcast(g.legal(out)); }
+      if (zebraOn) zebra(out);
       const wipe = Number(q("#cWipe", el).value) / 100;
       if (wipe > 0) {
         const cut = Math.round(out.width * wipe);
@@ -205,6 +213,35 @@ body.colouropen { overflow: hidden; }
   q("#cPlay", el).onclick = () => { if (!vid) return; if (vid.paused) vid.play(); else vid.pause(); q("#cPlay", el).textContent = vid.paused ? "▶" : "❚❚"; render(); };
   q("#cSeek", el).oninput = e => { if (vid && vid.duration) { vid.pause(); q("#cPlay", el).textContent = "▶"; vid.currentTime = Number(e.target.value) / 1000 * vid.duration; } };
   q("#cWipe", el).oninput = kick;
+
+  // ── broadcast: is this frame deliverable? ──────────────────────────────
+  let zebraOn = false;
+  const pct = v => (v * 100).toFixed(v >= 0.1 ? 0 : 1) + "%";
+  // what a check says, in words: the verdict, then what is flat
+  function legalText(lg) {
+    if (!lg) return ["Broadcast: —", "", false];
+    const bits = [];
+    if (lg.clipped > 0.01) bits.push(`${pct(lg.clipped)} clipped white`);
+    if (lg.crushed > 0.02) bits.push(`${pct(lg.crushed)} crushed black`);
+    const v = lg.legal ? "Broadcast: legal (EBU R 103)" : `Broadcast: OUT OF RANGE (${pct(Math.max(lg.out_rgb, lg.out_luma))} of pixels)`;
+    return [v, ` · luma ${pct(lg.luma_min)}–${pct(lg.luma_max)}` + (bits.length ? " · " + bits.join(", ") : ""), !lg.legal || bits.length > 0];
+  }
+  function showBroadcast(lg) {
+    const [v, d, warn] = legalText(lg);
+    q("#cBcastV", el).textContent = v; q("#cBcastV", el).classList.toggle("bad", warn); q("#cBcastD", el).textContent = d;
+  }
+  // stripes over what is flat: magenta at white, cyan at black
+  function zebra(img) {
+    const d = img.data, w = img.width;
+    for (let i = 0, p = 0; i < d.length; i += 4, p++) {
+      const hi = d[i] >= 254 || d[i + 1] >= 254 || d[i + 2] >= 254, lo = d[i] <= 1 || d[i + 1] <= 1 || d[i + 2] <= 1;
+      if (!hi && !lo) continue;
+      if (((p % w) + ((p / w) | 0)) % 8 < 4) continue;
+      d[i] = hi ? 255 : 0; d[i + 1] = hi ? 40 : 220; d[i + 2] = hi ? 200 : 255;
+    }
+  }
+  q("#cZebra", el).onchange = e => { zebraOn = e.target.checked; kick(); };
+  q("#cLegal", el).onchange = e => { if (e.target.checked) L().legal = true; else delete L().legal; touched(); };
 
   // ── scopes ──────────────────────────────────────────────────────────────
   function drawScope(g, img) {
@@ -429,6 +466,7 @@ body.colouropen { overflow: hidden; }
     const p = GG().preset();
     q("#cFilm", el).value = p.film; q("#cGrade", el).value = p.grade;
     syncSliders(); WHEELS.forEach(([k]) => drawWheel(k)); drawCurve(); syncLut();
+    q("#cLegal", el).checked = !!L().legal;
   }
 
   // ── out ─────────────────────────────────────────────────────────────────
@@ -446,7 +484,7 @@ body.colouropen { overflow: hidden; }
     const img = x.getImageData(0, 0, c.width, c.height); g.grade(img, L(), 7); x.putImageData(img, 0, 0);
     c.toBlob(b => { const a = document.createElement("a"); a.href = URL.createObjectURL(b); a.download = `${(t && (t.shot + (t.letter || ""))) || "take"}-graded.png`; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); }, "image/png");
   };
-  q("#cReset", el).onclick = async () => { await GG().reset(); delete L().wheels; delete L().curves; delete L().cdl; delete L().lut3d; syncAll(); touched(); };
+  q("#cReset", el).onclick = async () => { await GG().reset(); delete L().wheels; delete L().curves; delete L().cdl; delete L().lut3d; delete L().legal; syncAll(); touched(); };
 
   // ── open and close ──────────────────────────────────────────────────────
   async function open() {
@@ -473,6 +511,6 @@ body.colouropen { overflow: hidden; }
     if (e.key === " " && !/^(INPUT|SELECT|TEXTAREA|BUTTON)$/.test(document.activeElement.tagName)) { e.preventDefault(); q("#cPlay", el).click(); }
   }, true);
   // the tools' own maths, for another face on the same look (gobo_phone.js)
-  const tools = { WHEELS, CURVES, CONTROLS: [...BASICS, ...FILM], toRgb, toCbCr, ringImage, monotone, curveOf, setCurve, wheelsOf, tidyWheels };
+  const tools = { WHEELS, CURVES, CONTROLS: [...BASICS, ...FILM], toRgb, toCbCr, ringImage, monotone, curveOf, setCurve, wheelsOf, tidyWheels, legalText };
   window.goboColour = { open, close, render, tools };
 })();

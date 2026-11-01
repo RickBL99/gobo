@@ -94,6 +94,10 @@ body.pgopen { overflow: hidden; }
 #pg .pgmenu { position: absolute; top: calc(52px + env(safe-area-inset-top)); right: 10px; background: var(--panel); border: 1px solid var(--line2); border-radius: 12px;
   padding: 6px; display: flex; flex-direction: column; min-width: 230px; box-shadow: 0 12px 40px #000a; z-index: 2; }
 #pg .pgmenu.hidden { display: none; }
+#pg .pgbc { font-size: .8rem; color: var(--muted); margin: 10px 0 4px; line-height: 1.5; }
+#pg .pgbc b.bad { color: #ffb36b; }
+#pg .pgsw { display: flex; align-items: center; justify-content: space-between; padding: 12px 10px; border-radius: 12px; border: 1px solid var(--line); margin: 8px 0; font-size: .86rem; }
+#pg .pgsw input { width: 22px; height: 22px; }
 #pg .pgmenu button { text-align: left; padding: 12px; background: transparent; border: 0; color: var(--text); font-size: .92rem; border-radius: 8px; }
 @media (max-height: 500px) {
   #pg { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(260px, 1fr); grid-template-rows: auto minmax(0, 1fr) auto auto;
@@ -164,6 +168,7 @@ body.pgopen { overflow: hidden; }
         if (r && r.error) { say(r.error, true); return; }
       }
       if (scopeOn && (!vid || frameNo % 2 === 0)) drawScope(g, pic);
+      if (tab === "film" && (!vid || frameNo % 4 === 0)) showBroadcast(g.legal(pic));
       if (cv.width !== pic.width || cv.height !== pic.height) { cv.width = pic.width; cv.height = pic.height; }
       cv.getContext("2d").putImageData(pic, 0, 0);
       if (vid && !vid.paused && vid.duration) q("#pgSeek", el).value = Math.round(vid.currentTime / vid.duration * 1000);
@@ -267,6 +272,18 @@ body.pgopen { overflow: hidden; }
       <div class="top"><span>${h(c.label)}</span><output></output><button class="rs hidden" data-rs="${key}" aria-label="${h(c.label)} back to the stock and grade's">↺</button></div>
       <input type="range" data-k="${key}" min="${c.mn}" max="${c.mx}" step="${c.st}" aria-label="${h(c.label)}"></div>`; }).join("");
     GROUPS[k].forEach(syncRow);
+    if (k === "film") {
+      pane.insertAdjacentHTML("beforeend", `<label class="pgsw"><span>Broadcast safe<br><small style="color:var(--muted)">a soft limiter: white rolls off at 98%, black holds at 1%</small></span><input type="checkbox" id="pgLegal" ${L().legal ? "checked" : ""}></label>
+        <div class="pgbc" id="pgBc">Broadcast: —</div>`);
+      q("#pgLegal", pane).onchange = e => { if (e.target.checked) L().legal = true; else delete L().legal; touched(); };
+      kick();
+    }
+  }
+  function showBroadcast(lg) {
+    const el2 = q("#pgBc", pane);
+    if (!el2) return;
+    const [v, d, warn] = T.legalText(lg);
+    el2.innerHTML = `<b class="${warn ? "bad" : ""}">${h(v)}</b>${h(d)}`;
   }
   function syncRow(k) {
     const row = q(`.pgsl[data-k="${k}"]`, pane);
@@ -526,7 +543,7 @@ body.pgopen { overflow: hidden; }
     if (m === "still") return saveStill();
     if (m === "cube") return GG().saveCube();
     if (m === "reset") {
-      await GG().reset(); delete L().wheels; delete L().curves; delete L().cdl; delete L().lut3d;
+      await GG().reset(); delete L().wheels; delete L().curves; delete L().cdl; delete L().lut3d; delete L().legal;
       matched = null; await rebase(); showTab(tab); touched(); return;
     }
     if (m === "desk") { close(); return desk.open(); }

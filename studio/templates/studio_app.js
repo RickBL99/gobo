@@ -451,6 +451,61 @@ async function directIt() {
   if (r.negative_prompt && !S.negative && caps().negative) { S.negative = r.negative_prompt; $("#neg").value = S.negative; }
 }
 
+// ── the prompt workshop: questions and three versions before the Director ──
+// One exchange per shot, kept while the page lives (WS.history), so a second
+// round builds on the first. "Use this" arms the Director with the version.
+const WS = { history: [], last: null, busy: false };
+function openWorkshop() {
+  if (!S.scene.trim()) return toast("Write a scene first.");
+  const el = $("#pop"); el.dataset.wide = "1";
+  el.innerHTML = `<h3>Work out the prompt <span class="hint">with Gobo, for ${esc((model() || {}).label || "this model")}</span><span class="r"><button class="btn small" data-close>Done</button></span></h3>
+    <div class="ws"><div class="hint">Your scene, as it is. Gobo asks what it leaves open and offers three versions; answer, tweak, or just pick one.</div>
+      <div id="wsBody">${WS.last && WS.last.scene === S.scene ? "" : `<div class="row"><button class="btn primary small" id="wsGo">Ask Gobo</button></div>`}</div></div>`;
+  showPop(el, $("#workBtn"));
+  $$("[data-close]", el).forEach(b => b.onclick = closePop);
+  if (WS.last && WS.last.scene === S.scene) renderWorkshop(WS.last); else { WS.history = []; $("#wsGo").onclick = () => workshopRound(); }
+}
+async function workshopRound(said) {
+  if (WS.busy) return;
+  WS.busy = true;
+  const body = $("#wsBody");
+  if (said) WS.history.push({ role: "you", text: said });
+  body.innerHTML = `<div class="row"><div class="spinner"></div><span class="hint">Gobo is thinking…</span></div>`;
+  const r = await api("/workshop", { method: "POST", json: Object.assign(shotBody(), { history: WS.history }) });
+  WS.busy = false;
+  if (r.error) { body.innerHTML = `<div class="row"><span class="hint">${esc(r.error)}</span><button class="btn small" id="wsGo">Try again</button></div>`; $("#wsGo").onclick = () => workshopRound(); return; }
+  WS.history.push({ role: "gobo", text: (r.questions.length ? "Questions: " + r.questions.join(" ") + " " : "") + "Proposals: " + r.proposals.map(p => `${p.name}: ${p.prompt}`).join(" / ") });
+  WS.last = Object.assign(r, { scene: S.scene });
+  renderWorkshop(r);
+}
+function renderWorkshop(r) {
+  const body = $("#wsBody"); if (!body) return;
+  body.innerHTML = `${r.note ? `<div class="note">${esc(r.note)}</div>` : ""}
+    ${r.questions.length ? `<div class="qs">${r.questions.map((q2, i) => `<label>${esc(q2)}<input class="field" data-q="${i}" placeholder="Your answer (or leave it)"></label>`).join("")}</div>` : ""}
+    <div class="props">${r.proposals.map((p, i) => `<div class="prop"><b>${esc(p.name)}</b><div class="why">${esc(p.why)}</div><div class="ptext">${esc(p.prompt)}</div>
+      <button class="btn small primary" data-use="${i}">Use this</button></div>`).join("")}</div>
+    <div class="tweak"><input class="field" id="wsTweak" placeholder="What to change: more dusk, no crowd, she turns to camera at the end…"><button class="btn small" id="wsAgain">Another round</button></div>`;
+  $$("[data-use]", body).forEach(b => b.onclick = () => useProposal(r.proposals[+b.dataset.use]));
+  const again = () => {
+    const answers = $$("[data-q]", body).map((i, k) => i.value.trim() ? `${r.questions[k]} ${i.value.trim()}` : "").filter(Boolean);
+    const tweak = $("#wsTweak").value.trim();
+    const said = [...answers, tweak ? `Change: ${tweak}` : ""].filter(Boolean).join(" ");
+    if (!said) return toast("Answer a question or say what to change first.");
+    workshopRound(said);
+  };
+  $("#wsAgain").onclick = again;
+  $("#wsTweak").onkeydown = e => { if (e.key === "Enter") again(); };
+}
+function useProposal(p) {
+  if (!p) return;
+  S.pmode = "director"; renderPmode(); saveLocal();
+  $("#main").classList.remove("noinspector");
+  S.directed = p.prompt; setOverride(p.prompt);
+  $("#directNotes").textContent = `Workshop: the ${p.name} version. Edit it freely, or Direct it again for the Director's own pass.`;
+  closePop();
+  toast(`The ${p.name} version is the prompt. Generate when ready.`);
+}
+
 // ── generate ───────────────────────────────────────────────────────────
 function estimate() {
   const c = caps(); if (!c.m) return "";
@@ -923,11 +978,21 @@ async function toggleStar(t) {
   const r = await api(`/reels/${S.reel.id}/takes/${t.id}/star`, { method: "POST", json: { starred: !t.starred } });
   if (!r.error) mergeTakes([r.take]);
 }
+// a graded or stitched take's broadcast check (EBU R 103), measured frame by frame on the server
+function broadcastText(b) {
+  if (!b) return "";
+  const pct = v => (v * 100).toFixed(v >= 0.1 ? 0 : 1) + "%";
+  const bits = [];
+  if (b.worst_clipped > 0.01) bits.push(`clipped white up to ${pct(b.worst_clipped)}${b.worst_frame ? ` (frame ${b.worst_frame})` : ""}`);
+  if (b.worst_crushed > 0.02) bits.push(`crushed black up to ${pct(b.worst_crushed)}`);
+  return (b.legal ? "legal, EBU R 103" : `${b.unsafe_frames} of ${b.frames} frames out of range`) + (bits.length ? " · " + bits.join(", ") : " · nothing clipped");
+}
 function renderTakeInfo() {
   const t = cur(), el = $("#takeMeta");
   if (!t) { el.innerHTML = "Nothing selected yet."; return; }
   const rows = [["Shot", `${t.shot}${t.letter}`], ["Model", t.label], ["Status", t.status], ["Aspect", t.aspect],
     ["Size", t.w ? `${t.w}×${t.h}` : ""], ["Length", t.seconds ? `${(+t.seconds).toFixed(1)}s` : ""], ["Time", t.elapsed ? `${t.elapsed}s` : ""],
+    ["Broadcast", broadcastText(t.broadcast)],
     ["Seed", t.request && t.request.seed], ["From", t.action && t.action !== "generate" ? t.action : ""], ["Request", t.request_id]];
   el.innerHTML = `<dl class="kv">${rows.filter(r => r[1] !== undefined && r[1] !== null && r[1] !== "").map(r => `<dt>${esc(r[0])}</dt><dd>${esc(r[1])}</dd>`).join("")}</dl>
     ${t.prompt ? `<p class="sectitle" style="margin-top:10px">Prompt sent</p><div class="segs" style="font-size:.78rem">${esc(t.prompt)}</div>` : ""}
@@ -1471,6 +1536,7 @@ function wire() {
     if (S.pmode !== "director" && S.directed) setOverride(null);
   });
   $("#directBtn").onclick = directIt;
+  $("#workBtn").onclick = openWorkshop;
   $("#ovToggle").onchange = e => setOverride(e.target.checked ? (S.override != null ? S.override : lastCompiled) : null);
   $("#override").oninput = e => { S.override = e.target.value; updateGen(); };
   $("#neg").oninput = e => { S.negative = e.target.value; saveLocal(); };

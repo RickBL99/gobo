@@ -321,6 +321,24 @@ async def direct(request: Request):
     return out
 
 
+@router.post("/workshop", response_class=JSONResponse)
+async def workshop(request: Request):
+    """The prompt workshop: questions and three proposals for the shot, a round
+    at a time, before the Director's final rewrite."""
+    b = await request.json()
+    kw = _shot_inputs(b)
+    scene = kw["scene"]
+    brief = D.compile_prompt(kw.pop("scene"), kw.pop("direction"), **kw)
+    if not scene.strip():
+        return _err("Write a scene first.")
+    history = [h for h in (b.get("history") or []) if isinstance(h, dict)][:24]
+    try:
+        out = M.workshop(scene, brief, b.get("model") or "", video=b.get("mode") == "video", history=history)
+    except Exception as e:
+        return _err(f"The workshop couldn't answer: {e}", 502)
+    return out
+
+
 # ── reels ───────────────────────────────────────────────────────────────────
 @router.get("/reels", response_class=JSONResponse)
 async def reels():
@@ -1418,7 +1436,7 @@ def _grade_clip(reel: str, tid: str, src: str, name: str, spec: Dict, luts: Opti
                 os.remove(J.out_path(reel, f))
         return
     J.update_take(reel, tid, status="done", file=name, finished=time.time(), progress=None,
-                  frames=info["frames"], grade_seconds=info["seconds"], **extra)
+                  frames=info["frames"], grade_seconds=info["seconds"], broadcast=info.get("broadcast"), **extra)
 
 
 @router.post("/reels/{reel}/takes/{tid}/grade", response_class=JSONResponse)
@@ -1467,7 +1485,7 @@ async def grade_take(reel: str, tid: str, request: Request):
             os.remove(dst)
         return _err(f"Grading failed: {str(e)[-300:]}", 500)
     nt = _local_take(reel, t, "image", "grade", name, by=_who(request), label=label, look=spec,
-                     w=info["w"], h=info["h"])
+                     w=info["w"], h=info["h"], broadcast=info.get("broadcast"))
     return {"take": _public_take(nt)}
 
 
@@ -1711,7 +1729,7 @@ async def stitch(reel: str, request: Request):
     nt = _local_take(reel, {**lead, "prompt": " / ".join(c.get("prompt", "")[:80] for c in parts)},
                      "video", "stitch", name, by=_who(request),
                      label=str(b.get("label") or "").strip()[:60] or f"Stitched · {label}",
-                     parts=[c["id"] for c in parts], **extra)
+                     parts=[c["id"] for c in parts], broadcast=R.broadcast_join([c.get("broadcast") for c in parts]), **extra)
     return {"take": _public_take(nt)}
 
 

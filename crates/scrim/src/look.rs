@@ -39,6 +39,9 @@ pub struct Look {
     /// how much of the look reaches the picture: 1 is all of it, 0 is the
     /// picture as shot (for a take whose prompt already asked for the stock)
     pub amount: f32,
+    /// broadcast safe: the limiter (crate::legal) at the end of the look,
+    /// white to 98%, black to 1%, with a knee
+    pub legal: bool,
     // the colourist's tools (crate::colour), on display values, before the
     // look: a CDL, the primary wheels and the curves; and a .cube from
     // elsewhere, first or after the look
@@ -53,7 +56,7 @@ impl Default for Look {
         Look {
             exposure: 0.0, temp: 0.0, tint: 0.0, contrast: 1.0, pivot: 0.57, fade: 0.0, white: 1.0,
             sat: 1.0, shadows: [0.0; 2], highlights: [0.0; 2], mono: None, bleach: 0.0,
-            halation: 0.0, grain: 0.0, grain_size: 1.4, vignette: 0.0, amount: 1.0,
+            halation: 0.0, grain: 0.0, grain_size: 1.4, vignette: 0.0, amount: 1.0, legal: false,
             cdl: None, wheels: Wheels::default(), curves: Curves::default(), ext: None,
         }
     }
@@ -162,6 +165,7 @@ pub fn compose(a: &Look, b: &Look) -> Look {
         grain_size: if b.grain > a.grain { b.grain_size } else { a.grain_size },
         vignette: a.vignette.max(b.vignette),
         amount: a.amount * b.amount,
+        legal: a.legal || b.legal,
         // presets are looks only; the colourist's tools come from the numbers on top
         cdl: b.cdl.clone().or(a.cdl.clone()),
         wheels: if b.wheels.is_identity() { a.wheels.clone() } else { b.wheels.clone() },
@@ -239,6 +243,9 @@ impl Look {
             "bleach": r(self.bleach), "halation": r(self.halation), "grain": r(self.grain),
             "grain_size": r(self.grain_size), "vignette": r(self.vignette), "amount": r(self.amount),
         });
+        if self.legal {
+            m["legal"] = json!(true);
+        }
         if let Some(mo) = self.mono {
             m["mono"] = json!([r(mo[0]), r(mo[1]), r(mo[2])]);
         }
@@ -307,6 +314,9 @@ impl Look {
         l.white = l.white.clamp(0.5, 1.0).max(l.fade + 0.2);
         l.grain_size = l.grain_size.clamp(0.5, 6.0);
         l.amount = l.amount.clamp(0.0, 1.0);
+        if let Some(b) = o.get("legal").and_then(Value::as_bool) {
+            l.legal = b;
+        }
         match o.get("cdl") {
             None | Some(Value::Null) => {}
             Some(c) => l.cdl = Some(Cdl::from_json(c)?).filter(|c| *c != Cdl::default()),

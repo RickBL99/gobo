@@ -129,6 +129,40 @@ def _grade(g: Wasm, px: Tuple[int, int], w: int, h: int, spec: Dict, seed: int) 
         raise ValueError(out["error"])
 
 
+def legal(g: Wasm, px: Tuple[int, int], w: int, h: int) -> Dict:
+    """Is the frame deliverable? EBU R 103 levels and how much is clipped (scrim::legal)."""
+    return json.loads(g.answer(g.call("scrim_legal", px[0], px[1], w, h)))
+
+
+def broadcast_of(frames: list) -> Optional[Dict]:
+    """One verdict for a clip from its frames' checks: legal when every frame is,
+    the worst frame named, and how much of the picture sat at the ends."""
+    if not frames:
+        return None
+    worst = max(range(len(frames)), key=lambda i: frames[i]["clipped"] + frames[i]["crushed"])
+    n = len(frames)
+    return {"frames": n, "legal": all(f["legal"] for f in frames),
+            "unsafe_frames": sum(1 for f in frames if not f["legal"]),
+            "clipped": round(sum(f["clipped"] for f in frames) / n, 4), "crushed": round(sum(f["crushed"] for f in frames) / n, 4),
+            "worst_clipped": round(max(f["clipped"] for f in frames), 4), "worst_crushed": round(max(f["crushed"] for f in frames), 4),
+            "worst_frame": worst + 1,
+            "luma_min": round(min(f["luma_min"] for f in frames), 4), "luma_max": round(max(f["luma_max"] for f in frames), 4),
+            "rgb_min": round(min(f["rgb_min"] for f in frames), 4), "rgb_max": round(max(f["rgb_max"] for f in frames), 4)}
+
+
+def broadcast_join(parts: list) -> Optional[Dict]:
+    """A stitched film's verdict from its parts' (None when a part has none)."""
+    if not parts or any(not p for p in parts):
+        return None
+    n = sum(p["frames"] for p in parts)
+    return {"frames": n, "legal": all(p["legal"] for p in parts), "unsafe_frames": sum(p["unsafe_frames"] for p in parts),
+            "clipped": round(sum(p["clipped"] * p["frames"] for p in parts) / max(n, 1), 4),
+            "crushed": round(sum(p["crushed"] * p["frames"] for p in parts) / max(n, 1), 4),
+            "worst_clipped": max(p["worst_clipped"] for p in parts), "worst_crushed": max(p["worst_crushed"] for p in parts),
+            "worst_frame": None, "luma_min": min(p["luma_min"] for p in parts), "luma_max": max(p["luma_max"] for p in parts),
+            "rgb_min": min(p["rgb_min"] for p in parts), "rgb_max": max(p["rgb_max"] for p in parts)}
+
+
 def grade_still(src: str, dst: str, spec: Dict, luts: Optional[Dict[str, str]] = None) -> Dict:
     """A still through a look at full size (grain seed 7, as the Lab's still)."""
     look(spec, luts)
@@ -138,9 +172,10 @@ def grade_still(src: str, dst: str, spec: Dict, luts: Optional[Dict[str, str]] =
     g = _loaded(Wasm("gobo.wasm"), luts)
     px = g.put(im.tobytes())
     _grade(g, px, w, h, spec, 7)
+    check = legal(g, px, w, h)
     Image.frombytes("RGBA", (w, h), bytes(g.mem.read(g.store, px[0], px[0] + px[1]))).convert("RGB") \
         .save(dst, quality=94)
-    return {"w": w, "h": h}
+    return {"w": w, "h": h, "broadcast": broadcast_of([check])}
 
 
 def _matrix(path: str) -> str:
@@ -185,18 +220,19 @@ def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
     n = w * h * 4
     mine = threading.local()
 
-    def one(buf: bytes, seed: int) -> bytes:
+    def one(buf: bytes, seed: int) -> Tuple[bytes, Dict]:
         if not hasattr(mine, "g"):
             mine.g = _loaded(Wasm("gobo.wasm"), luts)
             mine.px = (mine.g.call("alloc", n), n)
         g, px = mine.g, mine.px
         g.mem.write(g.store, buf, px[0])
         _grade(g, px, w, h, spec, seed)
-        return g.mem.read(g.store, px[0], px[0] + n)
+        return g.mem.read(g.store, px[0], px[0] + n), legal(g, px, w, h)
 
     cores = _cores()
     t0 = time.time()
     frames = read = 0
+    checks: list = []
     with tempfile.TemporaryFile() as err, ThreadPoolExecutor(cores) as pool:
         dec = subprocess.Popen(["ffmpeg", "-nostdin", "-v", "error", "-i", src, "-map", "0:v:0",
                                 "-vf", f"scale=in_color_matrix={m}:flags={SWS}", "-f", "rawvideo", "-pix_fmt", "rgba", "pipe:1"],
@@ -214,7 +250,9 @@ def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
         def write_until(left: int) -> None:
             nonlocal frames
             while len(ahead) > left:
-                enc.stdin.write(ahead.popleft().result())
+                out, check = ahead.popleft().result()
+                enc.stdin.write(out)
+                checks.append(check)
                 frames += 1
                 if progress and progress(frames, max(total, frames)) is False:
                     raise Stopped()
@@ -239,4 +277,4 @@ def grade_film(src: str, dst: str, spec: Dict, timeout: int = 1800,
         if not ok or not frames:
             err.seek(0)
             raise RuntimeError((err.read().decode(errors="replace") or "ffmpeg failed")[-300:])
-    return {"frames": frames, "seconds": round(time.time() - t0, 2), "w": w, "h": h}
+    return {"frames": frames, "seconds": round(time.time() - t0, 2), "w": w, "h": h, "broadcast": broadcast_of(checks)}

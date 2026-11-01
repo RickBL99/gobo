@@ -217,6 +217,16 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <p>The order is the one a colourist uses: a camera LUT, the CDL, the wheels, the curves, the stock and grade, a creative LUT, then grain, halation and the vignette. <span class="ui">Download .cube</span> carries all of it except those last three, which need the whole picture.</p>
     <div class="tip">Grade by the scopes, not your screen: on the waveform, keep the blacks just above 0 and the brightest whites just under 100; a neutral grey should sit in the middle of the vectorscope.</div>
   </section>
+  <section class="topic" id="broadcast" data-keys="broadcast safe legal ebu r103 r 103 qc delivery clipping clipped crushed zebra limiter levels compliant">
+    <h3>Broadcast safe</h3>
+    <p>Under the scopes, <b>Broadcast</b> says whether the graded frame is deliverable, measured the way a QC house measures it, against <b>EBU R 103</b>: every red, green and blue component within −5% and 105%, luma within −1% and 103%, with up to 1% of a frame's pixels allowed outside. It also says how much of the frame sits flat at white or black, which is what a QC report calls clipping, and the luma range.</p>
+    <ul>
+      <li>Gobo's grader keeps every pixel within 0–100% and the film is encoded in video range, so its levels can't break R 103; the check measures them anyway rather than assuming. What a grade can do is clip: push highlights flat at white or crush shadows flat at black. <span class="ui">Zebra</span> stripes those pixels on the picture (magenta at white, cyan at black).</li>
+      <li><span class="ui">Broadcast safe</span> is the fix: a soft limiter at the end of the look, as a video limiter does it. White rolls off at 98%, black holds at 1%, the middle is untouched, and what grain and halation add is held inside the same range. It goes into the look's LUT, so the preview, the .cube and the server's grade all carry it. On a phone it is on the <span class="ui">Film</span> tab.</li>
+      <li><span class="ui">Grade the take</span> measures every frame on the server and writes the result on the take: in the take's details, <b>Broadcast</b> reads "legal, EBU R 103" with how much was clipped and the worst frame, or how many frames were out of range. A stitched film carries the worst of its parts.</li>
+    </ul>
+    <p class="hint">Flashing and pattern tests (Ofcom / Harding PSE) are a separate check Gobo doesn't do.</p>
+  </section>
   <section class="topic" id="phone" data-keys="phone iphone android mobile touch grade colour on the go layout desktop layout photo camera roll match">
     <h3>On a phone</h3>
     <p>On a phone the studio lays itself out for a thumb: one row of buttons along the top that scrolls, and a <span class="ui">Grade</span> button under every finished take. <span class="ui">Desktop layout</span>, at the end of that row, gives you the whole page; <span class="ui">Phone layout</span> brings this back.</p>
@@ -327,6 +337,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Plain</span>: just your words and the direction you set.</li>
       <li><span class="ui">Cinematic</span>: adds "cinematic film still" (or motion, for video).</li>
       <li><span class="ui">Director</span>: the Director rewrites the whole brief for the model you picked. Click <span class="ui">Direct it</span>, read its version on the right, and edit it if you like.</li>
+      <li><span class="ui">Work it out</span>: before the Director, a round or two with Gobo. It reads your scene and the direction you set, asks up to three questions the scene leaves open (who, the one action, how it ends), and offers three versions written for your model: <b>literal</b> (your words, tidied), <b>cinematic</b> (light and motion made concrete) and <b>bold</b> (one stronger idea). Answer the questions or say what to change for another round; <span class="ui">Use this</span> makes a version the prompt, in Director mode, and you can still edit it or <span class="ui">Direct it</span> again. The exchange is kept for the shot while the page is open.</li>
     </ul>
     <p>To write the prompt yourself, turn on <span class="ui">Edit</span> in the Prompt column on the right.</p>
   </section>

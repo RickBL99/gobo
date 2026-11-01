@@ -185,6 +185,12 @@ pub extern "C" fn scrim_scope(px: *mut u8, len: usize, w: u32, h: u32, kind: u32
     answer(scrim::scope::scope(lend(px, len), w as usize, h as usize, k, ow as usize, oh as usize))
 }
 
+/// Is a frame deliverable? EBU R 103 levels and how much is clipped (crate scrim::legal).
+#[no_mangle]
+pub extern "C" fn scrim_legal(px: *mut u8, len: usize, w: u32, h: u32) -> u64 {
+    reply(scrim::legal(lend(px, len), w as usize, h as usize).to_json())
+}
+
 /// Does shot B pick up where shot A left off? (A's last frame, B's first.)
 #[no_mangle]
 pub extern "C" fn flag_compare(a: *mut u8, a_len: usize, aw: u32, ah: u32,
@@ -209,5 +215,5 @@ pub extern "C" fn dingle_direct(body: *mut u8, len: usize) -> u64 {
 /// What this module is, for the page's "Rust · live" badge.
 #[no_mangle]
 pub extern "C" fn gobo_about() -> u64 {
-    reply(json!({"crates": ["scrim", "flag", "dingle"], "version": env!("CARGO_PKG_VERSION")}))
+    reply(json!({"crates": ["scrim", "flag", "dingle"], "version": env!("CARGO_PKG_VERSION"), "legal": true}))
 }

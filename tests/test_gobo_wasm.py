@@ -84,6 +84,13 @@ out.match_none = g.matchShot([{ data: new Uint8ClampedArray(0) }], [scene(0)]);
 const wf = g.scope(scene(0), "waveform", 256, 128), vs = g.scope(scene(0), "vector", 160, 160);
 out.scope = [wf.width, wf.height, wf.data.length, Array.from(wf.data).filter((v, i) => i % 4 === 3 && v > 0).length,
              vs.data.length, Array.from(vs.data).filter((v, i) => i % 4 === 3 && v > 0).length];
+// broadcast: a frame half flat white, half mid grey, measured; the limiter folds the white in
+const flat = img(20, 20, (x) => x < 10 ? [255, 255, 255] : [120, 120, 120]);
+out.legal = g.legal(flat);
+const safe = img(20, 20, (x) => x < 10 ? [255, 255, 255] : [0, 0, 0]);
+g.grade(safe, { legal: true }, 1); out.legal_safe = g.legal(safe);
+out.legal_look = g.look({ legal: true }).legal;
+out.legal_cube_max = Math.max(...g.cube({ legal: true }, 9).split("\n").filter(l => /^[0-9]/.test(l)).map(l => +l.split(" ")[0]));
 // one frame graded in the page, for the server to grade too
 const src = scene(0), mine = new Uint8ClampedArray(src.data);
 g.grade(src, LOOK, 5);
@@ -139,6 +146,18 @@ class GoboWasm(unittest.TestCase):
         self.assertEqual(self.out["cube"][0], 'TITLE "Teal"')
         self.assertIn("LUT_3D_SIZE 17", self.out["cube"])
         self.assertEqual(self.out["cube_lines"], 17 ** 3)
+
+    def test_broadcast_legality(self):
+        lg = self.out["legal"]
+        self.assertTrue(lg["legal"])
+        self.assertAlmostEqual(lg["clipped"], 0.5, places=2)
+        self.assertEqual(lg["crushed"], 0)
+        safe = self.out["legal_safe"]
+        self.assertEqual((safe["clipped"], safe["crushed"]), (0, 0), safe)
+        self.assertLessEqual(safe["rgb_max"], 0.99)
+        self.assertGreaterEqual(safe["rgb_min"], 0.005)
+        self.assertTrue(self.out["legal_look"])
+        self.assertLessEqual(self.out["legal_cube_max"], 0.981)
 
     def test_the_colourists_tools(self):
         o = self.out
