@@ -1080,6 +1080,8 @@ def main():
               and tab.js("$$('#wsBody .prop').length") == 3 and "Round one" in tab.js("$('#wsBody').textContent")
               and tab.js("window._wsCalls[0].scene") == "A woman on a pier." and tab.js("window._wsCalls[0].history.length") == 0)
         tab.js("$('#wsBody [data-q=\"0\"]').value = 'A lighthouse keeper.'; $('#wsTweak').value = 'at dusk'; $('#wsAgain').click(); 1"); time.sleep(0.8)
+        box = tab.js("(() => { const r = $('#pop').getBoundingClientRect(); return [r.top, r.bottom, innerHeight, $('.ws').scrollHeight > $('.ws').clientHeight]; })()")
+        check("workshop: the pop stays on the page, its body scrolling when the answer is long", box[0] >= 60 and box[1] <= box[2], box)
         check("workshop: answers and a tweak go into the next round", "Round two" in tab.js("$('#wsBody').textContent")
               and tab.js("window._wsCalls[1].history.map(h => h.role)") == ["gobo", "you"]
               and "A lighthouse keeper." in tab.js("window._wsCalls[1].history[1].text") and "Change: at dusk" in tab.js("window._wsCalls[1].history[1].text"))

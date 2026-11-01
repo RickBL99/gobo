@@ -462,6 +462,9 @@ function openWorkshop() {
     <div class="ws"><div class="hint">Your scene, as it is. Gobo asks what it leaves open and offers three versions; answer, tweak, or just pick one.</div>
       <div id="wsBody">${WS.last && WS.last.scene === S.scene ? "" : `<div class="row"><button class="btn primary small" id="wsGo">Ask Gobo</button></div>`}</div></div>`;
   showPop(el, $("#workBtn"));
+  // the answer grows the pop after it was placed by the button: pin it to the top, centred, and let its body scroll
+  const w = Math.min(960, window.innerWidth - 24);
+  el.style.width = w + "px"; el.style.left = Math.round((window.innerWidth - w) / 2) + "px"; el.style.top = "64px";
   $$("[data-close]", el).forEach(b => b.onclick = closePop);
   if (WS.last && WS.last.scene === S.scene) renderWorkshop(WS.last); else { WS.history = []; $("#wsGo").onclick = () => workshopRound(); }
 }
