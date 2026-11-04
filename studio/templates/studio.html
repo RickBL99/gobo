@@ -376,6 +376,59 @@ main.boardview #inspector { display: none !important; }
 .tlmeta { display: flex; justify-content: space-between; font-size: .74rem; color: var(--muted); }
 .tlmeta b { color: var(--text); }
 .tlmeta .over { color: var(--bad); } .tlmeta .on { color: var(--ok); }
+/* the Animation mode: a view of its own, laid out as the stages an animation studio works in */
+.amode { display: flex; flex-direction: column; gap: 12px; }
+.atitle { display: flex; flex-direction: column; gap: 10px; background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 14px 16px; }
+.atitle h2 { margin: 0 0 2px; font-size: 1.15rem; }
+.atitle > div > .hint { margin: 0; max-width: 72ch; }
+.astrip { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 6px; }
+.astage { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; text-align: left; background: #0f0f12; border: 1px solid var(--line); border-radius: 10px; padding: 8px 10px; cursor: pointer; color: var(--text); font: inherit; }
+.astage:hover { border-color: var(--line2); }
+.astage .n { font-size: .66rem; font-weight: 700; color: var(--muted); border: 1px solid var(--line2); border-radius: 99px; width: 18px; height: 18px; display: grid; place-items: center; }
+.astage.done .n { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.astage b { font-size: .82rem; } .astage small { font-size: .7rem; color: var(--muted); }
+.asec { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
+.asec .sectitle .num { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 99px; background: var(--text); color: #111; font-size: .7rem; font-weight: 800; margin-right: 8px; }
+.aline { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.aline .grow { flex: 1; min-width: 160px; }
+.aline .seg button { padding: 4px 11px; font-size: .78rem; }
+.arows { display: flex; flex-direction: column; gap: 8px; }
+.arow { display: grid; grid-template-columns: 150px 1fr auto auto; gap: 8px; align-items: start; padding: 8px; border: 1px solid var(--line); border-radius: 10px; background: #0f0f12; }
+.arow .aname { display: flex; flex-direction: column; gap: 2px; }
+.arow .alook { min-height: 44px; resize: vertical; font-size: .78rem; }
+.athumbs { display: flex; gap: 6px; flex-wrap: wrap; max-width: 300px; }
+.ath { position: relative; width: 44px; height: 44px; border-radius: 8px; background: #222 center / cover no-repeat; flex: none; border: 1px solid var(--line); }
+.ath.made { border-color: var(--accent); }
+.ath.sheet { width: 78px; }
+.ath.add { display: grid; place-items: center; color: var(--muted); font-size: 1.1rem; cursor: pointer; background: transparent; border-style: dashed; }
+.ath button { position: absolute; top: -6px; right: -6px; width: 16px; height: 16px; border-radius: 50%; border: 0; background: var(--bad); color: #fff; font-size: .6rem; line-height: 16px; padding: 0; cursor: pointer; display: none; }
+.ath:hover button { display: block; }
+.aacts { display: flex; flex-direction: column; gap: 6px; align-items: stretch; }
+/* stage 5 holds the Board's own head; its brief waits behind "Write the story instead" */
+.amode .bhead #bBrief, .amode .bhead > .bline:first-of-type { display: none; }
+.amode .bhead.showbrief #bBrief, .amode .bhead.showbrief > .bline:first-of-type { display: flex; }
+.amode .bhead.showbrief #bBrief { display: block; }
+.bframe img.apanel { object-fit: contain; background: #fff; }
+.apop { position: fixed; inset: 0; background: rgba(0,0,0,.55); display: grid; place-items: center; z-index: 60; padding: 20px; }
+.apopin { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; max-width: 720px; width: 100%; max-height: 85vh; overflow: auto; font-size: .82rem; }
+.apopin ul { padding-left: 18px; margin: 4px 0 10px; } .apopin li { margin: 3px 0; }
+.ath[data-file] { cursor: zoom-in; }
+.aeditin { max-width: 820px; display: flex; flex-direction: column; gap: 10px; }
+.aeditin .abig { width: 100%; min-height: 42vh; max-height: 70vh; resize: vertical; font-size: 1rem; line-height: 1.5; padding: 12px 14px; box-sizing: border-box; }
+.aeditin .abig.short { min-height: 16vh; }
+.amode .bcard [data-f="scene"], .amode .bcard [data-f="vo"], .amode .bcard [data-f="super"], .amode .bcard [data-f="change"], .amode .alook, .amode #aNotes { cursor: text; }
+.awarn { margin: 0; padding: 8px 10px; border: 1px solid var(--bad); border-radius: 10px; background: rgba(180,60,50,.12); font-size: .8rem; display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.mitem .aref { font-size: .66rem; font-weight: 700; padding: 2px 7px; border-radius: 99px; border: 1px solid; }
+.mitem .aref.ok { color: var(--ok); border-color: var(--ok); } .mitem .aref.bad { color: var(--bad); border-color: var(--bad); }
+.mitem.norefs { opacity: .45; }
+.anote { margin: 0 0 8px; }
+.amodels { list-style: none; padding: 0; margin: 4px 0 10px; } .amodels li { display: flex; gap: 8px; align-items: center; margin: 4px 0; padding: 4px 6px; border-radius: 8px; } .amodels li.on { background: #0f0f12; }
+.aviewin { display: flex; flex-direction: column; gap: 10px; max-width: min(96vw, 1600px); max-height: 92vh; }
+.aviewin img { max-width: 100%; max-height: 82vh; object-fit: contain; background: #fff; border-radius: 10px; cursor: zoom-out; }
+.aviewin .aline { background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; font-size: .82rem; }
+#animBtn.on { background: var(--accent); color: var(--accent-ink); border-color: var(--accent); }
+.lc .abadge { position: absolute; left: 6px; top: 6px; background: rgba(0,0,0,.65); color: #fff; font-size: .62rem; font-weight: 700; padding: 2px 6px; border-radius: 99px; }
+@media (max-width: 720px) { .arow { grid-template-columns: 1fr; } .astrip { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .bgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(290px, 1fr)); gap: 12px; padding-bottom: 30px; }
 .bcard { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); display: flex; flex-direction: column; overflow: hidden; }
 .bcard.cont { border-left: 3px solid var(--blue); }
@@ -888,6 +941,7 @@ const optOf = (g, id) => (CAT.groups[g].options.find(o => o.id === id) || CAT.gr
 <script src="/static/gobo_lab.js"></script>
 <script src="/static/gobo_colour.js"></script>
 <script src="/static/gobo_phone.js"></script>
+<script src="/static/animation.js"></script>
 <script src="/static/autopilot.js"></script>
 <script src="/static/director.js"></script>
 <script src="/static/standalone.js"></script>

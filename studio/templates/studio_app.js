@@ -1175,9 +1175,12 @@ async function newReel() {
 // A take stays until its maker deletes it. Mine is what you made, by the name
 // you signed in with; Everyone is the whole team's, plus takes from before
 // names were kept, which anyone may tidy away.
-const LIB = { who: LS.get("lib.who", "mine"), kind: LS.get("lib.kind", ""), starred: false, q: "",
+const LIB = { who: LS.get("lib.who", "mine"), kind: LS.get("lib.kind", ""), starred: false, q: "", blade: LS.get("lib.blade", ""), part: "",
               items: [], total: 0, counts: {}, me: "", picked: new Set(), view: -1, seq: 0 };
 const libKey = t => `${t.reel}:${t.id}`;
+// the Animation blade: what the Animation board made, by what it is
+const ANIM_PARTS = [["", "All"], ["design", "Designs"], ["sheet", "Model sheets"], ["plate", "Backgrounds"], ["keyframe", "Keyframes"], ["clip", "Clips"], ["cut", "Cuts"]];
+const ANIM_LABEL = { design: "Design", sheet: "Sheet", plate: "Background", keyframe: "Keyframe", frame: "Keyframe", animate: "Clip", stitch: "Cut" };
 const REELWORD = "reel";
 function libDay(ts) {
   const d = new Date(ts * 1000), today = new Date(); today.setHours(0, 0, 0, 0);
@@ -1195,6 +1198,8 @@ async function openLibrary() {
       <div class="libbar">
         <span class="seg" id="libWho"><button data-w="mine">Mine<i></i></button><button data-w="all">Everyone<i></i></button></span>
         <span class="seg" id="libKind"><button data-k="">All<i></i></button><button data-k="video">Clips<i></i></button><button data-k="image">Stills<i></i></button></span>
+        <span class="seg" id="libBlade"><button data-b="">Everything<i></i></button><button data-b="anim" title="What the Animation board made: designs, model sheets, backgrounds, keyframes, clips and cuts">🎞 Animation<i></i></button></span>
+        <span class="seg hidden" id="libPart">${ANIM_PARTS.map(([v, l]) => `<button data-p="${v}">${l}<i></i></button>`).join("")}</span>
         <button class="chipbtn" id="libStar">★ Starred<i></i></button>
         <input class="field" id="libQ" placeholder="Search prompts, models, ${REELWORD}s" value="${esc(LIB.q)}">
       </div></div>
@@ -1205,6 +1210,8 @@ async function openLibrary() {
   $$("#libWho button", el).forEach(b => b.onclick = () => { LIB.who = b.dataset.w; LS.set("lib.who", LIB.who); libFetch(); });
   $$("#libKind button", el).forEach(b => b.onclick = () => { LIB.kind = b.dataset.k; LS.set("lib.kind", LIB.kind); libFetch(); });
   $("#libStar", el).onclick = () => { LIB.starred = !LIB.starred; libFetch(); };
+  $$("#libBlade button", el).forEach(b => b.onclick = () => { LIB.blade = b.dataset.b; LIB.part = ""; LS.set("lib.blade", LIB.blade); libFetch(); });
+  $$("#libPart button", el).forEach(b => b.onclick = () => { LIB.part = b.dataset.p; libFetch(); });
   let qT = null;
   $("#libQ", el).oninput = e => { clearTimeout(qT); qT = setTimeout(() => { LIB.q = e.target.value.trim(); libFetch(); }, 250); };
   await libFetch();
@@ -1212,7 +1219,7 @@ async function openLibrary() {
 async function libFetch(more) {
   const seq = ++LIB.seq;            // a later search wins over an earlier, slower one
   const qs = new URLSearchParams({ who: LIB.who, kind: LIB.kind,
-                                   starred: LIB.starred ? 1 : 0, q: LIB.q, offset: more ? LIB.items.length : 0, limit: 60 });
+                                   starred: LIB.starred ? 1 : 0, q: LIB.q, blade: LIB.blade, part: LIB.part, offset: more ? LIB.items.length : 0, limit: 60 });
   const r = await api(`/library?${qs}`);
   if (seq !== LIB.seq) return;
   if (r.error) return toast(r.error, true);
@@ -1227,6 +1234,9 @@ function libCounts() {
   $$("#libKind button").forEach(b => { b.classList.toggle("on", b.dataset.k === LIB.kind);
     $("i", b).textContent = n(b.dataset.k === "video" ? c.video : b.dataset.k === "image" ? c.image : (c.video || 0) + (c.image || 0)); });
   $("#libStar").classList.toggle("on", LIB.starred);
+  $$("#libBlade button").forEach(b => { b.classList.toggle("on", b.dataset.b === LIB.blade); $("i", b).textContent = n(b.dataset.b === "anim" ? c.anim : (c.video || 0) + (c.image || 0)); });
+  $("#libPart").classList.toggle("hidden", LIB.blade !== "anim");
+  $$("#libPart button").forEach(b => { b.classList.toggle("on", b.dataset.p === LIB.part); $("i", b).textContent = n(b.dataset.p ? (c.anim_parts || {})[b.dataset.p] : c.anim); });
   $("i", $("#libStar")).textContent = n(c.starred);
   $("#libTotal").textContent = LIB.total ? `${LIB.total} take${LIB.total === 1 ? "" : "s"}` : "";
 }
@@ -1248,7 +1258,7 @@ function libCard(t, i) {
   const when = new Date(t.created * 1000).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   return `<div class="lc ${on ? "picked" : ""}" data-i="${i}" tabindex="0" title="${esc((t.prompt || "").slice(0, 300))}">
     <div class="lm">${media}${vid ? `<span class="badge">▶${t.seconds ? " " + Math.round(t.seconds) + "s" : ""}</span>` : ""}
-      ${t.starred ? `<span class="star">★</span>` : ""}<input type="checkbox" class="pick" ${on ? "checked" : ""} aria-label="Select">
+      ${t.starred ? `<span class="star">★</span>` : ""}${t.anim ? `<span class="abadge">${esc(ANIM_LABEL[t.action] || (vid ? "Clip" : "Still"))}</span>` : ""}<input type="checkbox" class="pick" ${on ? "checked" : ""} aria-label="Select">
       <span class="lo">${t.board ? `<button data-o="board" title="Its board, its card showing this ${vid ? "clip" : "keyframe"}">On its board</button>` : ""}<button data-o="clip" title="In ${esc(t.reel_name || `its ${REELWORD}`)}, on the Shot view's stage">${vid ? "As a clip" : "As a still"}</button></span></div>
     <div class="ll"><b>${esc(t.label)}</b><small>${size}${when} · ${esc(t.reel_name)}</small>
       ${LIB.who === "all" ? `<small>${esc(t.owner || "no name")}</small>` : ""}</div></div>`;

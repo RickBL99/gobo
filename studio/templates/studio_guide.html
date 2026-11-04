@@ -132,7 +132,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
 <!-- ═══════════════════════════════════════════════════════════════════ -->
 <div class="chapter" id="start">
   <h2>Start here</h2>
-  <p class="lede">The <b>studio</b> makes stills and video clips and plans TV spots. Pick what you want to do:</p>
+  <p class="lede">The <b>studio</b> makes stills and video clips, plans TV spots, and draws animated films from your characters and storyboards. Pick what you want to do:</p>
   <section class="topic" id="paths" data-keys="overview quick start what can i do">
     <h3>What do you want to make?</h3>
     <div class="paths">
@@ -141,6 +141,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <a href="#first-clip"><b>A video clip</b><span>Direct a shot like a cinematographer and run it on any video model.</span></a>
       <a href="#lab"><b>A look of my own</b><span>The Lab: steal the look of any frame, grade a take like film, check continuity, draw a camera move.</span></a>
       <a href="#board"><b>A TV spot</b><span>Brief → shot list → keyframes → clips → the cut, on the Board.</span></a>
+      <a href="#animation"><b>An animated film</b><span>Animation, for animators: style, model sheets from your drawings, background art, storyboard panels into shots, then keyframes, clips and the cut.</span></a>
       <a href="#footage-in"><b>Something with your own footage</b><span>Restyle it, swap in a product, extend it, lead into it.</span></a>
       <a href="#library"><b>Find something I made</b><span>The Library has everything, across every reel.</span></a>
       <a href="#choose"><b>Pick the right model</b><span>The Model directory: what each of {{ dir.count }} models is good at, and where it falls down.</span></a>
@@ -154,6 +155,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><b>Reel</b>: a project, holding all its shots and takes.</li>
       <li><b>Board</b>: a reel planned as a spot: one <b>card</b> per shot, in order, with a running time.</li>
       <li><b>Kit</b>: the cast, products and places that must look the same in every shot of a spot.</li>
+      <li><b>Model sheet</b>: a character's turnaround, expressions and swatches on one picture; in Animation, what every shot of them is drawn from.</li>
     </ul>
   </section>
 </div>
@@ -279,7 +281,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <ul>
       <li><b>Header</b>: the reel's name (click it to rename), <span class="ui">Library</span>, <span class="ui">Reels</span>, <span class="ui">New reel</span>, this <span class="ui">Guide</span>, your Comfy balance, and <span class="ui">Prompt</span> to show or hide the right column.</li>
       <li><b>Left panel</b>: what to make (<span class="ui">Still image</span> or <span class="ui">Video clip</span>), the model, the scene, the camera and look, the format, and the <span class="ui">Generate</span> button at the bottom.</li>
-      <li><b>Middle</b>: the <span class="ui">Shot</span> and <span class="ui">Board</span> switch, the stage where the current take plays, its actions, and the <b>Sequence</b> bar with every take in the reel.</li>
+      <li><b>Middle</b>: the <span class="ui">Shot</span> / <span class="ui">Board</span> / <span class="ui">Animation</span> switch, the stage where the current take plays, its actions, and the <b>Sequence</b> bar with every take in the reel.</li>
       <li><b>Right</b>: the prompt that will actually be sent, coloured by which control wrote each part, and details of the selected take.</li>
     </ul>
   </section>
@@ -489,6 +491,78 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li>Click <span class="ui">Mark … as mine</span>. A take with someone's name on it keeps it.</li>
     </ol>
     <p>If the Library says it doesn't know who you are, sign in again from the home page.</p>
+  </section>
+</div>
+
+<!-- ═══════════════════════════════════════════════════════════════════ -->
+<div class="chapter" id="animation">
+  <h2>Animation: a suite for animators</h2>
+  <p class="lede">A drawn film from your characters, your backgrounds and your storyboard panels. Nothing in it is photographed, so nothing is left to a seed: every shot is drawn from a model sheet. Open it with <span class="ui">🎞 Animation</span> in the header, or <span class="ui">Animation</span> above the stage.</p>
+  <section class="topic" id="anim-what" data-keys="animation animated film cartoon anime cel animator mode what is it stage strip getting around open inspect download pop-up editor type">
+    <h3>What it is, and who it's for</h3>
+    <p>Animators already have the story (a script, a storyboard), the characters (sketches, turnarounds, colour keys) and an idea of the world. What they don't have is a way to make an AI model draw <em>their</em> character, the same way, in every shot. Animation is the studio laid out for exactly that, in five stages, each with a number and a state so you can see where the film is:</p>
+    <ol>
+      <li><b>Style</b>: the look of the film, in every prompt.</li>
+      <li><b>Cast</b>: each character designed from your drawings and put on a model sheet.</li>
+      <li><b>World</b>: each place painted once as background art.</li>
+      <li><b>Storyboard</b>: your panels read into shot cards.</li>
+      <li><b>Shots and the cut</b>: keyframes, clips, the cut, as on the Board.</li>
+    </ol>
+    <p>Everything Animation makes is a take like any other, tagged as a design, a sheet, a background, a keyframe, a clip or a cut, and the <a href="#library">Library</a> has an <span class="ui">🎞 Animation</span> blade that shows only those, by kind.</p>
+    <p><b>Getting around.</b> The strip at the top is the five stages as tiles, each with its number, its name and where it stands ("2 of 3 on model sheets", "Upload the panels"); a tile's number lights up when its stage is done, and clicking one scrolls to it. The left panel is the same as the Board's: the look, the Kit, and the <b>Keyframes</b> and <b>Clips</b> model rows. Two things are true of every stage:</p>
+    <ul>
+      <li><b>Every picture opens full size.</b> Click a drawing, a design, a model sheet, a background or the style picture to inspect it (a sheet has to be read before it's trusted), with <span class="ui">Download</span> under it. Esc, a click on the picture or on the backdrop closes it.</li>
+      <li><b>Every text box opens as a pop-up editor</b> when you click into it: a character's look, a place, the style notes, and on the cards the scene, the voice-over and the on-screen text. A card's box is a few lines wide and a scene wants room. What you type lands in the box as you type, so nothing is lost if you close it half-way; <span class="ui">Done</span>, Esc or ⌘↩ closes it.</li>
+    </ul>
+  </section>
+  <section class="topic" id="anim-seed" data-keys="seed consistency same character every shot why not seed model sheet">
+    <h3>Why a sheet and not a seed</h3>
+    <p>A seed fixes the noise a model starts from. Change a word of the prompt and the same seed gives a different face; and the models that matter here (Seedance, Kling, Grok, Nano Banana) largely ignore it or pick their own. What holds a character across a film is drawing every shot from the same picture of them. That picture is the <b>model sheet</b>: a turnaround (front, three-quarter, side, back), four expressions and the colour swatches, on a plain sheet. Every keyframe and every clip is handed the sheet and told, in the model's own way of pointing at a picture, "draw her exactly as on the sheet".</p>
+  </section>
+  <section class="topic" id="anim-style" data-keys="style cel painterly 3d cg retro anime cutout stop motion ink style picture model takes no reference pictures badge references filter pick one that does recommended which models">
+    <h3>1 · Style</h3>
+    <p>Pick a style: 2D cel anime, painterly 2D, Western TV 2D, 3D CG feature, retro 80s–90s anime, paper cutout, stop-motion, or ink and halftone. Add a few words of your own (thick lines, pastel palette, grainy). Or upload a <span class="ui">Style picture</span>: one frame in the look you want, and every prompt asks the model to match its linework, shading and colour. The style is written into the design, the sheet, the plate, every keyframe and every clip.</p>
+    <p><b>The models, and which take pictures.</b> Under the style it says which model draws the keyframes and which the clips, and how many pictures each takes. This matters more here than anywhere: a sheet reaches a model only as a <b>reference picture</b>, so a model that takes none cannot hold your characters, however good it is. The mode makes that hard to miss:</p>
+    <ul>
+      <li>In the model sheet (click the <b>Keyframes</b> or <b>Clips</b> row on the left), every model carries a badge in Animation: <b>"6 pictures"</b> in green, or <b>"no references"</b> in red with the row dimmed. The <b>References</b> filter is on when the sheet opens, so you see only models the sheets can reach; switch it off to see the rest.</li>
+      <li>If the model you've chosen takes none, a red warning under Style says so in plain words, the Style tile reads "Keyframe model takes no pictures", and <span class="ui">Pick one that does</span> opens the sheet already filtered.</li>
+      <li><span class="ui">Use the recommended models</span> sets Nano Banana Pro for keyframes and Seedance 2.5 for clips. <span class="ui">Which models take references?</span> lists every model in the catalogue that takes pictures, keyframe and clip models alike, with how many each takes, whether it takes them with a keyframe or instead of one, and a <span class="ui">Use</span> button on each.</li>
+    </ul>
+  </section>
+  <section class="topic" id="anim-cast" data-keys="cast character design model sheet turnaround expressions drawings sketches build the sheet prop">
+    <h3>2 · Cast: from your drawings to a model sheet</h3>
+    <p>Add each character (and each prop that recurs). Say who they are in one line: age, build, face, hair, exactly what they wear. Then add your own drawings of them with <span class="ui">＋</span>: sketches, turnarounds, colour keys, as many as you have, in any state. <span class="ui">Build the sheet</span> runs two steps:</p>
+    <ul>
+      <li><b>The design</b>: one consolidated front three-quarter view in the film's style, drawn from your drawings. If you have several that disagree, this is where they're reconciled.</li>
+      <li><b>The sheet</b>: the turnaround, the expressions and the swatches, drawn from the design (and your drawings again, as far as the model takes pictures).</li>
+    </ul>
+    <p>A character with no drawings is designed from the description alone. <span class="ui">Build all sheets</span> does every character at once, and the cost is shown first. Both pictures stay in the Library, and the sheet goes into the Kit as the character's reference. Click the design or the sheet to inspect it full size, and if it isn't right, change the look or the drawings and <span class="ui">Build the sheet again</span>; the old one stays in the Library. Tips: one character per drawing, on a plain background, a front view first; a colour key does more than ten line sketches.</p>
+  </section>
+  <section class="topic" id="anim-world" data-keys="world background plate background art place paint">
+    <h3>3 · World: background art</h3>
+    <p>Add each place the story happens in, describe it (layout, materials, time of day, light), add any drawings of it, and <span class="ui">Paint the plate</span>: a wide establishing view with no characters, painted in the film's style. Every shot set there is drawn over it: the model is told to keep its layout, palette, perspective and light. Click the plate to inspect it; <span class="ui">Paint again</span> makes another.</p>
+  </section>
+  <section class="topic" id="anim-storyboard" data-keys="storyboard panels upload read cards shot list dialogue framing camera move">
+    <h3>4 · Storyboard: panels into cards</h3>
+    <p><span class="ui">Upload panels</span>, as many as you like, named in story order. Each panel is read into a shot card: what the camera sees, the framing, the camera move (arrows and notes are read), who is in it (matched to the cast by name; anyone new is added to the cast to be designed), how long the shot should run, and any dialogue or caption written on the panel, which goes into the card's voice-over. The panel itself stays on the card and is handed to the keyframe as its <b>composition reference</b>: match the staging, the poses and the angle, finished as a frame of the film.</p>
+    <p>No panels? <span class="ui">Write the story instead</span> opens the Board's brief, and the director drafts the shot list from it.</p>
+  </section>
+  <section class="topic" id="anim-shots" data-keys="keyframes clips cut line-up references cap pictures which models clips from keyframe references">
+    <h3>5 · Shots and the cut</h3>
+    <p>From here it is the <a href="#board">Board</a>: <span class="ui">Keyframe</span> each card, <span class="ui">Animate</span> it, trim, <span class="ui">Cut the spot</span>, and the Lab grades it. What changes is what the model is given. A model takes a few pictures (three to thirty, depending on the model; the badge on the model sheet says how many). They go in by what the shot can least do without:</p>
+    <ol>
+      <li>the <b>model sheet</b> of each character in the shot;</li>
+      <li>the <b>storyboard panel</b>;</li>
+      <li>the <b>background art</b> of the place;</li>
+      <li>the <b>style picture</b>.</li>
+    </ol>
+    <p>When a scene has more characters than fit beside the panel and the plate, one <b>cast line-up</b> goes instead: every sheet side by side on one picture, each labelled with its name, drawn automatically whenever a sheet changes.</p>
+    <p><b>Clips from the keyframe</b> is the Board's way: the clip starts on the keyframe, which already carries the cast. Most clip models take a starting frame <em>or</em> reference pictures, not both; the ones that take both (Kling 3 Omni, Wan 2.7 R2V) get the sheets as well. <b>Clips from the references</b> skips the keyframe: the clip is drawn straight from the sheets, the panel and the plate, for the models that hold a cast from references alone (Seedance 2.5, Kling, Grok Imagine, MiniMax H3). Switch between the two with <span class="ui">Clips from</span> at the top of stage 5. <span class="ui">Which models take references?</span> lists what each one takes, with <span class="ui">Use</span> on each.</p>
+    <p>A card with a panel and nothing drawn yet shows the panel in its frame. <span class="ui">Keyframe</span> draws the shot from the sheets, the panel, the plate and the style picture; <span class="ui">Animate</span> makes the clip. Each run says what it is being handed: the keyframe's prompt names the pictures in the model's own way ("@Image 1 is the character model sheet for Pip: draw Pip exactly as on the sheet"), so you can see on the take itself what the model was told.</p>
+  </section>
+  <section class="topic" id="anim-library" data-keys="library animation blade designs sheets backgrounds keyframes clips cuts find">
+    <h3>The Library's Animation blade</h3>
+    <p>In the Library, <span class="ui">🎞 Animation</span> shows only what Animation made, and the chips under it narrow it to <b>Designs</b>, <b>Model sheets</b>, <b>Backgrounds</b>, <b>Keyframes</b>, <b>Clips</b> or <b>Cuts</b>. Each card carries a badge saying which it is. From there a take does what any take does (<a href="#library-actions">What the Library can do</a>): <span class="ui">On its board</span> opens the film with that card showing it, <span class="ui">As a clip</span> or a still puts it on the Shot view's stage to grade or upscale, <span class="ui">Download</span>, and ticked takes go on a board with <span class="ui">Put on a board</span>.</p>
   </section>
 </div>
 

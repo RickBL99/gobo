@@ -689,6 +689,17 @@ def _resolve(v):
 def shape(rec: Dict, P: Dict) -> Dict:
     fam = rec.get("family", "flat")
     P = dict(P)
+    if str(rec.get("slug", "")).startswith("xai/"):
+        # Grok Imagine Video: the starting frame is {url, type}, the references
+        # [{url}], and the two exclude each other — a frame, when given, wins
+        first = P.pop("image", None)
+        refs = P.pop("reference_images", None) or []
+        if first:
+            P["image"] = {"url": _resolve(first), "type": "image_url"}
+        elif refs:
+            P["reference_images"] = [{"url": _resolve(r)} for r in refs]
+        P.setdefault("model", rec["slug"].split("/", 1)[1])
+        return {k: _resolve(v) for k, v in P.items()}
     if fam == "content":
         if P.get("first_frame") or P.get("last_frame"):
             P.pop("ratio", None)          # the frame sets the shape; Seedance 2.5 refuses a ratio with one

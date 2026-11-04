@@ -149,6 +149,9 @@ def analyse(rec: Dict) -> Optional[Dict]:
         R["refs_multi"] = _first(inp, REF_MULTI, lambda p: p.get("mul") and not p.get("obj")
                                  and p.get("md") in ("image", "file", None))
         singles = [n for n in REF_SINGLE if n in inp and not inp[n].get("mul") and _is_media("image")(inp[n])]
+        if not R["refs_multi"] and str(rec.get("slug", "")).startswith("byteplus/seedream") \
+                and inp.get("image", {}).get("mul"):
+            R["refs_multi"] = "image"              # Seedream's references are its `image` list
         R["refs_single"] = [] if R["refs_multi"] else singles
         R["refs_max"] = (inp[R["refs_multi"]].get("mi") or 10) if R["refs_multi"] else len(R["refs_single"])
         need = [n for n in ([R["refs_multi"]] + R["refs_single"]) if n and inp[n].get("req")]
@@ -163,8 +166,15 @@ def analyse(rec: Dict) -> Optional[Dict]:
                                  lambda p: p.get("mul") and not p.get("obj") and p.get("md") in ("image", "file", None))
         if not R["first"] and "keyframes" in inp and inp["keyframes"].get("mul") and not inp["keyframes"].get("obj"):
             R["first"] = "keyframes"            # FLUX 3 i2v: a list whose first item starts the clip
+        if str(rec.get("slug", "")).startswith("xai/"):
+            # Grok Imagine: `image` {url, type} starts the clip, `reference_images`
+            # [{url}] hold a cast (up to 7); comfy.shape writes the objects
+            if "image" in inp and inp["image"].get("obj") and not R["first"]:
+                R["first"] = "image"
+            if "reference_images" in inp and inp["reference_images"].get("mul") and not R["refs_multi"]:
+                R["refs_multi"] = "reference_images"
         R["refs_single"] = []
-        R["refs_max"] = (inp[R["refs_multi"]].get("mi") or 4) if R["refs_multi"] else 0
+        R["refs_max"] = (inp[R["refs_multi"]].get("mi") or (7 if str(rec.get("slug", "")).startswith("xai/") else 4)) if R["refs_multi"] else 0
         R["refs_min"] = 1 if R["refs_multi"] and inp[R["refs_multi"]].get("req") else 0
         if R["first"] == R["source"]:
             R["first"] = None
@@ -1064,10 +1074,11 @@ def claude_on() -> bool:
     return bool(settings.ANTHROPIC_API_KEY or settings.COMFY_API_KEY)
 
 
-def _claude_json(system: str, user: str, schema: Dict, effort: str = "low", max_tokens: int = 4000) -> Dict:
+def _claude_json(system: str, user, schema: Dict, effort: str = "low", max_tokens: int = 4000) -> Dict:
     """One structured call to Claude: the reply is JSON matching `schema`.
     With ANTHROPIC_API_KEY it goes to Anthropic; otherwise through Comfy
-    Router on the studio's one Comfy key."""
+    Router on the studio's one Comfy key. `user` is the text, or a list of
+    content blocks when pictures go with it (the storyboard reader)."""
     kw = dict(
         model=os.getenv("STUDIO_DIRECTOR_MODEL", "claude-opus-5-5"),
         max_tokens=max_tokens,

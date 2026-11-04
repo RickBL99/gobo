@@ -23,6 +23,7 @@ from PIL import Image
 
 from . import comfy
 from . import comfy_export as CX
+from . import animation as A
 from . import direction as D
 from . import jobs as J
 from . import models as M
@@ -399,12 +400,18 @@ def _clean_board(b: Dict) -> Dict:
 
     els = []
     for e in (b.get("elements") or [])[:BOARD_ELEMENTS]:
-        # a kit item is a picture, or the planner's cast still to be painted from its look
-        if isinstance(e, dict) and e.get("id") and (e.get("file") or s(e.get("look"))):
+        # a kit item is a picture, or the planner's cast still to be painted from its look;
+        # on an animation board it also carries its own drawings (`files`), the
+        # consolidated design (`hero`) and the model sheet (`sheet`) built from them
+        if isinstance(e, dict) and e.get("id") and (e.get("file") or s(e.get("look")) or e.get("files")):
+            files = [os.path.basename(s(f, 120)) for f in (e.get("files") or []) if isinstance(f, str) and s(f)][:8]
             els.append({"id": s(e["id"], 40), "name": s(e.get("name"), 60) or "Untitled",
-                        "kind": e.get("kind") if e.get("kind") in ("cast", "product", "place") else "cast",
+                        "kind": e.get("kind") if e.get("kind") in ("cast", "product", "place", "style") else "cast",
                         "file": os.path.basename(s(e.get("file"), 120)),
-                        **({"look": s(e.get("look"), 600)} if s(e.get("look")) else {})})
+                        **({"look": s(e.get("look"), 600)} if s(e.get("look")) else {}),
+                        **({"files": files} if files else {}),
+                        **({"hero": os.path.basename(s(e.get("hero"), 120))} if s(e.get("hero")) else {}),
+                        **({"sheet": os.path.basename(s(e.get("sheet"), 120))} if s(e.get("sheet")) else {})})
     ids = {e["id"] for e in els}
     shots = []
     for x in (b.get("shots") or [])[:BOARD_SHOTS * 3]:
@@ -425,15 +432,21 @@ def _clean_board(b: Dict) -> Dict:
             # a card is an AI shot, or footage someone shot (changed or extended with `tool`)
             "type": "footage" if x.get("type") == "footage" else "shot",
             "tool": s(x.get("tool"), 80), "change": s(x.get("change"), 1000),
-            "tooldur": num(x.get("tooldur"), 1, 30, 5)})
+            "tooldur": num(x.get("tooldur"), 1, 30, 5),
+            # an animation card's storyboard panel and the notes read off it
+            "panel": os.path.basename(s(x.get("panel"), 120)), "notes": s(x.get("notes"), 600)})
     look = b.get("look") if isinstance(b.get("look"), dict) else {}
     seed = b.get("seed")
+    a = b.get("anim") if isinstance(b.get("anim"), dict) else {}
+    anim = {"on": bool(a.get("on")), "style": a.get("style") if a.get("style") in A.STYLE_BY_ID else "cel",
+            "style_notes": s(a.get("style_notes"), 300), "clips_from": "refs" if a.get("clips_from") == "refs" else "keyframe",
+            "lineup": os.path.basename(s(a.get("lineup"), 120)), "lineup_key": s(a.get("lineup_key"), 400)} if a else {}
     return {"brief": s(b.get("brief"), 4000), "title": s(b.get("title"), 120), "notes": s(b.get("notes"), 1000),
             "target": num(b.get("target"), 5, 180, 30),
             "seed": int(seed) if str(seed or "").isdigit() else None, "variants": int(num(b.get("variants"), 1, 4, 1)),
             "look": {k: look.get(k) for k in ("direction", "aspect", "resolution", "pmode", "audio", "colors", "main_color")
                      if k in look},
-            "elements": els, "shots": shots, "updated": time.time()}
+            "elements": els, "shots": shots, **({"anim": anim} if anim else {}), "updated": time.time()}
 
 
 @router.get("/reels/{reel}/board", response_class=JSONResponse)
@@ -470,6 +483,93 @@ async def plan_board(reel: str, request: Request):
                                       [f for f in (b.get("footage") or []) if isinstance(f, dict) and f.get("id")][:BOARD_SHOTS])
     except Exception as e:
         return _err(f"The director couldn't plan this spot: {e}", 502)
+    return out
+
+
+# ── the Animation board ──────────────────────────────────────────────────────
+# (studio/animation.py) The Board's pipeline for a drawn film: a style bible,
+# character model sheets built from the person's own drawings, background
+# plates, storyboard panels read into cards, and clips from the keyframe or
+# straight from the references. Every run still goes through /run; these
+# routes write the prompts, pick the pictures and read the panels.
+ANIM_PANELS = 40
+
+
+@router.get("/anim/catalogue", response_class=JSONResponse)
+async def anim_catalogue():
+    return A.catalogue(M.public_models())
+
+
+@router.post("/reels/{reel}/anim/prompt", response_class=JSONResponse)
+async def anim_prompt(reel: str, request: Request):
+    """The prompt and the pictures for one run: a keyframe, a clip, a character's
+    design or sheet, a background plate — for the model named, within what it
+    takes."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    pm = next((m for m in M.public_models() if m["id"] == b.get("model")), None)
+    if not pm:
+        return _err("Pick a model.")
+    board = _clean_board(b.get("board") or {})
+    card = b.get("card") if isinstance(b.get("card"), dict) else None
+    element = b.get("element") if isinstance(b.get("element"), dict) else None
+    try:
+        out = A.plan(str(b.get("role") or ""), pm, board, card, element)
+    except ValueError:
+        return _err("What is this run for?")
+    missing = [f for f in out["refs"] if not _find_file(reel, f)]
+    if missing:
+        return _err("A reference picture is missing — add it again.")
+    return out
+
+
+@router.post("/reels/{reel}/anim/lineup", response_class=JSONResponse)
+async def anim_lineup(reel: str, request: Request):
+    """Every character's sheet on one labelled picture, so a scene with more
+    characters than a model takes pictures still gets its whole cast."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    items = []
+    for e in (b.get("elements") or [])[:12]:
+        if not isinstance(e, dict):
+            continue
+        f = os.path.basename(str(e.get("sheet") or e.get("file") or ""))
+        p = _find_file(reel, f) if f else None
+        if p:
+            items.append((str(e.get("name") or "")[:40], p))
+    if len(items) < 2:
+        return _err("Build at least two characters' sheets first.")
+    try:
+        name = await run_in_threadpool(A.lineup, items, os.path.dirname(J.ref_path(reel, "x")))
+    except Exception as e:
+        return _err(f"Couldn't draw the line-up: {e}", 500)
+    return {"name": name, "url": f"{PREFIX}/reels/{reel}/file/{name}", "count": len(items)}
+
+
+@router.post("/reels/{reel}/anim/storyboard", response_class=JSONResponse)
+async def anim_storyboard(reel: str, request: Request):
+    """Storyboard panels, already uploaded as references, read into cards."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    panels = [os.path.basename(str(p)) for p in (b.get("panels") or []) if isinstance(p, str) and p.strip()][:ANIM_PANELS]
+    paths = [_find_file(reel, p) for p in panels]
+    if not panels or not all(paths):
+        return _err("Upload the storyboard panels first.")
+    if not M.claude_on():
+        return _err("Reading panels needs the director's model, which isn't set up here.", 503)
+    names = [str(e.get("name") or "").strip() for e in (b.get("elements") or []) if isinstance(e, dict) and str(e.get("name") or "").strip()]
+    pm = next((m for m in M.public_models() if m["id"] == b.get("model")), None) or {}
+    durs = [d for d in ((pm.get("i2v") or pm).get("durations") or []) if 0 < d <= 60]
+
+    def ask(system, content, schema):
+        return M._claude_json(system, content, schema, effort=os.getenv("STUDIO_PLANNER_EFFORT", "medium"), max_tokens=16000)
+    try:
+        out = await run_in_threadpool(A.read_storyboard, paths, names, durs, ask)
+    except Exception as e:
+        return _err(f"The panels couldn't be read: {e}", 502)
     return out
 
 
@@ -825,6 +925,7 @@ async def run_shot(reel: str, request: Request):
             t = J.new_take(reel, shot, base + mi * takes_n + i, kind=mode, model=m,
                            label=M.MODELS[m]["label"], prompt=p, aspect=r["aspect"],
                            request=r, settings=st, action=b.get("action") or "generate",
+                           anim=bool(b.get("anim")),           # made on the Animation board: the Library's blade finds it
                            parent=b.get("parent"), by=who, **board)
             made.append(t)
             _enqueue(reel, t["id"])
@@ -1807,9 +1908,21 @@ def _zip_response(buf: io.BytesIO, name: str) -> StreamingResponse:
 LIB_PAGE = 60
 
 
+# What the Animation board makes, by what it is (the take's `action`)
+ANIM_PARTS = {
+    "design": lambda t: t.get("action") == "design",
+    "sheet": lambda t: t.get("action") == "sheet",
+    "plate": lambda t: t.get("action") == "plate",
+    "keyframe": lambda t: t.get("action") in ("keyframe", "frame") and t.get("kind") == "image",
+    "clip": lambda t: t.get("kind") == "video" and t.get("action") not in ("stitch",),
+    "cut": lambda t: t.get("action") == "stitch",
+}
+
+
 @router.get("/library", response_class=JSONResponse)
 async def library(request: Request, who: str = "mine", kind: str = "",
-                  starred: int = 0, q: str = "", offset: int = 0, limit: int = LIB_PAGE):
+                  starred: int = 0, q: str = "", offset: int = 0, limit: int = LIB_PAGE,
+                  blade: str = "", part: str = ""):
     me = _who(request)
     every = await run_in_threadpool(J.library)
     if V.on():                                   # the demo: a visitor's library is only their own
@@ -1821,6 +1934,14 @@ async def library(request: Request, who: str = "mine", kind: str = "",
               "image": sum(t["kind"] == "image" for t in pool)}
     if kind in ("video", "image"):
         pool = [t for t in pool if t["kind"] == kind]
+    # the Animation blade: what the Animation board made, by what it is
+    anim = [t for t in pool if t.get("anim")]
+    counts["anim"] = len(anim)
+    counts["anim_parts"] = {k: sum(1 for t in anim if f(t)) for k, f in ANIM_PARTS.items()}
+    if blade == "anim":
+        pool = anim
+        if part in ANIM_PARTS:
+            pool = [t for t in pool if ANIM_PARTS[part](t)]
     counts["starred"] = sum(bool(t.get("starred")) for t in pool)
     if starred:
         pool = [t for t in pool if t.get("starred")]
