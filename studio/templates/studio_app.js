@@ -1828,7 +1828,8 @@ function renderBoard() {
         <span class="hint">Keyframes per shot</span><span class="stepper" style="width:84px"><button id="bVm" aria-label="Fewer">−</button><span id="bV">${B.variants}</span><button id="bVp" aria-label="More">+</button></span></div>
       <div id="bNotes">${B.title ? `<b>${esc(B.title)}</b>${B.notes ? " — " : ""}` : ""}${esc(B.notes || "")}</div>
       <div id="bTime"></div>
-      <div class="bline"><button class="btn small" id="bKeyAll"></button><button class="btn small" id="bAnimAll"></button><span class="grow"></span>
+      <div class="bline"><button class="btn small" id="bKeyAll"></button><button class="btn small" id="bAnimAll"></button>
+        <label class="bland" title="When a clip finishes, its colour is matched to the card's keyframe — a CDL worked out in Rust from frames of both — and the matched clip takes the card. The original stays as a Clip letter."><input type="checkbox" id="bMatch" ${B.match === false ? "" : "checked"}>Match clips to keyframes</label><span class="grow"></span>
         <button class="btn small" id="bAnimatic" title="The keyframes held for their planned lengths: the spot's timing before any video is paid for">Animatic</button>
         <button class="btn small primary" id="bCut" title="The chosen clips, trimmed, in board order. A keyframe stands in where a clip isn't made yet.">Cut the spot</button>
         <button class="btn small hidden" id="bWatch">▶ Last cut</button></div>
@@ -1885,7 +1886,7 @@ function frameHtml(s) {
   const clip = pickOf(s, "clip"), key = pickOf(s, "key");
   const show = s._view === "key" ? (key || clip) : (clip || key);
   const waiting = [...cardTakes(s, "clip"), ...cardTakes(s, "key")].find(t => lineNote(t));
-  const busy = s._casting ? "Casting" : waiting ? lineShort(waiting) : busyOf(s, "clip") ? (s.type === "footage" ? "Changing" : (cardTakes(s, "clip").find(t => t.status === "running" || t.status === "queued") || {}).action === "extend" ? "Extending" : "Animating") : busyOf(s, "key") ? (s.start === "continue" ? "Reading the frame" : "Keyframing") : "";
+  const busy = s._casting ? "Casting" : waiting ? lineShort(waiting) : busyOf(s, "clip") ? (s.type === "footage" ? "Changing" : ({ extend: "Extending", grade: "Matching colour" })[(cardTakes(s, "clip").find(t => t.status === "running" || t.status === "queued") || {}).action] || "Animating") : busyOf(s, "key") ? (s.start === "continue" ? "Reading the frame" : "Keyframing") : "";
   const all = S.takes.filter(t => t.board === s.id), last = all[all.length - 1];
   let h = "";
   if (show) {
@@ -1907,7 +1908,7 @@ function frameHtml(s) {
 }
 function varsHtml(s) {
   const ks = cardTakes(s, "key"), cs = cardTakes(s, "clip"), pk = pickOf(s, "key"), pc = pickOf(s, "clip");
-  const b = (t, on) => `<button data-pick="${t.id}" class="${on ? "on" : ""} ${t.status === "failed" || t.status === "cancelled" ? "bad" : ""} ${t.status === "running" || t.status === "queued" ? "run" : ""}" title="${esc(t.label)} · ${esc(t.status)}">${esc(t.letter)}</button>`;
+  const b = (t, on) => `<button data-pick="${t.id}" class="${on ? "on" : ""} ${t.status === "failed" || t.status === "cancelled" ? "bad" : ""} ${t.status === "running" || t.status === "queued" ? "run" : ""} ${t.action === "grade" && t.matched ? "matched" : ""}" title="${esc(t.label)}${t.matched ? ` · colour ${(+t.matched.before).toFixed(1)} → ${(+t.matched.after).toFixed(1)} apart` : ""} · ${esc(t.status)}">${esc(t.letter)}${t.action === "grade" && t.matched ? "·" : ""}</button>`;
   return (ks.length ? `<span class="lab">Key</span>${ks.map(t => b(t, pk && pk.id === t.id)).join("")}` : "")
     + (cs.length ? `<span class="sep"></span><span class="lab">Clip</span>${cs.map(t => b(t, pc && pc.id === t.id)).join("")}` : "");
 }
@@ -1983,6 +1984,7 @@ function wireBoard() {
   const variants = d => { B.variants = Math.max(1, Math.min(4, B.variants + d)); $("#bV").textContent = B.variants; saveBoard(); refreshBoard(); };
   $("#bVm").onclick = () => variants(-1); $("#bVp").onclick = () => variants(1);
   $("#bKeyAll").onclick = keyAll; $("#bAnimAll").onclick = animAll;
+  $("#bMatch").onchange = e => { B.match = e.target.checked; saveBoard(); };
   $("#bAnimatic").onclick = () => cutSpot(true); $("#bCut").onclick = () => cutSpot(false);
   $("#bFoot").onclick = () => pickFootage(addFootageCard);
   $("#bAdd").onclick = () => {
@@ -2320,18 +2322,59 @@ async function animAll() {
   const waiting = B.shots.map((s, i) => s.start === "continue" && !pickOf(s, "key") ? i + 1 : 0).filter(Boolean);
   if (waiting.length) toast(`Shot${waiting.length > 1 ? "s" : ""} ${waiting.join(", ")} continue${waiting.length > 1 ? "" : "s"} the shot before: read ${waiting.length > 1 ? "their" : "its"} last frame once that clip lands.`);
 }
+// Before a cut, every join is checked (crates/flag, on the server): does shot
+// B pick up where A left off, and how far apart in colour. A drifting cut can
+// be matched — B's clip graded to A's last frame — or cut as it is.
+function cutCheckDialog(cuts, nums) {
+  return new Promise(resolve => {
+    const off = cuts.filter(c => c.verdict !== "match");
+    const row = c => `<li><b>Shot ${nums[c.from]} → ${nums[c.to]}</b> <span class="cverdict ${c.verdict}">${c.verdict}</span>${c.colour != null ? ` · colour ${(+c.colour).toFixed(1)} apart` : ""}${(c.notes || []).length ? ` — ${esc(c.notes.join("; "))}` : ""}</li>`;
+    const pop = document.createElement("div"); pop.className = "apop"; pop.innerHTML = `<div class="apopin">
+      <p class="sectitle">${off.length} of ${cuts.length} cut${cuts.length === 1 ? "" : "s"} drift${off.length === 1 ? "s" : ""}</p>
+      <p class="hint">Each join was read from the last frame of one shot and the first of the next. <b>Drift</b> is a colour or exposure step the eye catches at the cut; <b>jump</b> is a bigger break.</p>
+      <ul class="cuts">${off.map(row).join("")}</ul>
+      <p class="hint">Match grades each drifting shot's clip to the last frame of the shot before it, as a new take on its card; cut again when they're done. Where the cut is meant to change scene, cut as it is.</p>
+      <div class="aline"><span class="grow"></span><button class="btn small" data-do="">Cancel</button><button class="btn small" data-do="cut">Cut as it is</button><button class="btn small primary" data-do="match">Match them, then I'll cut</button></div></div>`;
+    document.body.appendChild(pop);
+    const done = v => { pop.remove(); resolve(v); };
+    $$("[data-do]", pop).forEach(x => x.onclick = () => done(x.dataset.do));
+    pop.onclick = e => { if (e.target === pop) done(""); };
+  });
+}
+async function matchCuts(cuts) {
+  const r = await api(`/reels/${S.reel.id}/cuts/match`, { method: "POST", json: { pairs: cuts.map(c => ({ a: c.a, b: c.b })) } });
+  if (r.error) return toast(r.error, true);
+  if (r.takes.length) mergeTakes(r.takes);
+  const why = (r.skipped || []).map(x => x.why).filter(Boolean);
+  toast(r.takes.length ? `Matching ${r.takes.length} clip${r.takes.length > 1 ? "s" : ""} to the shot before. The cards take them when they're done: cut again then.`
+    : `Nothing to match${why.length ? `: ${why[0]}` : ""}.`, !r.takes.length);
+  poll();
+}
 async function cutSpot(animatic) {   // → the cut take, or nothing
-  const parts = [], trims = {}, gaps = [];
+  const parts = [], trims = {}, gaps = [], nums = [], cont = [];
   B.shots.forEach((s, i) => {
     const c = (!animatic || s.type === "footage") && pickOf(s, "clip"), k = pickOf(s, "key");
     if (c) { parts.push(c.id); if (s.trim && s.trim_for === c.id) trims[c.id] = s.trim; }
     else if (k) { parts.push(k.id); trims[k.id] = [0, +s.duration || 3]; }
-    else gaps.push(i + 1);
+    else { gaps.push(i + 1); return; }
+    nums.push(i + 1); cont.push(s.start === "continue");
   });
   if (parts.length < 2) return toast(animatic ? "Keyframe at least two shots first." : "Make at least two shots first.");
   const b = animatic ? $("#bAnimatic") : $("#bCut"), was = b.textContent;
-  b.disabled = true; b.textContent = "Cutting…";
+  b.disabled = true;
   await flushBoard();
+  if (!animatic && B.match !== false) {
+    b.textContent = "Checking the cuts…";
+    const chk = await api(`/reels/${S.reel.id}/cuts/check`, { method: "POST", json: { takes: parts, continuous: cont } });
+    if (!chk.error && chk.off) {
+      b.disabled = false; b.textContent = was;
+      const go = await cutCheckDialog(chk.cuts, nums);
+      if (!go) return;
+      if (go === "match") return matchCuts(chk.cuts.filter(c => c.verdict !== "match"));
+      b.disabled = true;
+    }
+  }
+  b.textContent = "Cutting…";
   const r = await api(`/reels/${S.reel.id}/stitch`, { method: "POST", json: { takes: parts, trims, label: animatic ? "Animatic" : "Spot cut" } });
   b.disabled = false; b.textContent = was;
   if (r.error) return toast(r.error, true);

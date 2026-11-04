@@ -24,6 +24,7 @@ from PIL import Image
 from . import comfy
 from . import comfy_export as CX
 from . import animation as A
+from . import continuity as CONT
 from . import direction as D
 from . import jobs as J
 from . import models as M
@@ -446,7 +447,8 @@ def _clean_board(b: Dict) -> Dict:
             "seed": int(seed) if str(seed or "").isdigit() else None, "variants": int(num(b.get("variants"), 1, 4, 1)),
             "look": {k: look.get(k) for k in ("direction", "aspect", "resolution", "pmode", "audio", "colors", "main_color")
                      if k in look},
-            "elements": els, "shots": shots, **({"anim": anim} if anim else {}), "updated": time.time()}
+            "elements": els, "shots": shots, **({"anim": anim} if anim else {}),
+            "match": b.get("match") is not False, "updated": time.time()}
 
 
 @router.get("/reels/{reel}/board", response_class=JSONResponse)
@@ -1122,6 +1124,7 @@ def _store_result(reel: str, tid: str, res: Dict) -> None:
     J.update_take(reel, tid, status="done", file=name, finished=time.time(),
                   elapsed=round(time.time() - float(t.get("started") or t.get("created") or 0), 1),
                   **extra)
+    _match_after_done(reel, tid)
     J.unmark_active(reel, tid)
 
 
@@ -1909,6 +1912,161 @@ LIB_PAGE = 60
 
 
 # What the Animation board makes, by what it is (the take's `action`)
+# ── colour from shot to shot ─────────────────────────────────────────────────
+# A clip is a fresh render and its colour drifts from the keyframe it started
+# on. When a card's clip finishes, its colour is matched to the card's keyframe
+# (a CDL worked out in Rust from frames of both) and the matched clip takes the
+# card; before a cut, each join is checked and a drifting shot can be matched
+# to the one before it. Both run the Lab's own matcher: studio continuity.
+MATCHED_FROM = ("generate", "animate", "keyframe", "clip", "video", "footage_change")
+
+
+def _card_and_key(reel: str, t: Dict):
+    """The board card a clip was made for, and the keyframe that card is using."""
+    board = J.get_board(reel) or {}
+    card = next((s for s in (board.get("shots") or []) if s.get("id") == t.get("board")), None)
+    if not card:
+        return board, None, None
+    keys = [k for k in J.list_takes(reel) if k.get("board") == card["id"] and k.get("role") == "key"
+            and k.get("status") == "done" and k.get("kind") == "image" and k.get("file")]
+    key = next((k for k in keys if k["id"] == card.get("key")), None) or (keys[-1] if keys else None)
+    return board, card, key
+
+
+def _match_plan(reel: str, t: Dict, ref: Dict, at: str = "first") -> Dict:
+    """The CDL that matches clip `t` to `ref` (a still, or a frame of a clip:
+    'first' or 'last'), and whether it's worth a take. Seconds of work."""
+    src = J.out_path(reel, t["file"])
+    frames = CONT.frames_of(src, "video")
+    rp = J.out_path(reel, ref["file"])
+    rframes = [CONT.still_frame(rp)] if ref.get("kind") == "image" else CONT.clip_frames(rp, (at,))
+    m = CONT.match(frames, rframes)
+    if "error" in m:
+        return {"error": m["error"]}
+    plan = CONT.plan_match(m["before"], m["after"])
+    return {"cdl": m["cdl"], "before": m["before"], "after": m["after"], "to": ref["id"], **plan}
+
+
+def _match_make(reel: str, t: Dict, plan: Dict, label: str) -> Optional[Dict]:
+    """The matched clip as a take of its own on the same card: graded in the
+    background through the CDL, the original left alone."""
+    J.update_take(reel, t["id"], match={k: plan.get(k) for k in ("to", "before", "after", "match", "why", "error")})
+    if plan.get("error") or not plan.get("match"):
+        return None
+    spec = {"cdl": plan["cdl"], "match_to": plan["to"]}
+    card = {k: t[k] for k in ("board", "role") if t.get(k)}
+    name = f"matched-{uuid.uuid4().hex[:10]}.mp4"
+    nt = _local_take(reel, t, "video", "grade", None, by=t.get("by") or "", label=label, look=spec,
+                     progress="starting", w=t.get("w"), h=t.get("h"),
+                     matched={"to": plan["to"], "before": plan["before"], "after": plan["after"]},
+                     **card, **({"anim": True} if t.get("anim") else {}))
+    _spawn(_grade_clip, reel, nt["id"], J.out_path(reel, t["file"]), name, spec, None)
+    return nt
+
+
+def _match_to_key(reel: str, t: Dict, key: Dict) -> Optional[Dict]:
+    try:
+        plan = _match_plan(reel, t, key, "first")
+    except Exception as e:
+        plan = {"error": str(e)[-200:], "to": key["id"]}
+    return _match_make(reel, t, plan, "Matched to keyframe")
+
+
+def _match_after_done(reel: str, tid: str) -> None:
+    """A card's clip just finished: matched to the card's keyframe, unless the
+    board says not to. Runs beside the pump, never in its way."""
+    t = J.get_take(reel, tid) or {}
+    if t.get("kind") != "video" or t.get("role") != "clip" or not t.get("board") or t.get("status") != "done":
+        return
+    if t.get("action") in ("grade", "extend", "change", "footage", "stitch", "upscale"):
+        return
+    board, card, key = _card_and_key(reel, t)
+    if board.get("match") is False or not card or not key:
+        return
+    _spawn(_match_to_key, reel, t, key)
+
+
+@router.post("/reels/{reel}/takes/{tid}/match", response_class=JSONResponse)
+async def match_take(reel: str, tid: str, request: Request):
+    """This clip's colour matched to another take: {to: take id, at: first|last}
+    (a still, or that frame of a clip). The matched clip is a new take on the
+    same card, graded in the background; the answer says how far apart they
+    were, and carries the take when one is worth making."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    t, ref = J.get_take(reel, tid), J.get_take(reel, str(b.get("to") or ""))
+    if not t or t.get("kind") != "video" or t.get("status") != "done" or not t.get("file"):
+        return _err("Only a finished clip can be matched.")
+    if not ref or ref.get("status") != "done" or not ref.get("file") or ref.get("kind") not in ("image", "video"):
+        return _err("Pick a finished take to match it to.")
+    at = "last" if b.get("at") == "last" else "first"
+    try:
+        plan = await run_in_threadpool(_match_plan, reel, t, ref, at)
+    except Exception as e:
+        return _err(f"Could not read the frames: {str(e)[-200:]}", 500)
+    label = str(b.get("label") or "").strip()[:60] or ("Matched to keyframe" if ref.get("kind") == "image" else "Matched to the shot before")
+    nt = _match_make(reel, t, plan, label)
+    return {"take": _public_take(nt) if nt else None, "match": {k: plan.get(k) for k in ("to", "before", "after", "match", "why", "error")}}
+
+
+@router.post("/reels/{reel}/cuts/check", response_class=JSONResponse)
+async def check_cuts(reel: str, request: Request):
+    """Every join of a film before it's cut: {takes: [ids in order], continuous:
+    [bool per take]}. Each cut comes back with a verdict (match, drift, jump),
+    a score, how far apart in colour, and what to do."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    ids = [str(x) for x in (b.get("takes") or [])][:BOARD_SHOTS]
+    takes = []
+    for i in ids:
+        t = J.get_take(reel, i)
+        if not t or t.get("status") != "done" or not t.get("file") or t.get("kind") not in ("image", "video"):
+            return _err("Every take in the cut has to be finished.")
+        takes.append(t)
+    if len(takes) < 2:
+        return _err("Two takes, at least.")
+    cont = [bool(x) for x in (b.get("continuous") or [])]
+    try:
+        r = await run_in_threadpool(CONT.check, [(J.out_path(reel, t["file"]), t["kind"]) for t in takes], cont)
+    except Exception as e:
+        return _err(f"Could not read the frames: {str(e)[-200:]}", 500)
+    for c in r["cuts"]:
+        c["a"], c["b"] = takes[c["from"]]["id"], takes[c["to"]]["id"]
+    return r
+
+
+@router.post("/reels/{reel}/cuts/match", response_class=JSONResponse)
+async def match_cuts(reel: str, request: Request):
+    """Drifting cuts put right: {pairs: [{a, b}]} matches each clip `b` to the
+    last frame of `a`, the shot before it. The matched clips are new takes on
+    their cards, graded in the background."""
+    if not _reel_or_404(reel):
+        return _err("No such reel.", 404)
+    b = await request.json()
+    made, skipped = [], []
+    for pr in (b.get("pairs") or [])[:BOARD_SHOTS]:
+        if not isinstance(pr, dict):
+            continue
+        a, t = J.get_take(reel, str(pr.get("a") or "")), J.get_take(reel, str(pr.get("b") or ""))
+        if not a or not t or t.get("kind") != "video" or t.get("status") != "done" or not t.get("file") \
+                or a.get("status") != "done" or not a.get("file"):
+            skipped.append({"b": pr.get("b"), "why": "not a finished clip"})
+            continue
+        try:
+            plan = await run_in_threadpool(_match_plan, reel, t, a, "last")
+        except Exception as e:
+            skipped.append({"b": t["id"], "why": str(e)[-120:]})
+            continue
+        nt = _match_make(reel, t, plan, "Matched to the shot before")
+        if nt:
+            made.append(_public_take(nt))
+        else:
+            skipped.append({"b": t["id"], "why": plan.get("error") or plan.get("why")})
+    return {"takes": made, "skipped": skipped}
+
+
 ANIM_PARTS = {
     "design": lambda t: t.get("action") == "design",
     "sheet": lambda t: t.get("action") == "sheet",

@@ -413,6 +413,10 @@ main.boardview #inspector { display: none !important; }
 .apopin { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 16px; max-width: 720px; width: 100%; max-height: 85vh; overflow: auto; font-size: .82rem; }
 .apopin ul { padding-left: 18px; margin: 4px 0 10px; } .apopin li { margin: 3px 0; }
 .ath[data-file] { cursor: zoom-in; }
+.cverdict { font-size: .66rem; font-weight: 700; padding: 1px 7px; border-radius: 99px; text-transform: uppercase; letter-spacing: .05em; }
+.cverdict.drift { background: #3a3014; color: var(--warn); } .cverdict.jump { background: #3d1a16; color: var(--bad); } .cverdict.match { background: #1d3524; color: var(--ok); }
+.apopin ul.cuts { list-style: none; padding: 0; } .apopin ul.cuts li { margin: 5px 0; }
+.bvars button.matched { border-style: dashed; }
 .aeditin { max-width: 820px; display: flex; flex-direction: column; gap: 10px; }
 .aeditin .abig { width: 100%; min-height: 42vh; max-height: 70vh; resize: vertical; font-size: 1rem; line-height: 1.5; padding: 12px 14px; box-sizing: border-box; }
 .aeditin .abig.short { min-height: 16vh; }

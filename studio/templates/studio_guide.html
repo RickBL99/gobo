@@ -156,6 +156,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><b>Board</b>: a reel planned as a spot: one <b>card</b> per shot, in order, with a running time.</li>
       <li><b>Kit</b>: the cast, products and places that must look the same in every shot of a spot.</li>
       <li><b>Model sheet</b>: a character's turnaround, expressions and swatches on one picture; in Animation, what every shot of them is drawn from.</li>
+      <li><b>Matched</b> (a clip): graded so its colour sits on its keyframe's, or on the last frame of the shot before it; a CDL worked out from frames of both. The dot on a Clip letter.</li>
     </ul>
   </section>
 </div>
@@ -195,7 +196,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <ul>
       <li><span class="ui">Steal the look</span>: drop in any frame. It reads the tone, colour, palette, grain, letterbox, focus and light, names the nearest film stock and grade, and sets them on the shot.</li>
       <li><span class="ui">Grade</span>: the selected take through a film stock and a grade, live, with the grain moving on video. <span class="ui">Amount</span> sets the strength; the other sliders adjust grain, halation, vignette, fade, contrast, colour and warmth. Drag the bar under the picture to compare with the original. <span class="ui">Import LUT or CDL</span> reads a .cube or a colourist's CDL into the sliders (see <a href="#colour">Colour</a>), and <span class="ui">Advanced</span> opens Colour for wheels, curves and scopes. <span class="ui">Grade the take</span> grades every frame on the server and keeps the sound. The Lab closes on the new take, which says which frame it's on while it works (a clip takes a minute or two) and then plays the result; the original stays beside it in the strip. You can keep working meanwhile, or press <span class="ui">Stop grading</span>. <span class="ui">Download .cube</span> gives the same colour to Resolve, Premiere or Final Cut.</li>
-      <li><span class="ui">Grade other takes to match</span>: an extension, another angle or a retake, graded so it cuts with this take. Tick the takes, from <span class="ui">This reel</span> or from anywhere in the <span class="ui">Library</span> (a take from another reel is copied into this one first, so they cut together); each is first matched to this take's colour (Gobo reads frames of both and works out a CDL that lines up their blacks, mid-tones, whites and saturation, in Rust), then given this grade, as a new take beside its original. It says how far apart each was before and after. Open a graded take in the Lab and it regrades from the take it came from, with its grade loaded, so a grade you've made can be matched to the rest later.</li>
+      <li><span class="ui">Grade other takes to match</span>: an extension, another angle or a retake, graded so it cuts with this take. (The Board does this by itself for every clip against its keyframe, and checks every join before a cut: <a href="#continuity">Colour from shot to shot</a>.) Tick the takes, from <span class="ui">This reel</span> or from anywhere in the <span class="ui">Library</span> (a take from another reel is copied into this one first, so they cut together); each is first matched to this take's colour (Gobo reads frames of both and works out a CDL that lines up their blacks, mid-tones, whites and saturation, in Rust), then given this grade, as a new take beside its original. It says how far apart each was before and after. Open a graded take in the Lab and it regrades from the take it came from, with its grade loaded, so a grade you've made can be matched to the rest later.</li>
       <li><span class="ui">Continuity</span>: how each take ends against how the next begins, with the take whose look sits furthest from the rest called out.</li>
       <li><span class="ui">Draw the move</span>: draw on the frame with the camera pen and the subject pen. A loop reads as an orbit and a line toward the subject as a push-in; the subject's path becomes the action. <span class="ui">Shoot it</span> re-renders the take on screen with that move (a still is animated from), as a new take beside the old one, on the clip model picked on the left (change the model there first to reshoot it on another); <span class="ui">Just set it</span> only puts the move and the action on the shot, for you to generate later.</li>
     </ul>
@@ -506,7 +507,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><b>Cast</b>: each character designed from your drawings and put on a model sheet.</li>
       <li><b>World</b>: each place painted once as background art.</li>
       <li><b>Storyboard</b>: your panels read into shot cards.</li>
-      <li><b>Shots and the cut</b>: keyframes, clips, the cut, as on the Board.</li>
+      <li><b>Shots and the cut</b>: keyframes, clips, the cut, as on the Board, each clip matched to its keyframe's colour and every join checked before the cut.</li>
     </ol>
     <p>Everything Animation makes is a take like any other, tagged as a design, a sheet, a background, a keyframe, a clip or a cut, and the <a href="#library">Library</a> has an <span class="ui">🎞 Animation</span> blade that shows only those, by kind.</p>
     <p><b>Getting around.</b> The strip at the top is the five stages as tiles, each with its number, its name and where it stands ("2 of 3 on model sheets", "Upload the panels"); a tile's number lights up when its stage is done, and clicking one scrolls to it. The left panel is the same as the Board's: the look, the Kit, and the <b>Keyframes</b> and <b>Clips</b> model rows. Two things are true of every stage:</p>
@@ -558,6 +559,7 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     </ol>
     <p>When a scene has more characters than fit beside the panel and the plate, one <b>cast line-up</b> goes instead: every sheet side by side on one picture, each labelled with its name, drawn automatically whenever a sheet changes.</p>
     <p><b>Clips from the keyframe</b> is the Board's way: the clip starts on the keyframe, which already carries the cast. Most clip models take a starting frame <em>or</em> reference pictures, not both; the ones that take both (Kling 3 Omni, Wan 2.7 R2V) get the sheets as well. <b>Clips from the references</b> skips the keyframe: the clip is drawn straight from the sheets, the panel and the plate, for the models that hold a cast from references alone (Seedance 2.5, Kling, Grok Imagine, MiniMax H3). Switch between the two with <span class="ui">Clips from</span> at the top of stage 5. <span class="ui">Which models take references?</span> lists what each one takes, with <span class="ui">Use</span> on each.</p>
+    <p><b>Colour from shot to shot.</b> Flat colour has nowhere to hide, so a clip that comes back a shade darker than its keyframe shows at every cut. Animation keeps the Board's <b>Match clips to keyframes</b> switch on: each clip is matched to its keyframe as it finishes (the keyframe was drawn over the plate, so the plate's palette is the anchor for every shot in that place), and <span class="ui">Cut the spot</span> checks every join first. See <a href="#continuity">Colour from shot to shot</a>. A character drawn in the wrong colour is the sheet's job, not the grade's.</p>
     <p>A card with a panel and nothing drawn yet shows the panel in its frame. <span class="ui">Keyframe</span> draws the shot from the sheets, the panel, the plate and the style picture; <span class="ui">Animate</span> makes the clip. Each run says what it is being handed: the keyframe's prompt names the pictures in the model's own way ("@Image 1 is the character model sheet for Pip: draw Pip exactly as on the sheet"), so you can see on the take itself what the model was told.</p>
   </section>
   <section class="topic" id="anim-library" data-keys="library animation blade designs sheets backgrounds keyframes clips cuts find">
@@ -578,8 +580,8 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li>Write the brief, pick <span class="ui">:15</span>, <span class="ui">:30</span> or <span class="ui">:60</span>, and click <span class="ui">Write the shot list</span>.</li>
       <li>Read the cards and fix what you'd change.</li>
       <li><span class="ui">Keyframe</span> every card (cents each) and click <span class="ui">Animatic</span> to check the timing.</li>
-      <li><span class="ui">Animate</span> the cards you're happy with.</li>
-      <li>Trim, then <span class="ui">Cut the spot</span>.</li>
+      <li><span class="ui">Animate</span> the cards you're happy with. Each clip is matched to its keyframe's colour as it finishes (<a href="#continuity">Colour from shot to shot</a>).</li>
+      <li>Trim, then <span class="ui">Cut the spot</span>: every join is checked first, and a drifting shot can be matched to the one before it.</li>
     </ol>
   </section>
   <section class="topic" id="brief" data-keys="brief shot list claude write plan length target 15 30 60 seconds rewrite">
@@ -612,12 +614,12 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <p>On the Board the model card has two rows: <b>Keyframes</b> (a still model) and <b>Clips</b> (a video model). Click either to choose.</p>
     <div class="warn">For <b>Clips</b>, pick a model that makes video from a keyframe (Seedance, Veo, Kling…). Models that change or extend a clip belong on <a href="#footage-board">footage cards</a>; as the Clips model, AI shots fail on them.</div>
   </section>
-  <section class="topic" id="cards" data-keys="card fields scene framing move length voice over on-screen text super cut continue move duplicate delete">
+  <section class="topic" id="cards" data-keys="card fields scene framing move length voice over on-screen text super cut continue move duplicate delete clip letter dot matched colour">
     <h3>A card, field by field</h3>
     <ul>
       <li><b>Number and length</b> at the top, with <span class="ui">Cut</span> / <span class="ui">Continue</span>, and ← → to move it a place (or drag the card by its top bar, ⠿, to anywhere in the film: a line shows where it lands; Esc puts it back), ⧉ to duplicate, ✕ to take it off the board (its takes stay in the reel).</li>
       <li><b>The picture</b>: the chosen clip, else the keyframe. Hover over it to play. <span class="ui">Open ↗</span> opens that take in the Shot view, for upscaling, grabbing frames and the rest.</li>
-      <li><b>Key</b> and <b>Clip</b> letters: every keyframe and clip made for this card. Click one to choose it.</li>
+      <li><b>Key</b> and <b>Clip</b> letters: every keyframe and clip made for this card. Click one to choose it. A Clip letter with a dot is a clip matched to the keyframe's colour; hover for how far apart they were before and after.</li>
       <li><b>What the camera sees</b>, then <b>Framing</b>, <b>Move</b> and <b>Length</b>.</li>
       <li><b>Kit chips</b>: tick who and what is in the shot.</li>
       <li><b>Voice-over</b> and <b>On-screen text</b>: saved with the spot for the edit.</li>
@@ -627,12 +629,13 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
     <h3>Keyframes</h3>
     <p><span class="ui">Keyframe</span> makes the opening picture of the shot with the Keyframes model and the kit. <b>Keyframes per shot</b> (top of the Board) makes 1–4 options at once; click a letter to choose one. <span class="ui">New keyframe</span> makes more; the newest is shown until you pick another.</p>
   </section>
-  <section class="topic" id="animate" data-keys="animate clip from keyframe ends on next seamless hand off transition re-animate">
+  <section class="topic" id="animate" data-keys="animate clip from keyframe ends on next seamless hand off transition re-animate matching colour matched keyframe">
     <h3>Animate, and ending on the next shot</h3>
     <ul>
       <li><span class="ui">Animate</span> makes the clip from the chosen keyframe with the Clips model, at the card's length and move.</li>
       <li>Tick <span class="ui">ends on N</span> (on models that can end on a frame) and the clip finishes exactly on the next card's keyframe: a seamless hand-off.</li>
       <li><span class="ui">Re-animate</span> makes another version; choose between them with the Clip letters.</li>
+      <li>When a clip finishes, the card says <span class="ui">Matching colour</span> for a moment: the clip is graded to its keyframe's colour and the matched take takes the card. <b>Match clips to keyframes</b>, beside the Animate button, switches it off. See <a href="#continuity">Colour from shot to shot</a>.</li>
     </ul>
   </section>
   <section class="topic" id="continue" data-keys="continue last frame picks up same moment carry on next shot">
@@ -659,6 +662,16 @@ nav .toggle { display: none; width: 100%; background: none; border: 0; color: va
       <li><span class="ui">Cut the spot</span>: the chosen clips, trimmed, in board order. A keyframe stands in where a card has no clip yet.</li>
       <li>The <span class="ui">▶</span> button beside them (for example <span class="ui">▶ Spot cut · 0:12.5</span>) plays the last cut in the Shot view, with <span class="ui">Download</span> on the stage.</li>
     </ul>
+  </section>
+  <section class="topic" id="continuity" data-keys="colour consistent consistency across cuts clip to clip drift match keyframe cdl grade shot before cut check jump inter-clip">
+    <h3>Colour from shot to shot</h3>
+    <p>Every clip is a fresh render, and the clip model decides its colour on its own: an extension comes back darker and bluer, two angles of a scene were never the same. The look in the left panel and the Kit get every shot into the same neighbourhood; this is what holds the value. Three things, all through the Lab's own matcher, run on the server:</p>
+    <ul>
+      <li><b>Match clips to keyframes</b> (the switch beside <span class="ui">Keyframe</span> and <span class="ui">Animate</span>, on by default). When a card's clip finishes, its colour is matched to the card's keyframe: frames of both are read, a CDL (slope, offset, power, then saturation) is worked out that pulls the clip's tones onto the keyframe's, and the clip is graded through it as a new take on the same card, marked <span class="ui">Matching colour</span> while it runs. The matched take gets a dotted Clip letter and the card uses it; the original stays a letter away. A clip that already matches, or one whose difference from the keyframe is content rather than colour, is left alone, and the clip's letter says why.</li>
+      <li><b>The cut check.</b> <span class="ui">Cut the spot</span> first reads the last frame of each shot against the first of the next. A join that drifts (a colour or exposure step the eye catches) or jumps is listed, with how far apart in colour, and you choose: <span class="ui">Match them, then I'll cut</span> grades each drifting shot's clip to the last frame of the shot before it, as new takes on their cards (cut again when they're done); <span class="ui">Cut as it is</span> where the cut is meant to change scene. The Animatic is never checked.</li>
+      <li><b>By hand.</b> The Lab's <span class="ui">Match</span> does the same for any takes you tick, to any reference, with the grade on top; see <a href="#lab">The Lab</a> and <a href="#colour">Colour</a>.</li>
+    </ul>
+    <p>What a match cannot do: fix a thing drawn in the wrong colour. If a jacket comes out orange, no CDL makes it red without turning the rest of the frame. That is the keyframe's job (on the Board, the Kit picture; in Animation, the model sheet), and a model that takes reference pictures.</p>
   </section>
 </div>
 
