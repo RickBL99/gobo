@@ -2313,12 +2313,17 @@ async function keyAll() {
     toast(`Casting ${cast.map(e => e.name).join(", ")} first: one picture each, so every shot shows the same ${cast.some(e => e.kind === "place") ? "people and places" : "people"}.`);
     if (!(await Promise.all(cast.map(paintElement))).every(Boolean)) return;
   }
-  for (const s of list) if (!await keyframe(s)) break;
+  if (!list.length) return toast(B.shots.some(s => s.type !== "footage" && s.scene.trim()) ? "Every shot that can take a keyframe has one, or is being drawn now." : "Write what the camera sees on a shot first.");
+  let n = 0;
+  for (const s of list) { if (!await keyframe(s)) break; n++; }
+  if (n < list.length) toast(`Keyframing stopped at shot ${B.shots.indexOf(list[n]) + 1}${n ? ` after ${n}` : ""}: the shots after it wait. Fix what it said, then Keyframe again.`, true);
 }
 async function animAll() {
   const list = B.shots.filter(s => s.type !== "footage" && pickOf(s, "key") && !pickOf(s, "clip") && !busyOf(s, "clip")), m = clipModel();
   if (!list.length || !confirm(`Animate ${list.length} shot${list.length > 1 ? "s" : ""} on ${m.label}? ${costOf(list.map(clipCost))}.`)) return;
-  for (const s of list) if (!await animate(s)) break;
+  let n = 0;
+  for (const s of list) { if (!await animate(s)) break; n++; }
+  if (n < list.length) toast(`Animating stopped at shot ${B.shots.indexOf(list[n]) + 1}${n ? ` after ${n}` : ""}: the shots after it wait. Fix what it said, then Animate again.`, true);
   const waiting = B.shots.map((s, i) => s.start === "continue" && !pickOf(s, "key") ? i + 1 : 0).filter(Boolean);
   if (waiting.length) toast(`Shot${waiting.length > 1 ? "s" : ""} ${waiting.join(", ")} continue${waiting.length > 1 ? "" : "s"} the shot before: read ${waiting.length > 1 ? "their" : "its"} last frame once that clip lands.`);
 }
@@ -2328,12 +2333,12 @@ async function animAll() {
 function cutCheckDialog(cuts, nums) {
   return new Promise(resolve => {
     const off = cuts.filter(c => c.verdict !== "match");
-    const row = c => `<li><b>Shot ${nums[c.from]} → ${nums[c.to]}</b> <span class="cverdict ${c.verdict}">${c.verdict}</span>${c.colour != null ? ` · colour ${(+c.colour).toFixed(1)} apart` : ""}${(c.notes || []).length ? ` — ${esc(c.notes.join("; "))}` : ""}</li>`;
+    const row = c => `<li><b>Shot ${nums[c.from]} → ${nums[c.to]}</b> <span class="cverdict ${c.verdict}">${c.verdict}</span>${c.colour != null ? ` · colour ${(+c.colour).toFixed(1)} apart` : ""}${(c.notes || []).filter(n => !/^colour [\d.]+ apart$/.test(n)).length ? ` — ${esc(c.notes.filter(n => !/^colour [\d.]+ apart$/.test(n)).join("; "))}` : ""}</li>`;
     const pop = document.createElement("div"); pop.className = "apop"; pop.innerHTML = `<div class="apopin">
       <p class="sectitle">${off.length} of ${cuts.length} cut${cuts.length === 1 ? "" : "s"} drift${off.length === 1 ? "s" : ""}</p>
       <p class="hint">Each join was read from the last frame of one shot and the first of the next. <b>Drift</b> is a colour or exposure step the eye catches at the cut; <b>jump</b> is a bigger break.</p>
       <ul class="cuts">${off.map(row).join("")}</ul>
-      <p class="hint">Match grades each drifting shot's clip to the last frame of the shot before it, as a new take on its card; cut again when they're done. Where the cut is meant to change scene, cut as it is.</p>
+      <p class="hint">Match grades each drifting shot's clip to the last frame of the shot before it, as a new take on its card, and cuts the spot when they land. Where the cut is meant to change scene, cut as it is.</p>
       <div class="aline"><span class="grow"></span><button class="btn small" data-do="">Cancel</button><button class="btn small" data-do="cut">Cut as it is</button><button class="btn small primary" data-do="match">Match them, then I'll cut</button></div></div>`;
     document.body.appendChild(pop);
     const done = v => { pop.remove(); resolve(v); };
@@ -2341,20 +2346,32 @@ function cutCheckDialog(cuts, nums) {
     pop.onclick = e => { if (e.target === pop) done(""); };
   });
 }
-async function matchCuts(cuts) {
+async function matchCuts(cuts) {   // → the ids of the matching takes ([] when nothing needed it), or null
   const r = await api(`/reels/${S.reel.id}/cuts/match`, { method: "POST", json: { pairs: cuts.map(c => ({ a: c.a, b: c.b })) } });
-  if (r.error) return toast(r.error, true);
+  if (r.error) { toast(r.error, true); return null; }
   if (r.takes.length) mergeTakes(r.takes);
   const why = (r.skipped || []).map(x => x.why).filter(Boolean);
-  toast(r.takes.length ? `Matching ${r.takes.length} clip${r.takes.length > 1 ? "s" : ""} to the shot before. The cards take them when they're done: cut again then.`
-    : `Nothing to match${why.length ? `: ${why[0]}` : ""}.`, !r.takes.length);
+  if (!r.takes.length) { toast(`Nothing to match${why.length ? `: ${why[0]}` : ""}. Cutting as it is.`); return []; }
+  toast(`Matching ${r.takes.length} clip${r.takes.length > 1 ? "s" : ""} to the shot before; the spot is cut when they're done.`);
   poll();
+  return r.takes.map(x => x.id);
 }
-async function cutSpot(animatic) {   // → the cut take, or nothing
+// "Match them, then I'll cut" means that: the button counts the matches in as
+// they land, and the cut follows by itself with the matched clips on the cards.
+async function waitMatches(ids, b, was) {   // → true when every match landed
+  let left = ids.length;
+  const say = () => { b.textContent = `Matching… ${ids.length - left} of ${ids.length}`; };
+  say();
+  const got = await Promise.all(ids.map(id => waitTake(id, 30).then(t => { left--; say(); return t; })));
+  b.textContent = was;
+  return got.every(Boolean);
+}
+async function cutSpot(animatic, matched) {   // → the cut take, or nothing; matched: the joins were matched just now, don't ask again
   const parts = [], trims = {}, gaps = [], nums = [], cont = [];
+  let clips = 0;
   B.shots.forEach((s, i) => {
     const c = (!animatic || s.type === "footage") && pickOf(s, "clip"), k = pickOf(s, "key");
-    if (c) { parts.push(c.id); if (s.trim && s.trim_for === c.id) trims[c.id] = s.trim; }
+    if (c) { parts.push(c.id); clips++; if (s.trim && s.trim_for === c.id) trims[c.id] = s.trim; }
     else if (k) { parts.push(k.id); trims[k.id] = [0, +s.duration || 3]; }
     else { gaps.push(i + 1); return; }
     nums.push(i + 1); cont.push(s.start === "continue");
@@ -2363,14 +2380,25 @@ async function cutSpot(animatic) {   // → the cut take, or nothing
   const b = animatic ? $("#bAnimatic") : $("#bCut"), was = b.textContent;
   b.disabled = true;
   await flushBoard();
-  if (!animatic && B.match !== false) {
+  // keyframes held as stills aren't checked against each other: the check reads clips
+  if (!animatic && !matched && B.match !== false && clips) {
     b.textContent = "Checking the cuts…";
     const chk = await api(`/reels/${S.reel.id}/cuts/check`, { method: "POST", json: { takes: parts, continuous: cont } });
     if (!chk.error && chk.off) {
       b.disabled = false; b.textContent = was;
       const go = await cutCheckDialog(chk.cuts, nums);
       if (!go) return;
-      if (go === "match") return matchCuts(chk.cuts.filter(c => c.verdict !== "match"));
+      if (go === "match") {
+        const ids = await matchCuts(chk.cuts.filter(c => c.verdict !== "match"));
+        if (ids === null) return;
+        if (ids.length) {
+          b.disabled = true;
+          const ok = await waitMatches(ids, b, was);
+          b.disabled = false;
+          if (!ok) return toast("A match didn't land, so the spot wasn't cut. The card says what went wrong; Cut the spot again when it's sorted.", true);
+        }
+        return cutSpot(animatic, true);
+      }
       b.disabled = true;
     }
   }
@@ -2474,3 +2502,8 @@ window.STUDIO = {
     $("#scene").value = S.scene; onShotChange();
   },
 };
+
+// Whatever breaks on the page is said on it: a promise nobody caught, an error
+// in a handler. (A keyframe once died in silence on a helper that wasn't there.)
+window.addEventListener("unhandledrejection", e => { const r = e.reason; console.error(r); toast(`Something went wrong on the page: ${r && r.message || r}`, true); });
+window.addEventListener("error", e => { if (e.message) toast(`Something went wrong on the page: ${e.message}`, true); });

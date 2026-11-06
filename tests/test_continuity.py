@@ -209,7 +209,7 @@ class Routes(unittest.TestCase):
 class Page(unittest.TestCase):
     def test_the_board_the_guide_and_the_page_carry_it(self):
         js = open(SCRIPT, encoding="utf-8").read()
-        for s in ('id="bMatch"', "Matching colour", "cuts/check", "cuts/match", "function cutCheckDialog", "Match them, then I'll cut"):
+        for s in ('id="bMatch"', "Matching colour", "cuts/check", "cuts/match", "function cutCheckDialog", "function waitMatches", "cuts the spot when they land", "Match them, then I'll cut"):
             self.assertIn(s, js, s)
         page = open(PAGE, encoding="utf-8").read()
         self.assertIn(".cverdict", page)

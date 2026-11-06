@@ -405,7 +405,7 @@
     if (r.error) { refused(r.error, m.id); return null; }
     mergeTakes(r.takes); poll();
     const t = await waitTake(r.takes[0].id, 20);
-    if (!t) { toast(`${label} for ${e.name} didn't come back. Try again.`, true); return null; }
+    if (!t) { const f = S.takes.find(x => x.id === r.takes[0].id); toast(`${label} for ${e.name} ${f && f.status === "failed" ? `failed: ${f.error || "the model said no"}` : "didn't come back in 20 minutes"}. Try again.`, true); return null; }
     return copyTake(t);
   }
   // a character: the design from their drawings, then the sheet from the design
@@ -464,8 +464,21 @@
 
   // ── keyframes and clips, the Animation way ─────────────────────────────
   const _keyframe = keyframe, _animate = animate;
+  const shotNo = s => B.shots.indexOf(s) + 1;
+  const names = list => list.map(e => e.name).join(" and ");
+  // Nothing here fails quietly: whatever stops a keyframe or a clip is said
+  // on screen, and anything thrown on the way is said too.
   keyframe = async function (s) {
     if (!animOn()) return _keyframe(s);
+    try { return await keyframeAnim(s); }
+    catch (e) { console.error(e); toast(`Shot ${shotNo(s)}: the keyframe didn't start — ${e && e.message || e}`, true); return null; }
+  };
+  animate = async function (s) {
+    if (!animOn()) return _animate(s);
+    try { return await animateAnim(s); }
+    catch (e) { console.error(e); toast(`Shot ${shotNo(s)}: the clip didn't start — ${e && e.message || e}`, true); return null; }
+  };
+  async function keyframeAnim(s) {
     if (s.start === "continue") return continueFrom(s);
     if (!s.scene.trim()) return toast(`Write what the camera sees first (or let ${WHO} read the panel).`);
     const m = keyModel(); if (!m) return toast("No still model is available.", true);
@@ -473,21 +486,21 @@
     if (cast.length && !(m.refs || 0)) return toast(`${m.label} takes no reference pictures, so the sheets can't reach this keyframe. Pick a keyframe model that does — Nano Banana Pro, Seedream.`, true);
     const unmade = cast.filter(e => !e.sheet && !e.file);
     if (unmade.length) {
+      toast(`Shot ${shotNo(s)}: drawing ${names(unmade)}'s design and model sheet first (two stills, about a minute), then the keyframe.`);
       s._casting = true; refreshBoard();
       const ok = (await Promise.all(unmade.map(e => buildSheet(e)))).every(Boolean);
       s._casting = false; refreshBoard();
-      if (!ok) return null;
+      if (!ok) { toast(`Shot ${shotNo(s)}: no keyframe — ${names(unmade)}'s sheet isn't ready. See the note above, then Keyframe again.`, true); return null; }
     }
     await ensureLineup();
-    const p = await planned("key", m, { card: cardJson(s) }); if (!p) return null;
+    const p = await planned("key", m, { card: cardJson(s) }); if (!p) { toast(`Shot ${shotNo(s)}: the keyframe wasn't planned, so it didn't start.`, true); return null; }
     const aspects = m.ref_aspects && p.refs.length ? m.ref_aspects : (m.aspects && m.aspects.length ? m.aspects : CAT.aspects.map(a => a.id));
     const res = (m.resolutions || []).length ? (m.default_resolution && m.resolutions.includes(m.default_resolution) ? m.default_resolution : m.resolutions[m.resolutions.length > 1 ? 1 : 0]) : "";
     return runCard(s, { mode: "image", model: m.id, models: [m.id], scene: s.scene, direction: cardDirection(s), enhance: false, prompt_override: p.prompt,
       refs: p.refs, ref_names: p.ref_names, ref_kinds: p.ref_kinds, aspect: snapAspect(S.aspect, aspects), resolution: res, takes: B.variants,
       seed: m.seed ? shotSeed(s) : "", negative_prompt: m.negative ? p.negative : "", action: "keyframe", role: "key", anim: 1 });
-  };
-  animate = async function (s) {
-    if (!animOn()) return _animate(s);
+  }
+  async function animateAnim(s) {
     const m = clipModel(); if (!m) return toast("No video model is available.", true);
     if (!s.scene.trim()) return toast("Write what the camera sees first.");
     if (s.start === "continue" && !pickOf(s, "key") && !await continueFrom(s)) return null;
@@ -498,14 +511,15 @@
     if ((fromRefs || !key) && !(m.refs || 0)) return toast(`${m.label} takes no reference pictures, so it can't draw this clip from the sheets. Make a keyframe, or pick Seedance, Kling Omni or Grok.`, true);
     const unmade = castOf(s).filter(e => !e.sheet && !e.file);
     if ((fromRefs || !key) && unmade.length) {
+      toast(`Shot ${shotNo(s)}: drawing ${names(unmade)}'s design and model sheet first (two stills, about a minute), then the clip.`);
       s._casting = true; refreshBoard();
       const ok = (await Promise.all(unmade.map(e => buildSheet(e)))).every(Boolean);
       s._casting = false; refreshBoard();
-      if (!ok) return null;
+      if (!ok) { toast(`Shot ${shotNo(s)}: no clip — ${names(unmade)}'s sheet isn't ready. See the note above, then Animate again.`, true); return null; }
     }
     await ensureLineup();
     const role = key ? "clip_from_key" : "clip_from_refs";
-    const p = await planned(role, m, { card: cardJson(s) }); if (!p) return null;
+    const p = await planned(role, m, { card: cardJson(s) }); if (!p) { toast(`Shot ${shotNo(s)}: the clip wasn't planned, so it didn't start.`, true); return null; }
     const v = key ? framed(m) : m, i = B.shots.indexOf(s), next = B.shots[i + 1];
     const nextKey = next && s.land && key ? pickOf(next, "key") : null;
     const durs = v.durations || [];
@@ -514,7 +528,7 @@
       last_frame: nextKey && v.last_frame ? nextKey.file : null, aspect: S.aspect, resolution: S.resolution,
       duration: durs.length ? nearest(+s.duration || 5, durs) : null, audio: S.audio, seed: m.seed ? shotSeed(s) : "",
       negative_prompt: m.negative ? p.negative : "", takes: 1, action: "animate", role: "clip", anim: 1 });
-  };
+  }
   // a card with a panel and nothing drawn yet shows the panel
   const _frameHtml = frameHtml;
   frameHtml = function (s) {

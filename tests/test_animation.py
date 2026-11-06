@@ -323,6 +323,14 @@ class Routes(unittest.TestCase):
         for css in (".amode", ".astage", "#libBlade", ".abadge", ".aeditin", ".aviewin", ".awarn"):
             self.assertIn(css, html + open(os.path.join(ROOT, "studio", "templates", "studio_app.js"), encoding="utf-8").read(), css)
         self.assertEqual(self.c.get("/static/animation.js").status_code, 200)
+        # nothing stops quietly: the bulk buttons say where they stopped, a sheet
+        # that isn't ready is named, and a thrown error reaches the screen
+        app_js = open(os.path.join(ROOT, "studio", "templates", "studio_app.js"), encoding="utf-8").read()
+        ours = open(os.path.join(ROOT, "studio", "static", "animation.js"), encoding="utf-8").read()
+        for s in ("function waitTake(", "Keyframing stopped at shot", "Animating stopped at shot", 'addEventListener("unhandledrejection"'):
+            self.assertIn(s, app_js, s)
+        for s in ("sheet isn't ready", "the keyframe didn't start"):
+            self.assertIn(s, ours, s)
         guide = self.c.get("/studio/guide").text
         self.assertIn('id="animation"', guide)
         self.assertIn("a suite for animators", guide)
